@@ -1,16 +1,112 @@
-## Hi there 👋
+# ALLinSSL - SSL证书全流程管理工具
 
-<!--
-**allinssl/allinssl** is a ✨ _special_ ✨ repository because its `README.md` (this file) appears on your GitHub profile.
+## 项目介绍
 
-Here are some ideas to get you started:
+ALLinSSL 是一个集证书申请、管理、部署和监控于一体的SSL证书全生命周期管理工具。本工具可帮助用户轻松管理多个网站的SSL证书，提供自动化的证书申请、更新和部署流程，并实时监控证书状态，确保网站安全持续运行。
 
-- 🔭 I’m currently working on ...
-- 🌱 I’m currently learning ...
-- 👯 I’m looking to collaborate on ...
-- 🤔 I’m looking for help with ...
-- 💬 Ask me about ...
-- 📫 How to reach me: ...
-- 😄 Pronouns: ...
-- ⚡ Fun fact: ...
--->
+## 主要功能
+
+- **证书申请**: 支持通过ACME协议从Let's Encrypt等CA自动申请免费证书
+- **证书管理**: 集中管理所有SSL证书，包括手动上传和自动申请的证书
+- **证书部署**: 支持一键部署证书到多种平台，如阿里云、腾讯云、宝塔面板、1Panel等
+- **站点监控**: 实时监控站点SSL证书状态，提前预警证书过期
+- **自动化任务**: 支持定时任务，自动续期证书并部署
+- **多平台支持**: 支持多种DNS提供商（阿里云、腾讯云等）的DNS验证方式
+
+## 技术栈
+
+- **后端**: Go语言
+- **前端**: HTML/CSS/JavaScript
+- **数据存储**: SQLite
+- **证书管理**: ACME协议 (Let's Encrypt)
+- **定时任务**: 内置调度器
+
+## 安装说明
+
+### 系统要求
+
+- 操作系统: Linux
+- 权限要求: 需要有读写权限创建数据目录
+
+### 安装步骤
+#### 1. 通过官网安装脚本安装
+#### 2. 编译安装：
+  - 编译安装时需要注意可执行文件的名称和运行目录，在`allinssl.sh`中需要修改为对应的名称和路径否则可能导致脚本不可用
+  - 推荐安装路径为`/www/allinssl/`，可执行文件名为`allinssl`，建议将`allinssl.sh`软链到`/usr/bin/`目录下
+  - 安装：
+    1. 下载最新版本的release包并解压
+    2. 编译go程序（allinssl）
+    3. 运行可执行文件启动服务
+       - Linux: 执行 `./allinssl start`
+
+### 首次启动设置
+
+1. 首次启动后，设置管理员账号和密码
+2. 设置安全入口和端口号
+3. 完成初始设置后，即可通过 `http://your-ip:your-port/your-secure-entry` 访问管理界面
+
+## 使用指南
+
+### 自动化部署
+
+#### 证书申请
+1. 添加DNS验证凭证（支持阿里云、腾讯云等）
+2. 输入需要申请证书的域名
+3. 输入邮箱地址（用于接收ca的通知）
+
+#### 证书上传
+1. 选择手动上传证书
+2. 粘贴证书和私钥内容
+
+#### 证书部署
+
+1. 选择申请或上传的证书
+2. 选择部署目标（支持阿里云CDN、腾讯云CDN、宝塔面板、1Panel等）
+3. 添加部署凭证（如阿里云、腾讯云的API密钥）
+
+#### 通知
+1. 配置通知通道
+2. 输入通知内容和主题
+
+
+### 站点监控
+
+1. 添加需要监控的站点域名
+2. 系统将自动检测站点证书状态
+3. 设置证书到期提醒阈值（默认为30天）
+4. 当证书接近过期时，系统将发出提醒
+5. 连续多次检测网站异常时，系统将发出提醒
+
+
+## 命令行操作
+
+```bash
+# 基本操作
+allinssl 1: 启动服务
+allinssl 2: 停止服务
+allinssl 3: 重启服务
+allinssl 4: 修改安全入口
+allinssl 5: 修改用户名
+allinssl 6: 修改密码
+allinssl 7: 修改端口
+
+# Web服务管理
+allinssl 8: 关闭web服务
+allinssl 9: 开启web服务
+allinssl 10: 重启web服务
+
+# 后台任务管理
+allinssl 11: 关闭后台自动调度
+allinssl 12: 开启后台自动调度
+allinssl 13: 重启后台自动调度
+
+# 系统管理
+allinssl 14: 关闭https
+allinssl 15: 获取面板地址
+allinssl 16: 更新ALLinSSL到最新版本（文件覆盖安装）
+allinssl 17: 卸载ALLinSSL
+```
+
+## 许可证
+
+本项目使用 [LICENSE](./LICENSE) 文件中规定的许可证进行授权。
