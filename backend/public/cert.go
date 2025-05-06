@@ -1,0 +1,139 @@
+package public
+
+import (
+	"crypto"
+	"crypto/ecdsa"
+	"crypto/ed25519"
+	"crypto/rsa"
+	"crypto/sha256"
+	"crypto/x509"
+	"encoding/hex"
+	"encoding/pem"
+	"errors"
+	"fmt"
+	"time"
+)
+
+// **解析 PEM 格式的证书**
+func ParseCertificate(certPEM []byte) (*x509.Certificate, error) {
+	block, _ := pem.Decode(certPEM)
+	if block == nil {
+		return nil, fmt.Errorf("无法解析证书 PEM")
+	}
+	return x509.ParseCertificate(block.Bytes)
+}
+
+// **解析 PEM 格式的私钥**
+func ParsePrivateKey(keyPEM []byte) (crypto.PrivateKey, error) {
+	block, _ := pem.Decode(keyPEM)
+	if block == nil {
+		return nil, fmt.Errorf("无法解析私钥 PEM")
+	}
+
+	// **尝试解析不同类型的私钥**
+	if key, err := x509.ParsePKCS1PrivateKey(block.Bytes); err == nil {
+		return key, nil
+	}
+	if key, err := x509.ParseECPrivateKey(block.Bytes); err == nil {
+		return key, nil
+	}
+	if key, err := x509.ParsePKCS8PrivateKey(block.Bytes); err == nil {
+		return key, nil
+	}
+	return nil, fmt.Errorf("无法识别的私钥格式")
+}
+
+// **检查证书是否过期**
+func CheckCertificateExpiration(cert *x509.Certificate) error {
+	now := time.Now()
+	if now.Before(cert.NotBefore) {
+		return fmt.Errorf("证书尚未生效，有效期开始于: %v", cert.NotBefore)
+	}
+	if now.After(cert.NotAfter) {
+		return fmt.Errorf("证书已过期，有效期截止到: %v", cert.NotAfter)
+	}
+	return nil
+}
+
+// **检查证书是否与私钥匹配**
+func VerifyCertificateAndKey(cert *x509.Certificate, privateKey crypto.PrivateKey) error {
+	messageARR := sha256.Sum256([]byte("test message"))
+	message := messageARR[:]
+	var signature []byte
+	var err error
+
+	// **用私钥签名数据**
+	switch key := privateKey.(type) {
+	case *rsa.PrivateKey:
+		signature, err = rsa.SignPKCS1v15(nil, key, crypto.SHA256, message)
+	case *ecdsa.PrivateKey:
+		signature, err = key.Sign(nil, message, crypto.SHA256)
+	case ed25519.PrivateKey:
+		signature = ed25519.Sign(key, message)
+	default:
+		err = errors.New("不支持的私钥类型")
+	}
+	if err != nil {
+		return fmt.Errorf("签名失败: %v", err)
+	}
+
+	// **使用公钥验证签名**
+	switch pub := cert.PublicKey.(type) {
+	case *rsa.PublicKey:
+		err = rsa.VerifyPKCS1v15(pub, crypto.SHA256, message, signature)
+	case *ecdsa.PublicKey:
+		ok := ecdsa.VerifyASN1(pub, message, signature)
+		if !ok {
+			err = fmt.Errorf("ECDSA 签名验证失败")
+		}
+	case ed25519.PublicKey:
+		if !ed25519.Verify(pub, message, signature) {
+			err = fmt.Errorf("Ed25519 签名验证失败")
+		}
+	default:
+		err = fmt.Errorf("不支持的公钥类型: %T", pub)
+	}
+	return err
+}
+
+// **主验证函数**
+func ValidateSSLCertificate(certStr, keyStr string) error {
+	certPEM, keyPEM := []byte(certStr), []byte(keyStr)
+	// **解析证书和私钥**
+	cert, err := ParseCertificate(certPEM)
+	if err != nil {
+		return fmt.Errorf("解析证书失败: %v", err)
+	}
+	privateKey, err := ParsePrivateKey(keyPEM)
+	if err != nil {
+		return fmt.Errorf("解析私钥失败: %v", err)
+	}
+
+	// **检查证书有效期**
+	if err := CheckCertificateExpiration(cert); err != nil {
+		return err
+	}
+
+	// **检查证书和私钥是否匹配**
+	if err := VerifyCertificateAndKey(cert, privateKey); err != nil {
+		return fmt.Errorf("证书与私钥不匹配: %v", err)
+	}
+
+	return nil
+}
+
+// 获取sha256
+func GetSHA256(certStr string) (string, error) {
+	certPEM := []byte(certStr)
+	block, _ := pem.Decode(certPEM)
+	if block == nil {
+		return "", fmt.Errorf("无法解析证书 PEM")
+	}
+	cert, err := x509.ParseCertificate(block.Bytes)
+	if err != nil {
+		return "", fmt.Errorf("解析证书失败: %v", err)
+	}
+
+	sha256Hash := sha256.Sum256(cert.Raw)
+	return hex.EncodeToString(sha256Hash[:]), nil
+}
