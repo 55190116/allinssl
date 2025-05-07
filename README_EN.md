@@ -109,4 +109,4 @@ allinssl 17: Uninstall ALLinSSL
 
 ## License
 
-This project is licensed under the terms specified in the [LICENSE](./LICENSE) file. 
+This project is licensed under the terms specified in the [LICENSE](./LICENSE) file.
