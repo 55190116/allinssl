@@ -50,7 +50,7 @@ if [ $# -eq 0 ]; then
 fi
 
 function update_allinssl() {
-    local url="http://192.168.69.167:8888/down/Kuguq0edGNRA.tar.gz"
+    local url="https://download.allinssl.com/bin/allinssl.tar.gz"
     local target_dir="${WORK_DIR}"
     local temp_file=$(mktemp)
     local original_filename temp_file

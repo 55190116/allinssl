@@ -165,7 +165,6 @@ func init() {
 	    create_time TEXT,
 	    end_time    TEXT,
 	    workflow_id TEXT not null
-		fail_reason TEXT,
 	);
 	`)
 	insertDefaultData(db, "users", "INSERT INTO users (id, username, password, salt) VALUES (1, 'xxxx', 'xxxxxxx', '&*ghs^&%dag');")

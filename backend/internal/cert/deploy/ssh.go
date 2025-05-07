@@ -6,7 +6,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"golang.org/x/crypto/ssh"
-	"path"
 	"strconv"
 )
 
@@ -124,9 +123,13 @@ func DeploySSH(cfg map[string]any) error {
 	default:
 		return fmt.Errorf("参数错误：provider_id")
 	}
-	dir, ok := cfg["path"].(string)
+	keyPath, ok := cfg["keyPath"].(string)
 	if !ok {
-		return fmt.Errorf("参数错误：path")
+		return fmt.Errorf("参数错误：keyPath")
+	}
+	certPath, ok := cfg["keyPath"].(string)
+	if !ok {
+		return fmt.Errorf("参数错误：certPath")
 	}
 	beforeCmd, ok := cfg["beforeCmd"].(string)
 	if !ok {
@@ -152,8 +155,8 @@ func DeploySSH(cfg map[string]any) error {
 	}
 	// 自动创建多级目录
 	files := []RemoteFile{
-		{Path: path.Join(dir, "cert.pem"), Content: certPem},
-		{Path: path.Join(dir, "key.pem"), Content: keyPem},
+		{Path: keyPath, Content: certPem},
+		{Path: certPath, Content: keyPem},
 	}
 	err = writeMultipleFilesViaSSH(providerConfig, files, beforeCmd, afterCmd)
 	if err != nil {

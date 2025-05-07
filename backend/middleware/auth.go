@@ -3,7 +3,6 @@ package middleware
 import (
 	"ALLinSSL/backend/public"
 	"encoding/gob"
-	"fmt"
 	"github.com/gin-contrib/sessions"
 	"github.com/gin-gonic/gin"
 	"net/http"
@@ -28,18 +27,6 @@ func SessionAuthMiddleware() gin.HandlerFunc {
 		now := time.Now()
 		gob.Register(time.Time{})
 		last := session.Get("lastRequestTime")
-		var form struct {
-			Skip string `form:"skip"`
-		}
-		err := c.Bind(&form)
-		if err != nil {
-			fmt.Println(err)
-		} else {
-			if form.Skip == "1" {
-				c.Next()
-				return
-			}
-		}
 		
 		if routePath == public.Secure && session.Get("secure") == nil {
 			// 访问安全入口，设置 session
