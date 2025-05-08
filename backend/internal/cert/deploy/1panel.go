@@ -10,6 +10,7 @@ import (
 	"fmt"
 	"io"
 	"net/http"
+	"net/url"
 	"strconv"
 	"time"
 )
@@ -53,8 +54,12 @@ func Request1panel(data *map[string]any, method, providerID, requestUrl string) 
 	if providerConfig["url"][len(providerConfig["url"])-1:] != "/" {
 		providerConfig["url"] += "/"
 	}
-
-	req, err := http.NewRequest(method, providerConfig["url"]+requestUrl, bytes.NewBuffer(jsonData))
+	parsedURL, err := url.Parse(providerConfig["url"])
+	if err != nil {
+		return nil, err
+	}
+	baseURL := fmt.Sprintf("%s://%s", parsedURL.Scheme, parsedURL.Host)
+	req, err := http.NewRequest(method, baseURL+requestUrl, bytes.NewBuffer(jsonData))
 	if err != nil {
 		// fmt.Println(err)
 		return nil, err

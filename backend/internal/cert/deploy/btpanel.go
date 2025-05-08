@@ -18,7 +18,7 @@ import (
 func generateSignature(timestamp, apiKey string) string {
 	keyMd5 := md5.Sum([]byte(apiKey))
 	keyMd5Hex := strings.ToLower(hex.EncodeToString(keyMd5[:]))
-
+	
 	signMd5 := md5.Sum([]byte(timestamp + keyMd5Hex))
 	signMd5Hex := strings.ToLower(hex.EncodeToString(signMd5[:]))
 	return signMd5Hex
@@ -44,15 +44,21 @@ func RequestBt(data *url.Values, method, providerID, requestUrl string) (map[str
 	if providerConfig["url"][len(providerConfig["url"])-1:] != "/" {
 		providerConfig["url"] += "/"
 	}
-
+	
 	data.Set("request_time", fmt.Sprintf("%d", timestamp))
 	data.Set("request_token", token)
-
-	req, err := http.NewRequest(method, providerConfig["url"]+requestUrl, strings.NewReader(data.Encode()))
+	
+	parsedURL, err := url.Parse(providerConfig["url"])
 	if err != nil {
 		return nil, err
 	}
-
+	baseURL := fmt.Sprintf("%s://%s", parsedURL.Scheme, parsedURL.Host)
+	
+	req, err := http.NewRequest(method, baseURL+requestUrl, strings.NewReader(data.Encode()))
+	if err != nil {
+		return nil, err
+	}
+	
 	req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
 	req.Header.Set("user-agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/134.0.0.0 Safari/537.36")
 	// 自定义 Transport，跳过 SSL 证书验证
@@ -63,7 +69,7 @@ func RequestBt(data *url.Values, method, providerID, requestUrl string) (map[str
 	tr := &http.Transport{
 		TLSClientConfig: &tls.Config{InsecureSkipVerify: ignoreSsl},
 	}
-
+	
 	client := &http.Client{Transport: tr}
 	resp, err := client.Do(req)
 	if err != nil {
@@ -72,13 +78,13 @@ func RequestBt(data *url.Values, method, providerID, requestUrl string) (map[str
 	}
 	body, _ := io.ReadAll(resp.Body)
 	defer resp.Body.Close()
-
+	
 	var res map[string]interface{}
 	err = json.Unmarshal(body, &res)
 	if err != nil {
 		return nil, fmt.Errorf("返回值解析失败: %v", err)
 	}
-
+	
 	if res["status"] != nil && !res["status"].(bool) {
 		return nil, fmt.Errorf("请求出错: %s", res["msg"].(string))
 	}
@@ -112,7 +118,7 @@ func DeployBt(cfg map[string]any) error {
 	data.Set("cert_type", "1")
 	data.Set("privateKey", keyPem)
 	data.Set("certPem", certPem)
-	_, err := RequestBt(&data, "POST", providerID, "/config?action=SetPanelSSL")
+	_, err := RequestBt(&data, "POST", providerID, "config?action=SetPanelSSL")
 	if err != nil {
 		return fmt.Errorf("证书部署失败: %v", err)
 	}
@@ -150,7 +156,7 @@ func DeployBtSite(cfg map[string]any) error {
 	data.Set("key", keyPem)
 	data.Set("csr", certPem)
 	data.Set("siteName", siteName)
-	_, err := RequestBt(&data, "POST", providerID, "/site?action=SetSSL")
+	_, err := RequestBt(&data, "POST", providerID, "site?action=SetSSL")
 	if err != nil {
 		return fmt.Errorf("证书部署失败: %v", err)
 	}
