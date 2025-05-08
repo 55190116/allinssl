@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"github.com/jordan-wright/email"
 	"net/smtp"
+	"strings"
 	"time"
 )
 
@@ -182,18 +183,24 @@ func NotifyMail(params map[string]any) error {
 			ServerName:         config["smtpHost"],
 		}
 		err = e.SendWithTLS(addr, auth, tlsConfig)
-		if err != nil && (err.Error() == "EOF" || err.Error() == "short response" || err.Error() == "server response incomplete") {
+		if err != nil {
+			if err.Error() == "EOF" || strings.Contains(err.Error(), "short response") || err.Error() == "server response incomplete" {
+				// 忽略短响应错误
+				return nil
+			}
+			return err
+		}
+		return nil
+	}
+	
+	// 普通明文发送（25端口，非推荐）
+	err = e.Send(addr, auth)
+	if err != nil {
+		if err.Error() == "EOF" || strings.Contains(err.Error(), "short response") || err.Error() == "server response incomplete" {
 			// 忽略短响应错误
 			return nil
 		}
 		return err
 	}
-	
-	// 普通明文发送（25端口，非推荐）
-	err = e.Send(addr, auth)
-	if err != nil && (err.Error() == "EOF" || err.Error() == "short response" || err.Error() == "server response incomplete") {
-		// 忽略短响应错误
-		return nil
-	}
-	return err
+	return nil
 }
