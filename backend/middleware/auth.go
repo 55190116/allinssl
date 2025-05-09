@@ -133,6 +133,9 @@ func checkApiKey(c *gin.Context) bool {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid request"})
 		return false
 	}
+	if form.ApiToken == "" || form.Timestamp == "" {
+		return false
+	}
 	apiKey := public.GetSettingIgnoreError("api_key")
 	if apiKey == "" {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "未开启api"})
