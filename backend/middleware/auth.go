@@ -26,7 +26,7 @@ func SessionAuthMiddleware() gin.HandlerFunc {
 		if checkApiKey(c) {
 			return
 		}
-
+		
 		routePath := c.Request.URL.Path
 		method := c.Request.Method
 		paths := strings.Split(strings.TrimPrefix(routePath, "/"), "/")
@@ -34,7 +34,7 @@ func SessionAuthMiddleware() gin.HandlerFunc {
 		now := time.Now()
 		gob.Register(time.Time{})
 		last := session.Get("lastRequestTime")
-
+		
 		if routePath == public.Secure {
 			if session.Get("secure") == nil {
 				// 访问安全入口，设置 session
@@ -81,6 +81,9 @@ func SessionAuthMiddleware() gin.HandlerFunc {
 									c.Next()
 									return
 								}
+							}
+							if routePath == "/favicon.ico" {
+								return
 							}
 							// 判断是否为静态文件路径
 							if method == "GET" {
@@ -166,7 +169,7 @@ func checkApiKey(c *gin.Context) bool {
 func generateSignature(timestamp, apiKey string) string {
 	keyMd5 := md5.Sum([]byte(apiKey))
 	keyMd5Hex := strings.ToLower(hex.EncodeToString(keyMd5[:]))
-
+	
 	signMd5 := md5.Sum([]byte(timestamp + keyMd5Hex))
 	signMd5Hex := strings.ToLower(hex.EncodeToString(signMd5[:]))
 	return signMd5Hex
