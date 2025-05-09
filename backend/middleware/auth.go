@@ -2,10 +2,13 @@ package middleware
 
 import (
 	"ALLinSSL/backend/public"
+	"crypto/md5"
 	"encoding/gob"
+	"encoding/hex"
 	"github.com/gin-contrib/sessions"
 	"github.com/gin-gonic/gin"
 	"net/http"
+	"strconv"
 	"strings"
 	"time"
 )
@@ -20,6 +23,10 @@ var Html404 = []byte(`<html>
 
 func SessionAuthMiddleware() gin.HandlerFunc {
 	return func(c *gin.Context) {
+		if checkApiKey(c) {
+			return
+		}
+
 		routePath := c.Request.URL.Path
 		method := c.Request.Method
 		paths := strings.Split(strings.TrimPrefix(routePath, "/"), "/")
@@ -114,4 +121,43 @@ func SessionAuthMiddleware() gin.HandlerFunc {
 			}
 		}
 	}
+}
+
+func checkApiKey(c *gin.Context) bool {
+	var form struct {
+		ApiToken  string `form:"api_token"`
+		Timestamp string `form:"timestamp"`
+	}
+	err := c.Bind(&form)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid request"})
+		return false
+	}
+	apiKey := public.GetSettingIgnoreError("api_key")
+	// timestamp := time.Now().Unix()
+	ApiToken := generateSignature(form.Timestamp, apiKey)
+	if form.ApiToken != ApiToken {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "invalid token"})
+		return false
+	}
+	// 这里可以添加其他的验证逻辑，比如检查时间戳是否过期等
+	timestamp, err := strconv.ParseInt(form.Timestamp, 10, 64)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid timestamp"})
+		return false
+	}
+	if time.Now().Unix()-timestamp > 60*5 {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "timestamp expired"})
+		return false
+	}
+	return true
+}
+
+func generateSignature(timestamp, apiKey string) string {
+	keyMd5 := md5.Sum([]byte(apiKey))
+	keyMd5Hex := strings.ToLower(hex.EncodeToString(keyMd5[:]))
+
+	signMd5 := md5.Sum([]byte(timestamp + keyMd5Hex))
+	signMd5Hex := strings.ToLower(hex.EncodeToString(signMd5[:]))
+	return signMd5Hex
 }
