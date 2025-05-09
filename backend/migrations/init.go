@@ -4,7 +4,7 @@ import (
 	"ALLinSSL/backend/public"
 	"database/sql"
 	"fmt"
-	_ "github.com/mattn/go-sqlite3"
+	_ "modernc.org/sqlite"
 	"os"
 	"path/filepath"
 )
@@ -16,7 +16,7 @@ func init() {
 	_, _ = filepath.Abs(dbPath)
 	os.WriteFile(dbPath, []byte{}, 0644)
 	// fmt.Println("数据库路径:", absPath)
-	db, err := sql.Open("sqlite3", dbPath)
+	db, err := sql.Open("sqlite", dbPath)
 	if err != nil {
 		// fmt.Println("创建数据库失败:", err)
 		return
