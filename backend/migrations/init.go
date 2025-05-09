@@ -14,7 +14,6 @@ func init() {
 	
 	dbPath := "data/data.db"
 	_, _ = filepath.Abs(dbPath)
-	os.WriteFile(dbPath, []byte{}, 0644)
 	// fmt.Println("数据库路径:", absPath)
 	db, err := sql.Open("sqlite", dbPath)
 	if err != nil {
