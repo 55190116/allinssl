@@ -133,11 +133,11 @@ func DeploySSH(cfg map[string]any) error {
 	}
 	beforeCmd, ok := cfg["beforeCmd"].(string)
 	if !ok {
-		return fmt.Errorf("参数错误：beforeCmd")
+		beforeCmd = ""
 	}
 	afterCmd, ok := cfg["afterCmd"].(string)
 	if !ok {
-		return fmt.Errorf("参数错误：afterCmd")
+		afterCmd = ""
 	}
 	providerData, err := access.GetAccess(providerID)
 	if err != nil {
