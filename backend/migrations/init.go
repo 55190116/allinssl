@@ -10,6 +10,27 @@ import (
 )
 
 func init() {
+	// 指定运行目录为当前目录
+	exePath, err := os.Executable()
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "获取可执行文件路径失败: %v\n", err)
+		os.Exit(1)
+	}
+	
+	exePath, err = filepath.EvalSymlinks(exePath) // 解决 macOS/Linux 下软链接问题
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "解析软链接失败: %v\n", err)
+		os.Exit(1)
+	}
+	
+	exeDir := filepath.Dir(exePath)
+	
+	err = os.Chdir(exeDir)
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "切换目录失败: %v\n", err)
+		os.Exit(1)
+	}
+	
 	os.MkdirAll("data", os.ModePerm)
 	
 	dbPath := "data/data.db"
