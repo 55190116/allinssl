@@ -233,13 +233,13 @@ func Apply(cfg map[string]any, logger *public.Logger) (map[string]any, error) {
 	}
 	
 	err = client.Challenge.SetDNS01Provider(provider,
-		// dns01.WrapPreCheck(func(domain, fqdn, value string, check dns01.PreCheckFunc) (bool, error) {
-		// 	// 跳过预检查
-		// 	return true, nil
-		// }),
+		dns01.WrapPreCheck(func(domain, fqdn, value string, check dns01.PreCheckFunc) (bool, error) {
+			// 跳过预检查
+			return true, nil
+		}),
 		dns01.AddRecursiveNameservers([]string{
-			"google-public-dns-a.google.com:53",
-			"google-public-dns-b.google.com:53",
+			"volans.dnspod.net:53",
+			"dove.dnspod.net:53",
 		}),
 	)
 	if err != nil {
