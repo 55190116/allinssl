@@ -15,6 +15,9 @@ import (
 	"github.com/go-acme/lego/v4/challenge/dns01"
 	"github.com/go-acme/lego/v4/lego"
 	"github.com/go-acme/lego/v4/providers/dns/alidns"
+	"github.com/go-acme/lego/v4/providers/dns/baiducloud"
+	"github.com/go-acme/lego/v4/providers/dns/cloudflare"
+	"github.com/go-acme/lego/v4/providers/dns/huaweicloud"
 	"github.com/go-acme/lego/v4/providers/dns/tencentcloud"
 	"github.com/go-acme/lego/v4/registration"
 	"strconv"
@@ -39,17 +42,33 @@ func GetDNSProvider(providerName string, creds map[string]string) (challenge.Pro
 		config.SecretID = creds["secret_id"]
 		config.SecretKey = creds["secret_key"]
 		return tencentcloud.NewDNSProviderConfig(config)
-	
-	// case "cloudflare":
-	// 	config := cloudflare.NewDefaultConfig()
-	// 	config.AuthToken = creds["CLOUDFLARE_API_TOKEN"]
-	// 	return cloudflare.NewDNSProviderConfig(config)
-	
+	case "cloudflare":
+		config := cloudflare.NewDefaultConfig()
+		config.AuthEmail = creds["email"]
+		config.AuthKey = creds["api_key"]
+		return cloudflare.NewDNSProviderConfig(config)
 	case "aliyun":
 		config := alidns.NewDefaultConfig()
 		config.APIKey = creds["access_key"]
 		config.SecretKey = creds["access_secret"]
 		return alidns.NewDNSProviderConfig(config)
+	case "huaweicloud":
+		config := huaweicloud.NewDefaultConfig()
+		config.AccessKeyID = creds["access_key"]
+		config.SecretAccessKey = creds["secret_key"]
+		// 不传会报错
+		config.Region = "cn-north-1"
+		return huaweicloud.NewDNSProviderConfig(config)
+	case "baidu":
+		config := baiducloud.NewDefaultConfig()
+		config.AccessKeyID = creds["access_key"]
+		config.SecretAccessKey = creds["secret_key"]
+		return baiducloud.NewDNSProviderConfig(config)
+	// case "godaddy":
+	// 	config := godaddy.NewDefaultConfig()
+	// 	config.APIKey = creds["api_key"]
+	// 	config.APISecret = creds["api_secret"]
+	// 	return godaddy.NewDNSProviderConfig(config)
 	
 	default:
 		return nil, fmt.Errorf("不支持的 DNS Provider: %s", providerName)
@@ -221,7 +240,8 @@ func Apply(cfg map[string]any, logger *public.Logger) (map[string]any, error) {
 		dns01.AddRecursiveNameservers([]string{
 			"8.8.8.8:53",
 			"1.1.1.1:53",
-		}))
+		}),
+	)
 	if err != nil {
 		return nil, err
 	}
