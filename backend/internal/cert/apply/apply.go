@@ -15,10 +15,6 @@ import (
 	"github.com/go-acme/lego/v4/challenge/dns01"
 	"github.com/go-acme/lego/v4/lego"
 	"github.com/go-acme/lego/v4/providers/dns/alidns"
-	"github.com/go-acme/lego/v4/providers/dns/baiducloud"
-	"github.com/go-acme/lego/v4/providers/dns/cloudflare"
-	"github.com/go-acme/lego/v4/providers/dns/godaddy"
-	"github.com/go-acme/lego/v4/providers/dns/huaweicloud"
 	"github.com/go-acme/lego/v4/providers/dns/tencentcloud"
 	"github.com/go-acme/lego/v4/registration"
 	"strconv"
@@ -44,31 +40,31 @@ func GetDNSProvider(providerName string, creds map[string]string) (challenge.Pro
 		config.SecretKey = creds["secret_key"]
 		return tencentcloud.NewDNSProviderConfig(config)
 	
-	case "cloudflare":
-		config := cloudflare.NewDefaultConfig()
-		config.AuthToken = creds["CLOUDFLARE_API_TOKEN"]
-		return cloudflare.NewDNSProviderConfig(config)
+	// case "cloudflare":
+	// 	config := cloudflare.NewDefaultConfig()
+	// 	config.AuthToken = creds["CLOUDFLARE_API_TOKEN"]
+	// 	return cloudflare.NewDNSProviderConfig(config)
 	
 	case "aliyun":
 		config := alidns.NewDefaultConfig()
 		config.APIKey = creds["access_key"]
 		config.SecretKey = creds["access_secret"]
 		return alidns.NewDNSProviderConfig(config)
-	case "huaweicloud":
-		config := huaweicloud.NewDefaultConfig()
-		config.AccessKeyID = creds["access_key"]
-		config.SecretAccessKey = creds["secret_key"]
-		return huaweicloud.NewDNSProviderConfig(config)
-	case "baiducloud":
-		config := baiducloud.NewDefaultConfig()
-		config.AccessKeyID = creds["access_key"]
-		config.SecretAccessKey = creds["secret_key"]
-		return baiducloud.NewDNSProviderConfig(config)
-	case "godaddy":
-		config := godaddy.NewDefaultConfig()
-		config.APIKey = creds["api_key"]
-		config.APISecret = creds["api_secret"]
-		return godaddy.NewDNSProviderConfig(config)
+	// case "huaweicloud":
+	// 	config := huaweicloud.NewDefaultConfig()
+	// 	config.AccessKeyID = creds["access_key"]
+	// 	config.SecretAccessKey = creds["secret_key"]
+	// 	return huaweicloud.NewDNSProviderConfig(config)
+	// case "baiducloud":
+	// 	config := baiducloud.NewDefaultConfig()
+	// 	config.AccessKeyID = creds["access_key"]
+	// 	config.SecretAccessKey = creds["secret_key"]
+	// 	return baiducloud.NewDNSProviderConfig(config)
+	// case "godaddy":
+	// 	config := godaddy.NewDefaultConfig()
+	// 	config.APIKey = creds["api_key"]
+	// 	config.APISecret = creds["api_secret"]
+	// 	return godaddy.NewDNSProviderConfig(config)
 	
 	default:
 		return nil, fmt.Errorf("不支持的 DNS Provider: %s", providerName)
