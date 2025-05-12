@@ -214,6 +214,12 @@ INSERT INTO settings (key, value, create_time, update_time, active, type) VALUES
 INSERT INTO settings (key, value, create_time, update_time, active, type) VALUES ('port', '%d', '2025-04-15 15:58', '2025-04-15 15:58', 1, null);`, uuidStr, uuidStr, randomStr, port)
 	
 	insertDefaultData(db, "settings", Isql)
+	
+	InsertIfNotExists(db, "access_type", map[string]any{"name": "cloudflare", "type": "host"}, []string{"name", "type"}, []any{"cloudflare", "host"})
+	InsertIfNotExists(db, "access_type", map[string]any{"name": "cloudflare", "type": "dns"}, []string{"name", "type"}, []any{"cloudflare", "dns"})
+	InsertIfNotExists(db, "access_type", map[string]any{"name": "huaweicloud", "type": "host"}, []string{"name", "type"}, []any{"cloudflare", "host"})
+	InsertIfNotExists(db, "access_type", map[string]any{"name": "huaweicloud", "type": "dns"}, []string{"name", "type"}, []any{"cloudflare", "dns"})
+	
 }
 
 func insertDefaultData(db *sql.DB, table, insertSQL string) {
@@ -237,4 +243,56 @@ func insertDefaultData(db *sql.DB, table, insertSQL string) {
 		// } else {
 		// 	fmt.Println("表已有数据，跳过插入。")
 	}
+}
+
+func InsertIfNotExists(
+	db *sql.DB,
+	table string,
+	whereFields map[string]any, // 用于 WHERE 判断的字段和值
+	insertColumns []string,
+	insertValues []any,
+) error {
+	// 1. 构建 WHERE 子句
+	whereClause := ""
+	whereArgs := make([]any, 0, len(whereFields))
+	i := 0
+	for col, val := range whereFields {
+		if i > 0 {
+			whereClause += " AND "
+		}
+		whereClause += fmt.Sprintf("%s = ?", col)
+		whereArgs = append(whereArgs, val)
+		i++
+	}
+	
+	// 2. 判断是否存在
+	query := fmt.Sprintf("SELECT EXISTS(SELECT 1 FROM %s WHERE %s)", table, whereClause)
+	var exists bool
+	err := db.QueryRow(query, whereArgs...).Scan(&exists)
+	if err != nil {
+		return fmt.Errorf("check exists failed: %w", err)
+	}
+	if exists {
+		return nil // 已存在
+	}
+	
+	// 3. 构建 INSERT 语句
+	columnList := ""
+	placeholderList := ""
+	for i, col := range insertColumns {
+		if i > 0 {
+			columnList += ", "
+			placeholderList += ", "
+		}
+		columnList += col
+		placeholderList += "?"
+	}
+	insertSQL := fmt.Sprintf("INSERT INTO %s (%s) VALUES (%s)", table, columnList, placeholderList)
+	
+	_, err = db.Exec(insertSQL, insertValues...)
+	if err != nil {
+		return fmt.Errorf("insert failed: %w", err)
+	}
+	
+	return nil
 }
