@@ -120,21 +120,31 @@ func Apply(cfg map[string]any, logger *public.Logger) (map[string]any, error) {
 		}
 	}
 	
-	var skipCheck int
+	var skipCheck bool
 	if cfg["skip_check"] == nil {
-		skipCheck = 1
+		skipCheck = true
 	} else {
 		switch v := cfg["skip_check"].(type) {
 		case int:
-			skipCheck = v
-		case float64:
-			skipCheck = int(v)
-		case string:
-			skipCheckStr := v
-			skipCheck, err = strconv.Atoi(skipCheckStr)
-			if err != nil {
-				return nil, fmt.Errorf("参数错误：skip_check")
+			if v > 0 {
+				skipCheck = true
+			} else {
+				skipCheck = false
 			}
+		case float64:
+			if v > 0 {
+				skipCheck = true
+			} else {
+				skipCheck = false
+			}
+		case string:
+			if v == "true" || v == "1" {
+				skipCheck = true
+			} else {
+				skipCheck = false
+			}
+		case bool:
+			skipCheck = v
 		default:
 			return nil, fmt.Errorf("参数错误：skip_check")
 		}
@@ -269,7 +279,7 @@ func Apply(cfg map[string]any, logger *public.Logger) (map[string]any, error) {
 		return nil, fmt.Errorf("创建 DNS provider 失败: %v", err)
 	}
 	
-	if skipCheck == 1 {
+	if skipCheck {
 		// 跳过预检查
 		err = client.Challenge.SetDNS01Provider(provider,
 			dns01.WrapPreCheck(func(domain, fqdn, value string, check dns01.PreCheckFunc) (bool, error) {
