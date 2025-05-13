@@ -2,6 +2,10 @@
 
 ![GitHub License](https://img.shields.io/github/license/allinssl/allinssl)
 ![GitHub Stars](https://img.shields.io/github/stars/allinssl/allinssl?style=social)
+![GitHub Issues](https://img.shields.io/github/issues/allinssl/allinssl)
+![GitHub Release](https://img.shields.io/github/v/release/allinssl/allinssl)
+![Docker Pulls](https://img.shields.io/docker/pulls/allinssl/allinssl)
+
 
 > 🚀 一站式SSL证书生命周期管理解决方案 | 支持Let's Encrypt | 多平台部署 | 自动化运维
 
