@@ -2,10 +2,13 @@ package deploy
 
 import (
 	"ALLinSSL/backend/internal/access"
+	"ALLinSSL/backend/public"
 	"bytes"
 	"encoding/json"
 	"fmt"
 	"golang.org/x/crypto/ssh"
+	"os"
+	"path/filepath"
 	"strconv"
 )
 
@@ -14,7 +17,7 @@ type SSHConfig struct {
 	Password   string // 可选
 	PrivateKey string // 可选
 	Host       string
-	Port       float64
+	Port       any
 }
 
 type RemoteFile struct {
@@ -45,7 +48,7 @@ func buildAuthMethods(password, privateKey string) ([]ssh.AuthMethod, error) {
 }
 
 func writeMultipleFilesViaSSH(config SSHConfig, files []RemoteFile, preCmd, postCmd string) error {
-	addr := fmt.Sprintf("%s:%d", config.Host, int(config.Port))
+	addr := fmt.Sprintf("%s:%s", config.Host, config.Port)
 	
 	authMethods, err := buildAuthMethods(config.Password, config.PrivateKey)
 	if err != nil {
@@ -161,6 +164,63 @@ func DeploySSH(cfg map[string]any) error {
 	err = writeMultipleFilesViaSSH(providerConfig, files, beforeCmd, afterCmd)
 	if err != nil {
 		return fmt.Errorf("SSH 部署失败: %v", err)
+	}
+	return nil
+}
+
+func DeployLocalhost(cfg map[string]any) error {
+	cert, ok := cfg["certificate"].(map[string]any)
+	if !ok {
+		return fmt.Errorf("证书不存在")
+	}
+	// 设置证书
+	keyPem, ok := cert["key"].(string)
+	if !ok {
+		return fmt.Errorf("证书错误：key")
+	}
+	certPem, ok := cert["cert"].(string)
+	if !ok {
+		return fmt.Errorf("证书错误：cert")
+	}
+	keyPath, ok := cfg["keyPath"].(string)
+	if !ok {
+		return fmt.Errorf("参数错误：keyPath")
+	}
+	certPath, ok := cfg["certPath"].(string)
+	if !ok {
+		return fmt.Errorf("参数错误：certPath")
+	}
+	beforeCmd, ok := cfg["beforeCmd"].(string)
+	if ok {
+		_, errout, err := public.ExecCommand(beforeCmd)
+		if err != nil {
+			return fmt.Errorf("前置命令执行失败: %v, %s", err, errout)
+		}
+	}
+	
+	dir := filepath.Dir(certPath)
+	if err := os.MkdirAll(dir, os.ModePerm); err != nil {
+		panic("创建证书保存目录失败: " + err.Error())
+	}
+	dir = filepath.Dir(keyPath)
+	if err := os.MkdirAll(dir, os.ModePerm); err != nil {
+		panic("创建私钥保存目录失败: " + err.Error())
+	}
+	err := os.WriteFile(certPath, []byte(certPem), 0644)
+	if err != nil {
+		return fmt.Errorf("写入证书失败: %v", err)
+	}
+	err = os.WriteFile(keyPath, []byte(keyPem), 0644)
+	if err != nil {
+		return fmt.Errorf("写入私钥失败: %v", err)
+	}
+	
+	afterCmd, ok := cfg["afterCmd"].(string)
+	if ok {
+		_, errout, err := public.ExecCommand(afterCmd)
+		if err != nil {
+			return fmt.Errorf("后置命令执行失败: %v, %s", err, errout)
+		}
 	}
 	return nil
 }

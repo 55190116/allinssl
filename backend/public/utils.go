@@ -1,6 +1,7 @@
 package public
 
 import (
+	"bytes"
 	"crypto/rand"
 	"fmt"
 	"github.com/google/uuid"
@@ -8,6 +9,8 @@ import (
 	"math/big"
 	"net"
 	"net/http"
+	"os/exec"
+	"runtime"
 	"strings"
 )
 
@@ -199,4 +202,24 @@ func ContainsAllIgnoreBRepeats(a, b []string) bool {
 		}
 	}
 	return true
+}
+
+// ExecCommand 执行系统命令，并返回 stdout、stderr 和错误
+func ExecCommand(command string) (string, string, error) {
+	var cmd *exec.Cmd
+	
+	// 根据操作系统选择解释器
+	if runtime.GOOS == "windows" {
+		cmd = exec.Command("cmd", "/C", command)
+	} else {
+		cmd = exec.Command("bash", "-c", command)
+	}
+	
+	var stdout, stderr bytes.Buffer
+	cmd.Stdout = &stdout
+	cmd.Stderr = &stderr
+	
+	err := cmd.Run()
+	
+	return stdout.String(), stderr.String(), err
 }
