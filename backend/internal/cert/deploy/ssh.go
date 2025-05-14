@@ -15,7 +15,7 @@ import (
 type SSHConfig struct {
 	User       string
 	Password   string // 可选
-	PrivateKey string // 可选
+	PrivateKey string `json:"key"` // 可选
 	Host       string
 	Port       any
 }
