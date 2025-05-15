@@ -237,6 +237,9 @@ INSERT INTO settings (key, value, create_time, update_time, active, type) VALUES
 	InsertIfNotExists(db, "access_type", map[string]any{"name": "baidu", "type": "dns"}, []string{"name", "type"}, []any{"baidu", "dns"})
 
 	InsertIfNotExists(db, "access_type", map[string]any{"name": "btwaf", "type": "host"}, []string{"name", "type"}, []any{"btwaf", "host"})
+
+	InsertIfNotExists(db, "access_type", map[string]any{"name": "safeline", "type": "dns"}, []string{"name", "type"}, []any{"safeline", "host"})
+
 }
 
 func insertDefaultData(db *sql.DB, table, insertSQL string) {
