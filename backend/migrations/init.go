@@ -27,9 +27,9 @@ func init() {
 		fmt.Fprintf(os.Stderr, "切换目录失败: %v\n", err)
 		os.Exit(1)
 	}
-	
+
 	os.MkdirAll("data", os.ModePerm)
-	
+
 	dbPath := "data/data.db"
 	_, _ = filepath.Abs(dbPath)
 	// fmt.Println("数据库路径:", absPath)
@@ -41,6 +41,8 @@ func init() {
 	defer db.Close()
 	// 创建表
 	_, err = db.Exec(`
+	PRAGMA journal_mode=WAL;
+
 	create table IF NOT EXISTS _accounts
 	(
 	    id          integer not null
@@ -184,6 +186,17 @@ func init() {
 	    end_time    TEXT,
 	    workflow_id TEXT not null
 	);
+
+	create table workflow_deploy
+	(
+		id          TEXT,
+		workflow_id TEXT,
+		cert_hash   TEXT,
+		status      TEXT,
+		constraint workflow_deploy_pk
+			primary key (id, workflow_id)
+	);
+
 	`)
 	insertDefaultData(db, "users", "INSERT INTO users (id, username, password, salt) VALUES (1, 'xxxx', 'xxxxxxx', '&*ghs^&%dag');")
 	insertDefaultData(db, "access_type", `
@@ -194,15 +207,15 @@ func init() {
 	INSERT INTO access_type (name, type) VALUES ('ssh', 'host');
 	INSERT INTO access_type (name, type) VALUES ('btpanel', 'host');
 	INSERT INTO access_type (name, type) VALUES ('1panel', 'host');`)
-	
+
 	uuidStr := public.GenerateUUID()
 	randomStr := public.RandomString(8)
-	
+
 	port, err := public.GetFreePort()
 	if err != nil {
 		port = 20773
 	}
-	
+
 	Isql := fmt.Sprintf(
 		`INSERT INTO settings (key, value, create_time, update_time, active, type) VALUES ('log_path', 'logs/ALLinSSL.log', '2025-04-15 15:58', '2025-04-15 15:58', 1, null);
 INSERT INTO settings (key, value, create_time, update_time, active, type) VALUES ( 'workflow_log_path', 'logs/workflows/', '2025-04-15 15:58', '2025-04-15 15:58', 1, null);
@@ -212,14 +225,18 @@ INSERT INTO settings (key, value, create_time, update_time, active, type) VALUES
 INSERT INTO settings (key, value, create_time, update_time, active, type) VALUES ('session_key', '%s', '2025-04-15 15:58', '2025-04-15 15:58', 1, null);
 INSERT INTO settings (key, value, create_time, update_time, active, type) VALUES ('secure', '/%s', '2025-04-15 15:58', '2025-04-15 15:58', 1, null);
 INSERT INTO settings (key, value, create_time, update_time, active, type) VALUES ('port', '%d', '2025-04-15 15:58', '2025-04-15 15:58', 1, null);`, uuidStr, uuidStr, randomStr, port)
-	
+
 	insertDefaultData(db, "settings", Isql)
-	
+
 	InsertIfNotExists(db, "access_type", map[string]any{"name": "cloudflare", "type": "host"}, []string{"name", "type"}, []any{"cloudflare", "host"})
 	InsertIfNotExists(db, "access_type", map[string]any{"name": "cloudflare", "type": "dns"}, []string{"name", "type"}, []any{"cloudflare", "dns"})
 	InsertIfNotExists(db, "access_type", map[string]any{"name": "huaweicloud", "type": "host"}, []string{"name", "type"}, []any{"huaweicloud", "host"})
 	InsertIfNotExists(db, "access_type", map[string]any{"name": "huaweicloud", "type": "dns"}, []string{"name", "type"}, []any{"huaweicloud", "dns"})
-	
+
+	InsertIfNotExists(db, "access_type", map[string]any{"name": "baidu", "type": "host"}, []string{"name", "type"}, []any{"baidu", "host"})
+	InsertIfNotExists(db, "access_type", map[string]any{"name": "baidu", "type": "dns"}, []string{"name", "type"}, []any{"baidu", "dns"})
+
+	InsertIfNotExists(db, "access_type", map[string]any{"name": "btwaf", "type": "host"}, []string{"name", "type"}, []any{"btwaf", "host"})
 }
 
 func insertDefaultData(db *sql.DB, table, insertSQL string) {
@@ -230,7 +247,7 @@ func insertDefaultData(db *sql.DB, table, insertSQL string) {
 		// fmt.Println("检查数据行数失败:", err)
 		return
 	}
-	
+
 	// 如果表为空，则插入默认数据
 	if count == 0 {
 		// fmt.Println("表为空，插入默认数据...")
@@ -264,7 +281,7 @@ func InsertIfNotExists(
 		whereArgs = append(whereArgs, val)
 		i++
 	}
-	
+
 	// 2. 判断是否存在
 	query := fmt.Sprintf("SELECT EXISTS(SELECT 1 FROM %s WHERE %s)", table, whereClause)
 	var exists bool
@@ -275,7 +292,7 @@ func InsertIfNotExists(
 	if exists {
 		return nil // 已存在
 	}
-	
+
 	// 3. 构建 INSERT 语句
 	columnList := ""
 	placeholderList := ""
@@ -288,11 +305,11 @@ func InsertIfNotExists(
 		placeholderList += "?"
 	}
 	insertSQL := fmt.Sprintf("INSERT INTO %s (%s) VALUES (%s)", table, columnList, placeholderList)
-	
+
 	_, err = db.Exec(insertSQL, insertValues...)
 	if err != nil {
 		return fmt.Errorf("insert failed: %w", err)
 	}
-	
+
 	return nil
 }

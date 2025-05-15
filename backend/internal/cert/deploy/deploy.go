@@ -17,6 +17,9 @@ func Deploy(cfg map[string]any, logger *public.Logger) error {
 	case "btpanel-site":
 		logger.Debug("部署到宝塔面板网站...")
 		return DeployBtSite(cfg)
+	case "btwaf-site":
+		logger.Debug("部署到宝塔WAF面板网站...")
+		return DeployBtWafSite(cfg)
 	case "tencentcloud-cdn":
 		cfg["resource_type"] = "cdn"
 		logger.Debug("部署到腾讯云CDN...")
@@ -40,6 +43,9 @@ func Deploy(cfg map[string]any, logger *public.Logger) error {
 	case "aliyun-oss":
 		logger.Debug("部署到阿里云OSS...")
 		return DeployOss(cfg)
+	case "localhost":
+		logger.Debug("部署到本地...")
+		return DeployLocalhost(cfg)
 	default:
 		return fmt.Errorf("不支持的部署: %s", providerName)
 	}
