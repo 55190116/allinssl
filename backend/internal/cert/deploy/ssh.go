@@ -48,7 +48,18 @@ func buildAuthMethods(password, privateKey string) ([]ssh.AuthMethod, error) {
 }
 
 func writeMultipleFilesViaSSH(config SSHConfig, files []RemoteFile, preCmd, postCmd string) error {
-	addr := fmt.Sprintf("%s:%s", config.Host, config.Port)
+	var port string
+	switch v := config.Port.(type) {
+	case float64:
+		port = strconv.Itoa(int(v))
+	case string:
+		port = v
+	case int:
+		port = strconv.Itoa(v)
+	default:
+		port = "22"
+	}
+	addr := fmt.Sprintf("%s:%s", config.Host, port)
 	
 	authMethods, err := buildAuthMethods(config.Password, config.PrivateKey)
 	if err != nil {
