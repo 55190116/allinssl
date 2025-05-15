@@ -56,7 +56,7 @@ export interface ReportMail {
 	sender: string
 	smtpHost: string
 	smtpPort: string
-	smtpTLS: 'true' | 'false'
+	smtpTLS: true | false
 	// username: string
 }
 

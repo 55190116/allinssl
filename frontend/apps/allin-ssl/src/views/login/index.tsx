@@ -5,8 +5,8 @@ import { $t } from '@locales/index'
 import { useController } from './useController'
 import styles from './index.module.css'
 
-import LocalesTips from '@baota/naive-ui/components/localesTips'
-import ThemeTips from '@baota/naive-ui/components/themeTips'
+// import LocalesTips from '@baota/naive-ui/components/localesTips'
+// import ThemeTips from '@baota/naive-ui/components/themeTips'
 
 export default defineComponent({
 	setup() {
@@ -27,8 +27,8 @@ export default defineComponent({
 					style={`background-image:${isDark.value ? 'url(/static/images/login-bg-dark.svg)' : 'url(/static/images/login-bg.svg)'};`}
 				>
 					<div class="absolute z-[99] top-0 right-0 p-[2rem] flex w-[120px] justify-between">
-						<LocalesTips />
-						<ThemeTips />
+						{/* <LocalesTips /> */}
+						{/* <ThemeTips /> */}
 					</div>
 					<div class={styles.loginBox}>
 						<div class={styles.leftSection}>

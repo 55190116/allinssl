@@ -133,6 +133,7 @@ export default defineConfig({
 						'.cursor',
 						'.devcontainer',
 						'.github',
+						'.git',
 						'.test',
 						'.vascode',
 						'.turbo',

@@ -1,4 +1,17 @@
 {
+  "t_1_1745833931535": "Host",
+  "t_3_1747019616129": "Tencent Cloud",
+  "t_2_1747019616224": "Alibaba Cloud",
+  "t_0_1747271295174": "Pagoda WAF - URL format error",
+  "t_1_1747271295484": "Please enter the Pagoda WAF-API key",
+  "t_2_1747271295877": "Please enter the correct Huawei Cloud AccessKey",
+  "t_3_1747271294475": "Please enter the correct Baidu Cloud AccessKey",
+  "t_4_1747271294621": "Please enter the correct Baidu Cloud SecretKey",
+  "t_5_1747271291828": "Baota WAF-URL",
+  "t_6_1747271296994": "Local Deployment",
+  "t_7_1747271292060": "All sources",
+  "t_8_1747271290414": "Pagoda",
+  "t_9_1747271284765": "1Panel",
   "t_0_1744098811152": "Warning: You have entered an unknown area, the page you are visiting does not exist, please click the button to return to the homepage.",
   "t_1_1744098801860": "Return Home",
   "t_2_1744098804908": "Safety Tip: If you think this is an error, please contact the administrator immediately",
@@ -332,7 +345,6 @@
   "t_3_1745765920953": "The current node has configuration data, are you sure you want to delete it?",
   "t_4_1745765868807": "Please select the deployment type before proceeding to the next step",
   "t_0_1745833934390": "Please select type",
-  "t_1_1745833931535": "Host",
   "t_2_1745833931404": "port",
   "t_3_1745833936770": "Failed to get homepage overview data",
   "t_4_1745833932780": "Version information",
@@ -488,8 +500,6 @@
   "t_4_1746858917773": "Selected",
   "t_0_1747019621052": "Please select a host provider{0}",
   "t_1_1747019624067": "Click to set up website monitoring and grasp real-time status",
-  "t_2_1747019616224": "Alibaba Cloud",
-  "t_3_1747019616129": "Tencent Cloud",
   "t_0_1747040228657": "For multiple domains, please use English commas to separate them, for example: test.com,test.cn",
   "t_1_1747040226143": "For wildcard domains, use an asterisk *, for example: *.test.com",
   "t_0_1747042966820": "Please enter the correct Cloudflare API key",
@@ -508,5 +518,6 @@
   "t_0_1747110184700": "Select certificate",
   "t_1_1747110191587": "If you need to modify the certificate content and key, please choose a custom certificate",
   "t_2_1747110193465": "When a non-custom certificate is selected, neither the certificate content nor the key can be modified",
-  "t_3_1747110185110": "Upload and submit"
+  "t_3_1747110185110": "Upload and submit",
+  "t_0_1747215751189": "Pagoda WAF Website"
 }

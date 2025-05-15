@@ -56,11 +56,13 @@ export const useLayoutStore = defineStore('layout-store', () => {
 		// 主机提供商
 		ssh: { name: 'SSH', access: ['host'] },
 		btpanel: { name: $t('t_10_1745735765165'), access: ['host'] },
+		btwaf: { name: '宝塔WAF', access: ['host'] },
 		'1panel': { name: '1Panel', access: ['host'] },
 		aliyun: { name: $t('t_2_1747019616224'), access: ['dns', 'host'] },
 		tencentcloud: { name: $t('t_3_1747019616129'), access: ['dns', 'host'] },
 		huaweicloud: { name: '华为云', access: ['dns'] },
 		cloudflare: { name: 'Cloudflare', access: ['dns'] },
+		baidu: { name: '百度云', access: ['dns'] },
 	})
 
 	/**
@@ -163,7 +165,19 @@ export const useLayoutStore = defineStore('layout-store', () => {
 	 * @returns DNS提供商
 	 */
 	const fetchDnsProvider = async (
-		type: 'btpanel' | 'aliyun' | 'ssh' | 'tencentcloud' | '1panel' | 'dns' | '' = '',
+		type:
+			| 'btpanel'
+			| 'aliyun'
+			| 'ssh'
+			| 'tencentcloud'
+			| '1panel'
+			| 'dns'
+			| 'baidu'
+			| 'huaweicloud'
+			| 'cloudflare'
+			| 'baidu'
+			| ''
+			| 'btwaf' = '',
 	): Promise<void> => {
 		try {
 			dnsProvider.value = []

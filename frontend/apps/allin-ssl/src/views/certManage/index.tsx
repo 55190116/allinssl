@@ -1,5 +1,5 @@
 import { NInput, NButton } from 'naive-ui'
-import { useThemeCssVar } from '@baota/naive-ui/theme'
+import { useTheme, useThemeCssVar } from '@baota/naive-ui/theme'
 import { PlusOutlined } from '@vicons/antd'
 import { Search } from '@vicons/carbon'
 import { $t } from '@locales/index'
@@ -18,7 +18,8 @@ export default defineComponent({
 		const cssVar = useThemeCssVar(['contentPadding', 'borderColor', 'headerHeight', 'iconColorHover'])
 		// 挂载时请求数据
 		onMounted(() => fetch())
-
+		const { theme, themeOverrides } = useTheme()
+		console.log(theme.value, themeOverrides.value)
 		return () => (
 			<div class="h-full flex flex-col" style={cssVar.value}>
 				<div class="mx-auto max-w-[1600px] w-full p-6">

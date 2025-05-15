@@ -73,7 +73,7 @@ const mountApps = (app: App, resources: any) => {
 // 自定义Modal钩子函数
 const useModal = (options: CustomModalOptions) => {
 	const { theme, themeOverrides } = useTheme()
-
+	console.log(themeOverrides.value, theme.value)
 	// 创建discreteModal实例 - 这个可以在任何地方使用
 	const { modal, message, unmount, app } = createDiscreteApi(['modal', 'message'], {
 		configProviderProps: { theme: theme.value, themeOverrides: themeOverrides.value },

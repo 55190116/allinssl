@@ -19,6 +19,8 @@ export default defineComponent({
 		const { locale } = useI18n() // 国际化
 		const { naiveLocale, naiveDateLocale } = useNaiveI18nSync(locale) // i18n 同步
 		const { theme, themeOverrides } = useTheme() // 主题
+
+		console.log(theme.value, themeOverrides.value)
 		// 国际化配置
 		return () => (
 			<NConfigProvider

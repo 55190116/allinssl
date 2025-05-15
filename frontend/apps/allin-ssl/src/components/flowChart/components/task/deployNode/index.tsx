@@ -37,7 +37,7 @@ export default defineComponent({
 
 		// 提示内容
 		const verificationPrompt = computed(() => {
-			console.log(props.node.config.provider, 'validationResult')
+			console.log(validationResult.value, 'validationResult', props.node.config)
 			if (validationResult.value.valid) return <TypeIcon icon={props.node.config.provider} type="success" />
 			return $t('t_9_1745735765287')
 		})
