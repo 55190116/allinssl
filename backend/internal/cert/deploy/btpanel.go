@@ -79,7 +79,7 @@ func RequestBt(data *url.Values, method, providerID, requestUrl string) (map[str
 	var res map[string]interface{}
 	err = json.Unmarshal(body, &res)
 	if err != nil {
-		return nil, fmt.Errorf("返回值解析失败: %v", err)
+		return nil, fmt.Errorf("返回值解析失败: %v，%s", err, string(body))
 	}
 
 	if res["status"] != nil && !res["status"].(bool) {

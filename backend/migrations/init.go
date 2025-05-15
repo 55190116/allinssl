@@ -41,6 +41,8 @@ func init() {
 	defer db.Close()
 	// 创建表
 	_, err = db.Exec(`
+	PRAGMA journal_mode=WAL;
+
 	create table IF NOT EXISTS _accounts
 	(
 	    id          integer not null
