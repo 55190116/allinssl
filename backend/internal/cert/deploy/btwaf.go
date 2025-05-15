@@ -166,12 +166,20 @@ func DeployBtWafSite(cfg map[string]any) error {
 		return fmt.Errorf("参数错误：siteName")
 	}
 
-	sitelist, err := GetBTWafSiteList(1, 10, siteName, providerID)
-	if len(sitelist) == 0 || err != nil {
-		return fmt.Errorf("找不到网站：%s", siteName)
+	siteId := ""
+	sitelist, err := GetBTWafSiteList(1, 100, siteName, providerID)
+	if len(sitelist) != 0 && err == nil {
+		for _, site := range sitelist {
+			siteInfo := site.(map[string]any)
+			if siteName == siteInfo["site_name"].(string) {
+				siteId = siteInfo["site_id"].(string)
+			}
+		}
+	}
+	if siteId == "" {
+		return fmt.Errorf("宝塔WAF找不到网站名称：%s", siteName)
 	}
 
-	siteId := sitelist[0].(map[string]any)["site_id"].(string)
 	data := map[string]any{
 		"site_id": siteId,
 		"types":   "openCert",
