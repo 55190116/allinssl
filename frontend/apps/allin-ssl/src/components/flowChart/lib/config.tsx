@@ -147,6 +147,7 @@ nodeOptions[DEPLOY] = () =>
 			config: {
 				provider: '',
 				provider_id: '',
+				skip: 1,
 				inputs: {
 					fromNodeId: '',
 					name: '',

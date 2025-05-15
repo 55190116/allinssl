@@ -281,7 +281,11 @@ export const useApiFormController = (props: { data: AccessItem }) => {
 				trigger: 'input',
 				validator: (rule: FormItemRule, value: string, callback: (error?: Error) => void) => {
 					if (!isUrl(value)) {
-						return callback(new Error($t('t_2_1745317314362')))
+						const mapTips = {
+							btpanel: $t('t_2_1745317314362'),
+							btwaf: $t('t_0_1747271295174'),
+						}
+						return callback(new Error(mapTips[param.value.type as keyof typeof mapTips]))
 					}
 					callback()
 				},
@@ -290,11 +294,12 @@ export const useApiFormController = (props: { data: AccessItem }) => {
 				trigger: 'input',
 				validator: (rule: FormItemRule, value: string, callback: (error?: Error) => void) => {
 					if (!value.length) {
-						if (param.value.type === 'cloudflare') {
-							return callback(new Error($t('t_0_1747042966820')))
-						} else if (param.value.type === 'btpanel') {
-							return callback(new Error($t('t_1_1747042969705')))
+						const mapTips = {
+							cloudflare: $t('t_0_1747042966820'),
+							btpanel: $t('t_1_1747042969705'),
+							btwaf: $t('t_1_1747271295484'),
 						}
+						return callback(new Error(mapTips[param.value.type as keyof typeof mapTips]))
 					}
 					callback()
 				},
@@ -314,23 +319,35 @@ export const useApiFormController = (props: { data: AccessItem }) => {
 				message: $t('t_6_1745317313383'),
 				trigger: 'input',
 			},
-			secret_key: {
-				trigger: 'input',
-				validator: (rule: FormItemRule, value: string, callback: (error?: Error) => void) => {
-					if (!value.length) {
-						if (param.value.type === 'tencentcloud') {
-							return callback(new Error($t('t_2_1747042967277')))
-						} else if (param.value.type === 'huaweicloud') {
-							return callback(new Error($t('t_3_1747042967608')))
-						}
-					}
-					callback()
-				},
-			},
+
 			access_key: {
 				required: true,
 				message: $t('t_4_1747042966254'),
 				trigger: 'input',
+				validator: (rule: FormItemRule, value: string, callback: (error?: Error) => void) => {
+					if (!value.length) {
+						const mapTips = {
+							huawei: $t('t_2_1747271295877'),
+							baidu: $t('t_3_1747271294475'),
+						}
+						return callback(new Error(mapTips[param.value.type as keyof typeof mapTips]))
+					}
+					callback()
+				},
+			},
+			secret_key: {
+				trigger: 'input',
+				validator: (rule: FormItemRule, value: string, callback: (error?: Error) => void) => {
+					if (!value.length) {
+						const mapTips = {
+							tencentcloud: $t('t_2_1747042967277'),
+							huawei: $t('t_3_1747042967608'),
+							baidu: $t('t_4_1747271294621'),
+						}
+						return callback(new Error(mapTips[param.value.type as keyof typeof mapTips]))
+					}
+					callback()
+				},
 			},
 			email: {
 				trigger: 'input',
@@ -407,8 +424,9 @@ export const useApiFormController = (props: { data: AccessItem }) => {
 				break
 			case '1panel':
 			case 'btpanel':
+			case 'btwaf':
 				items.push(
-					useFormInput($t('t_2_1746667592840'), 'config.url'),
+					useFormInput(param.value.type === 'btwaf' ? $t('t_5_1747271291828') : $t('t_2_1746667592840'), 'config.url'),
 					useFormInput($t('t_55_1745289355715'), 'config.api_key'),
 					useFormSwitch(
 						$t('t_3_1746667592270'),
@@ -417,9 +435,7 @@ export const useApiFormController = (props: { data: AccessItem }) => {
 							checkedValue: '1',
 							uncheckedValue: '0',
 						},
-						{
-							showRequireMark: false,
-						},
+						{ showRequireMark: false },
 					),
 				)
 				break
@@ -434,6 +450,7 @@ export const useApiFormController = (props: { data: AccessItem }) => {
 				items.push(useFormInput('SecretId', 'config.secret_id'), useFormInput('SecretKey', 'config.secret_key'))
 				break
 			case 'huaweicloud':
+			case 'baidu':
 				items.push(useFormInput('AccessKey', 'config.access_key'), useFormInput('SecretKey', 'config.secret_key'))
 				break
 			case 'cloudflare':
@@ -461,6 +478,7 @@ export const useApiFormController = (props: { data: AccessItem }) => {
 					break
 				case '1panel':
 				case 'btpanel':
+				case 'btwaf':
 					param.value.config = {
 						url: '',
 						api_key: '',
@@ -471,6 +489,19 @@ export const useApiFormController = (props: { data: AccessItem }) => {
 					param.value.config = {
 						access_key_id: '',
 						access_key_secret: '',
+					}
+					break
+				case 'baidu':
+				case 'huaweicloud':
+					param.value.config = {
+						access_key: '',
+						secret_key: '',
+					}
+					break
+				case 'cloudflare':
+					param.value.config = {
+						email: '',
+						api_key: '',
 					}
 					break
 				case 'tencentcloud':

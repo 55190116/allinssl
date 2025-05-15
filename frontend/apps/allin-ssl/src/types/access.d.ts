@@ -42,7 +42,9 @@ export interface AddAccessParams<
 		| TencentCloudAccessConfig
 		| PanelAccessConfig
 		| HuaWeiCloudAccessConfig
-		| CloudflareAccessConfig,
+		| CloudflareAccessConfig
+		| BaiduCloudAccessConfig
+		| BtWafSiteAccessConfig,
 > {
 	name: string
 	type: string
@@ -57,7 +59,9 @@ export interface UpdateAccessParams<
 		| TencentCloudAccessConfig
 		| PanelAccessConfig
 		| HuaWeiCloudAccessConfig
-		| CloudflareAccessConfig,
+		| CloudflareAccessConfig
+		| BaiduCloudAccessConfig
+		| BtWafSiteAccessConfig,
 > extends AddAccessParams<T> {
 	id: string
 }
@@ -97,6 +101,10 @@ export interface PanelAccessConfig {
 }
 
 /**
+ * 宝塔waf网站授权
+ */
+export interface BtWafSiteAccessConfig extends PanelAccessConfig {}
+/**
  * 华为云授权配置
  */
 export interface HuaWeiCloudAccessConfig {
@@ -105,14 +113,16 @@ export interface HuaWeiCloudAccessConfig {
 }
 
 /**
+ * 百度云授权配置
+ */
+export interface BaiduCloudAccessConfig extends HuaWeiCloudAccessConfig {}
+/**
  *  cloudflare 授权配置
  */
 export interface CloudflareAccessConfig {
 	api_key: string
 	email: string
 }
-
-
 
 
 /** 删除授权请求参数 */

@@ -24,7 +24,7 @@ export default defineComponent({
 				<BaseComponent
 					v-slots={{
 						header: () => (
-							<div class="flex items-center justify-between">
+							<div class="flex items-center justify-between mb-[1.6rem]">
 								<NButton type="primary" onClick={() => fetch()}>
 									{$t('t_9_1746667589516')}
 								</NButton>

@@ -6,9 +6,9 @@ import { $t } from '@locales/index'
 import { useThemeCssVar } from '@baota/naive-ui/theme'
 import { MenuFoldOutlined, MenuUnfoldOutlined } from '@vicons/antd'
 import { useController } from './useController'
-
 import styles from './index.module.css'
 
+// import ThemeTips from '@baota/naive-ui/components/themeTips'
 export default defineComponent({
 	setup() {
 		// 获取控制器中的状态和方法
@@ -65,6 +65,7 @@ export default defineComponent({
 				<NLayout>
 					<NLayoutHeader class={styles.header}>
 						<div class={styles.systemInfo}>
+							{/* <ThemeTips size="small" /> */}
 							<NBadge value={1} show={false} dot>
 								<span class="px-[.5rem] cursor-pointer">v1.0.1</span>
 							</NBadge>

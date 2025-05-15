@@ -214,7 +214,7 @@ export const useController = () => {
 	 */
 	const handleViewHistory = async (workflow: WorkflowItem) => {
 		useModal({
-			title: workflow ? `${workflow.name} - ${$t('t_9_1745215914666')}` : $t('t_9_1745215914666'),
+			title: workflow ? `【${workflow.name}】 - ${$t('t_9_1745215914666')}` : $t('t_9_1745215914666'),
 			component: HistoryModal,
 			area: 800,
 			componentProps: { id: workflow.id },

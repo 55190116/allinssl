@@ -1,4 +1,17 @@
 {
+  "t_1_1745833931535": "Host",
+  "t_3_1747019616129": "Tencent Cloud",
+  "t_2_1747019616224": "Alibaba Cloud",
+  "t_0_1747271295174": "Pagoda WAF - Error de formato de URL",
+  "t_1_1747271295484": "Por favor, introduzca la clave Pagoda WAF-API",
+  "t_2_1747271295877": "Por favor ingrese el AccessKey correcto de Huawei Cloud",
+  "t_3_1747271294475": "Por favor, ingrese el Baidu Cloud AccessKey correcto",
+  "t_4_1747271294621": "Por favor, ingrese el SecretKey correcto de Baidu Cloud",
+  "t_5_1747271291828": "Baota WAF-URL",
+  "t_6_1747271296994": "Despliegue Local",
+  "t_7_1747271292060": "Todas las fuentes",
+  "t_8_1747271290414": "Pagoda",
+  "t_9_1747271284765": "1Panel",
   "t_0_1744098811152": "Advertencia: Ha ingresado a una zona desconocida, la página que intenta visitar no existe, por favor, haga clic en el botón para regresar a la página de inicio.",
   "t_1_1744098801860": "Volver al inicio",
   "t_2_1744098804908": "Consejo de seguridad: Si piensa que es un error, póngase en contacto con el administrador inmediatamente",
@@ -332,7 +345,6 @@
   "t_3_1745765920953": "El nodo actual tiene datos de configuración, ¿está seguro de que desea eliminarlo?",
   "t_4_1745765868807": "Por favor, seleccione el tipo de implementación antes de continuar con el siguiente paso",
   "t_0_1745833934390": "Por favor, seleccione el tipo",
-  "t_1_1745833931535": "Host",
   "t_2_1745833931404": "puerto",
   "t_3_1745833936770": "Error al obtener los datos de vista general de la página de inicio",
   "t_4_1745833932780": "Información de versión",
@@ -488,8 +500,6 @@
   "t_4_1746858917773": "Seleccionado",
   "t_0_1747019621052": "Seleccione un proveedor de alojamiento{0}",
   "t_1_1747019624067": "Haz clic para configurar el monitoreo del sitio web y conocer el estado en tiempo real",
-  "t_2_1747019616224": "Alibaba Cloud",
-  "t_3_1747019616129": "Tencent Cloud",
   "t_0_1747040228657": "Para múltiples dominios, utilice comas en inglés para separarlos, por ejemplo: test.com,test.cn",
   "t_1_1747040226143": "Para dominios comodín, use un asterisco *, por ejemplo: *.test.com",
   "t_0_1747042966820": "Por favor, ingrese la clave API correcta de Cloudflare",
@@ -508,5 +518,6 @@
   "t_0_1747110184700": "Seleccionar certificado",
   "t_1_1747110191587": "Si necesita modificar el contenido del certificado y la clave, elija un certificado personalizado",
   "t_2_1747110193465": "Cuando se selecciona un certificado no personalizado, ni el contenido del certificado ni la clave se pueden modificar",
-  "t_3_1747110185110": "Subir y enviar"
+  "t_3_1747110185110": "Subir y enviar",
+  "t_0_1747215751189": "Sitio web de Pagoda WAF"
 }

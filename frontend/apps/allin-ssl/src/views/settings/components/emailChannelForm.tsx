@@ -1,4 +1,4 @@
-import { NGrid, NFormItemGi, NInput, NSwitch } from 'naive-ui'
+import { NGrid, NFormItemGi, NInput, NSwitch, NTooltip } from 'naive-ui'
 import { useForm, useModalHooks } from '@baota/naive-ui/hooks'
 import { useError } from '@baota/hooks/error'
 import { $t } from '@locales/index'
@@ -72,14 +72,38 @@ export default defineComponent({
 						'smtp-template': (formData: Ref<ReportMail>) => {
 							return (
 								<NGrid cols="24" xGap="24">
-									<NFormItemGi span="12" label={$t('t_14_1745833932440')} path="smtpHost">
+									<NFormItemGi span="14" label={$t('t_14_1745833932440')} path="smtpHost">
 										<NInput v-model:value={formData.value.smtpHost} placeholder={$t('t_15_1745833940280')} />
 									</NFormItemGi>
-									<NFormItemGi span="7" label={$t('t_16_1745833933819')} path="smtpPort">
-										<NInput v-model:value={formData.value.smtpPort} placeholder={$t('t_17_1745833935070')} />
-									</NFormItemGi>
 									<NFormItemGi span="5" label={$t('t_18_1745833933989')} path="smtpTLS">
-										<NSwitch v-model:value={formData.value.smtpTLS} checkedValue="true" uncheckedValue="false" />
+										<NSwitch
+											v-model:value={formData.value.smtpTLS}
+											checkedValue="true"
+											uncheckedValue="false"
+											onUpdateValue={(val) => {
+												formData.value.smtpPort = val === 'true' ? '465' : '25'
+											}}
+										/>
+									</NFormItemGi>
+									<NFormItemGi span="5" label={$t('t_16_1745833933819')} path="smtpPort">
+										<NTooltip
+											trigger="hover"
+											placement="top"
+											v-slots={{
+												trigger: () => {
+													return (
+														<NInput
+															v-model:value={formData.value.smtpPort}
+															readonly
+															class="!cursor-not-allowed"
+															placeholder={$t('t_17_1745833935070')}
+														/>
+													)
+												},
+											}}
+										>
+											{$t('SMTP端口禁止修改')}
+										</NTooltip>
 									</NFormItemGi>
 								</NGrid>
 							)

@@ -231,10 +231,11 @@ export interface DeployConfig<
 > {
 	provider: T
 	provider_id: string
+	skip: 1 | 0
 	[key: string]: Z
 }
 
-export interface DeployPanelConfig {}
+// export interface DeployPanelConfig {}
 
 // 部署节点配置（ssh）
 export interface DeploySSHConfig {
@@ -243,6 +244,9 @@ export interface DeploySSHConfig {
 	beforeCmd: string // 前置命令
 	afterCmd?: string // 后置命令
 }
+
+// 部署本地节点配置
+export interface DeployLocalConfig extends DeploySSHConfig {}
 
 // 部署节点配置（宝塔面板）
 export interface DeployBTPanelConfig {
@@ -268,7 +272,7 @@ export interface DeployStorageConfig {
 
 // 部署节点配置
 export type DeployNodeConfig = DeployConfig<
-	DeploySSHConfig | DeployBTPanelConfig | Deploy1PanelConfig | DeployCDNConfig | DeployStorageConfig
+	DeploySSHConfig | DeployLocalConfig | DeployBTPanelConfig | Deploy1PanelConfig | DeployCDNConfig | DeployStorageConfig
 >
 
 // 部署节点输入配置

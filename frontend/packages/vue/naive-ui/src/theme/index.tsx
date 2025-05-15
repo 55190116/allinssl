@@ -39,7 +39,7 @@ export const useTheme = (name?: ThemeName) => {
 	const themeActiveOverrides = ref<ThemeTemplate | null>(null)
 
 	// 是否暗黑
-	
+
 	// const isDark = useDark()
 
 	// 禁用自动切换暗色模式避免错误
@@ -52,9 +52,7 @@ export const useTheme = (name?: ThemeName) => {
 
 	// 主题继承修改
 	const themeOverrides = computed(() => {
-		// 如果没有激活的主题，则返回空对象
-		if (!themeActiveOverrides.value) return {}
-		return themeActiveOverrides.value.themeOverrides || {}
+		return themeActiveOverrides.value || {}
 	})
 
 	// 预设配置
@@ -62,7 +60,7 @@ export const useTheme = (name?: ThemeName) => {
 		// 如果没有激活的主题，则返回空对象
 		console.log('presetsOverrides', themeActiveOverrides.value)
 		if (!themeActiveOverrides.value) return {}
-		return themeActiveOverrides.value.presetsOverrides || {}
+		return themeActiveOverrides.value || {}
 	})
 
 	/**

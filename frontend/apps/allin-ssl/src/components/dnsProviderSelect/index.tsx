@@ -10,7 +10,17 @@ interface DnsProviderOption {
 	type: string
 }
 
-type DnsProviderType = 'btpanel' | 'aliyun' | 'ssh' | 'tencentcloud' | '1panel' | 'dns' | ''
+type DnsProviderType =
+	| 'aliyun'
+	| 'tencentcloud'
+	| 'baidu'
+	| 'huaweicloud'
+	| 'cloudflare'
+	| 'dns'
+	| 'btpanel'
+	| '1panel'
+	| 'ssh'
+	| ''
 
 interface DnsProviderSelectProps {
 	// 表单类型，用于获取不同的下拉列表
