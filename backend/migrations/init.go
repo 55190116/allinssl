@@ -2,6 +2,7 @@ package migrations
 
 import (
 	"ALLinSSL/backend/public"
+	"ALLinSSL/backend/public/sqlite_migrate"
 	"database/sql"
 	"fmt"
 	_ "modernc.org/sqlite"
@@ -122,28 +123,7 @@ func init() {
 	    active      integer not null,
 	    type        TEXT
 	);
-	
-	create table IF NOT EXISTS site_monitor
-	(
-	    id              integer not null
-	        constraint site_monitor_pk
-	            primary key autoincrement,
-	    name            TEXT    not null,
-	    site_domain     TEXT    not null,
-	    cycle           integer not null,
-	    report_type     TEXT    not null,
-	    cert_domain     TEXT,
-	    ca              TEXT,
-	    active          integer,
-	    end_time        TEXT,
-	    end_day         TEXT,
-	    last_time       TEXT,
-	    except_end_time TEXT,
-	    create_time     TEXT,
-	    state           TEXT,
-	    update_time     TEXT,
-	    repeat_send_gap INTEGER
-	);
+
 	
 	create table IF NOT EXISTS users
 	(
@@ -238,8 +218,54 @@ INSERT INTO settings (key, value, create_time, update_time, active, type) VALUES
 	
 	InsertIfNotExists(db, "access_type", map[string]any{"name": "btwaf", "type": "host"}, []string{"name", "type"}, []any{"btwaf", "host"})
 	
+	// 雷池
 	InsertIfNotExists(db, "access_type", map[string]any{"name": "safeline", "type": "host"}, []string{"name", "type"}, []any{"safeline", "host"})
+	// 西部数码
+	InsertIfNotExists(db, "access_type", map[string]any{"name": "westcn", "type": "dns"}, []string{"name", "type"}, []any{"westcn", "dns"})
+	// 火山引擎
+	InsertIfNotExists(db, "access_type", map[string]any{"name": "volcengine", "type": "dns"}, []string{"name", "type"}, []any{"volcengine", "dns"})
 	
+	err = sqlite_migrate.EnsureDatabaseWithTables(
+		"data/site_monitor.db",
+		"data/data.db",
+		[]string{"site_monitor"}, // 你要迁移的表
+	)
+	if err != nil {
+		fmt.Println("错误:", err)
+	}
+	
+	db1, err := sql.Open("sqlite", "data/site_monitor.db")
+	if err != nil {
+		// fmt.Println("创建数据库失败:", err)
+		return
+	}
+	defer db1.Close()
+	// 创建表
+	_, err = db1.Exec(`
+	PRAGMA journal_mode=WAL;
+ 
+	create table IF NOT EXISTS site_monitor
+	(
+	    id              integer not null
+	        constraint site_monitor_pk
+	            primary key autoincrement,
+	    name            TEXT    not null,
+	    site_domain     TEXT    not null,
+	    cycle           integer not null,
+	    report_type     TEXT    not null,
+	    cert_domain     TEXT,
+	    ca              TEXT,
+	    active          integer,
+	    end_time        TEXT,
+	    end_day         TEXT,
+	    last_time       TEXT,
+	    except_end_time TEXT,
+	    create_time     TEXT,
+	    state           TEXT,
+	    update_time     TEXT,
+	    repeat_send_gap INTEGER
+	);
+       `)
 }
 
 func insertDefaultData(db *sql.DB, table, insertSQL string) {
