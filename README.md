@@ -157,7 +157,8 @@ allinssl 17: 卸载ALLinSSL 🗑️
 
 **感谢以下用户对本项目的支持和贡献：**
 - [@寒雨馨](https://www.hanyuxin.cn/)
-
+- [@suguer](https://github.com/suguer)
+- [@Kbanma](https://github.com/Kbanma)
 
 ## 📜 许可证
 本项目采用 [AGPL-3.0 license](./LICENSE) 开源协议
