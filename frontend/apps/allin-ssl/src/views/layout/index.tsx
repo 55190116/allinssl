@@ -67,7 +67,7 @@ export default defineComponent({
 						<div class={styles.systemInfo}>
 							{/* <ThemeTips size="small" /> */}
 							<NBadge value={1} show={false} dot>
-								<span class="px-[.5rem] cursor-pointer">v1.0.1</span>
+								<span class="px-[.5rem] cursor-pointer">v1.0.2</span>
 							</NBadge>
 						</div>
 					</NLayoutHeader>

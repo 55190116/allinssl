@@ -101,13 +101,13 @@ export default defineConfig({
 			gitProjects: [
 				{
 					repo: 'ssh://git@git.bt.cn:30001/wzz/allinssl.git',
-					branch: '1.0.1',
+					branch: '1.0.2',
 					targetDir: 'allinssl-gitlab',
 					discardChanges: true,
 				},
 				{
 					repo: 'https://github.com/allinssl/allinssl.git',
-					branch: '1.0.1',
+					branch: '1.0.2',
 					targetDir: 'allinssl-github',
 					discardChanges: true,
 				},
