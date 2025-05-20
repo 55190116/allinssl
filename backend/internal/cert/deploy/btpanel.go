@@ -197,3 +197,12 @@ func DeployBtDockerSite(cfg map[string]any) error {
 	}
 	return nil
 }
+
+func BtPanelAPITest(providerID string) error {
+	data := url.Values{}
+	_, err := RequestBt(&data, "POST", providerID, "mod/push/task/get_task_list")
+	if err != nil {
+		return fmt.Errorf("测试请求失败: %v", err)
+	}
+	return nil
+}

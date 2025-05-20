@@ -235,3 +235,61 @@ func DeployLocalhost(cfg map[string]any) error {
 	}
 	return nil
 }
+
+func SSHAPITest(providerID string) error {
+	providerData, err := access.GetAccess(providerID)
+	if err != nil {
+		return err
+	}
+	
+	providerConfigStr, ok := providerData["config"].(string)
+	if !ok {
+		return fmt.Errorf("api配置错误")
+	}
+	
+	// 解析 JSON 配置
+	var providerConfig SSHConfig
+	err = json.Unmarshal([]byte(providerConfigStr), &providerConfig)
+	if err != nil {
+		return err
+	}
+	
+	var port string
+	switch v := providerConfig.Port.(type) {
+	case float64:
+		port = strconv.Itoa(int(v))
+	case string:
+		port = v
+	case int:
+		port = strconv.Itoa(v)
+	default:
+		port = "22"
+	}
+	addr := fmt.Sprintf("%s:%s", providerConfig.Host, port)
+	
+	authMethods, err := buildAuthMethods(providerConfig.Password, providerConfig.PrivateKey)
+	if err != nil {
+		return err
+	}
+	
+	sshConfig := &ssh.ClientConfig{
+		User:            providerConfig.User,
+		Auth:            authMethods,
+		HostKeyCallback: ssh.InsecureIgnoreHostKey(),
+	}
+	
+	client, err := ssh.Dial("tcp", addr, sshConfig)
+	if err != nil {
+		return fmt.Errorf("SSH连接失败: %v", err)
+	}
+	defer client.Close()
+	
+	// 尝试创建会话来验证连接
+	session, err := client.NewSession()
+	if err != nil {
+		return fmt.Errorf("SSH会话创建失败: %v", err)
+	}
+	defer session.Close()
+	
+	return nil
+}

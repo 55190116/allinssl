@@ -199,3 +199,12 @@ func DeployBtWafSite(cfg map[string]any) error {
 	}
 	return nil
 }
+
+func BtWafAPITest(providerID string) error {
+	data := map[string]any{}
+	_, err := RequestBtWaf(&data, "POST", providerID, "api/overview/infos")
+	if err != nil {
+		return fmt.Errorf("测试请求失败: %v", err)
+	}
+	return nil
+}

@@ -43,6 +43,7 @@ func Register(r *gin.Engine) {
 		access.POST("/del_access", api.DelAccess)
 		access.POST("/upd_access", api.UpdateAccess)
 		access.POST("/get_all", api.GetAllAccess)
+		access.POST("/test_access", api.TestAccess)
 	}
 	cert := v1.Group("/cert")
 	{

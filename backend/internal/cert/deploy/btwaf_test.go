@@ -40,3 +40,11 @@ func TestGetBTWAFSiteList(t *testing.T) {
 	}
 	fmt.Println(err)
 }
+
+func TestBtWafAPITest(t *testing.T) {
+	result := BtWafAPITest("1")
+	if result != nil {
+		fmt.Println(result)
+		return
+	}
+}

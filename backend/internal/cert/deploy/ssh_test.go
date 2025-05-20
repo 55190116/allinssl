@@ -20,3 +20,12 @@ func TestSSH(t *testing.T) {
 	}
 	// println(err.Error())
 }
+
+func TestSSHAPITest(t *testing.T) {
+	result := SSHAPITest("7")
+	if result != nil {
+		t.Fatalf("SSHAPITest failed: %v", result)
+	} else {
+		t.Log("SSHAPITest success")
+	}
+}

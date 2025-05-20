@@ -45,3 +45,12 @@ func TestGetSafeLineWAFSiteList(t *testing.T) {
 	siteId := matchSafeLineSiteByColumn(res, "comment", "测得3")
 	fmt.Println(siteId)
 }
+
+func TestSafeLineAPITest(t *testing.T) {
+	result := SafeLineAPITest("5")
+	if result != nil {
+		t.Fatalf("SafeLineAPITest failed: %v", result)
+	} else {
+		t.Log("SafeLineAPITest success")
+	}
+}

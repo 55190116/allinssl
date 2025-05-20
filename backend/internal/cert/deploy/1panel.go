@@ -97,9 +97,9 @@ func Request1panel(data *map[string]any, method, providerID, requestUrl string) 
 	if code != 200 {
 		msg, ok := res["message"].(string)
 		if !ok {
-			return nil, fmt.Errorf("证书部署失败")
+			return nil, fmt.Errorf("请求失败")
 		}
-		return nil, fmt.Errorf("证书部署失败: %s", msg)
+		return nil, fmt.Errorf("请求失败: %s", msg)
 	}
 	return res, nil
 	
@@ -222,4 +222,13 @@ func Deploy1panelSite(cfg map[string]any) error {
 	}
 	_, err = Request1panel(&data, "POST", providerID, fmt.Sprintf("api/v1/websites/%s/https", siteId))
 	return err
+}
+
+func OnePanelAPITest(providerID string) error {
+	data := map[string]interface{}{}
+	_, err := Request1panel(&data, "GET", providerID, "api/v1/settings/upgrade")
+	if err != nil {
+		return fmt.Errorf("测试请求失败: %v", err)
+	}
+	return nil
 }

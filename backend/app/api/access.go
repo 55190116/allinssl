@@ -2,6 +2,7 @@ package api
 
 import (
 	"ALLinSSL/backend/internal/access"
+	"ALLinSSL/backend/internal/cert/deploy"
 	"ALLinSSL/backend/public"
 	"github.com/gin-gonic/gin"
 	"strings"
@@ -131,5 +132,49 @@ func DelAccess(c *gin.Context) {
 		return
 	}
 	public.SuccessMsg(c, "删除成功")
+	return
+}
+
+func TestAccess(c *gin.Context) {
+	var form struct {
+		ID   string `form:"id"`
+		Type string `form:"type"`
+	}
+	err := c.Bind(&form)
+	if err != nil {
+		public.FailMsg(c, err.Error())
+		return
+	}
+	if form.Type == "" {
+		public.FailMsg(c, "类型不能为空")
+		return
+	}
+	
+	var result error
+	switch form.Type {
+	case "btwaf":
+		result = deploy.BtWafAPITest(form.ID)
+	case "btpanel":
+		result = deploy.BtPanelAPITest(form.ID)
+	case "ssh":
+		result = deploy.SSHAPITest(form.ID)
+	case "safeline":
+		result = deploy.SafeLineAPITest(form.ID)
+	case "1panel":
+		result = deploy.OnePanelAPITest(form.ID)
+	case "tencentcloud":
+		result = deploy.TencentCloudAPITest(form.ID)
+	case "aliyun":
+		result = deploy.AliyunCdnAPITest(form.ID)
+	default:
+		public.FailMsg(c, "不支持测试的提供商")
+	}
+	
+	if result != nil {
+		public.FailMsg(c, result.Error())
+		return
+	}
+	
+	public.SuccessMsg(c, "请求测试成功！")
 	return
 }

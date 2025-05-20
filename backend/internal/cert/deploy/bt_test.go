@@ -1,6 +1,8 @@
 package deploy
 
-import "testing"
+import (
+	"testing"
+)
 
 func TestBTSite(t *testing.T) {
 	cfg := map[string]any{
@@ -42,4 +44,13 @@ func TestBTDockerSite(t *testing.T) {
 	}
 	err := DeployBtDockerSite(cfg)
 	println(err)
+}
+
+func TestBtPanelAPITest(t *testing.T) {
+	result := BtPanelAPITest("4")
+	if result != nil {
+		t.Fatalf("SSHAPITest failed: %v", result)
+	} else {
+		t.Log("SSHAPITest success")
+	}
 }

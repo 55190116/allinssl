@@ -130,3 +130,33 @@ func DeployToTX(cfg map[string]any) error {
 	fmt.Println(response.Response.DeployRecordId)
 	return nil
 }
+
+func TencentCloudAPITest(providerID string) error {
+	providerData, err := access.GetAccess(providerID)
+	if err != nil {
+		return err
+	}
+	
+	providerConfigStr, ok := providerData["config"].(string)
+	if !ok {
+		return fmt.Errorf("api配置错误")
+	}
+	
+	// 解析 JSON 配置
+	var providerConfig map[string]string
+	err = json.Unmarshal([]byte(providerConfigStr), &providerConfig)
+	if err != nil {
+		return err
+	}
+	
+	// 创建客户端
+	client := ClientTencentcloud(providerConfig["secret_id"], providerConfig["secret_key"], "")
+	
+	request := ssl.NewDescribeCertificatesRequest()
+	_, err = client.DescribeCertificates(request)
+	if err != nil {
+		return fmt.Errorf("测试请求失败: %v", err)
+	}
+	
+	return nil
+}

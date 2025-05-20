@@ -29,3 +29,12 @@ func TestP(t *testing.T) {
 	err := Deploy1panel(cfg)
 	println(err)
 }
+
+func TestOnePanelAPITest(t *testing.T) {
+	result := OnePanelAPITest("8")
+	if result != nil {
+		t.Fatalf("SSHAPITest failed: %v", result)
+	} else {
+		t.Log("SSHAPITest success")
+	}
+}

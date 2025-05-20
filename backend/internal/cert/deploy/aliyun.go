@@ -6,11 +6,11 @@ import (
 	"fmt"
 	aliyuncdn "github.com/alibabacloud-go/cdn-20180510/v6/client"
 	aliyunopenapi "github.com/alibabacloud-go/darabonba-openapi/v2/client"
+	aliyunmarket "github.com/alibabacloud-go/market-20151101/v4/client"
 	"github.com/alibabacloud-go/tea/tea"
+	"github.com/aliyun/aliyun-oss-go-sdk/oss"
 	"strconv"
 	"strings"
-
-	"github.com/aliyun/aliyun-oss-go-sdk/oss"
 )
 
 func ClientAliCdn(accessKey, accessSecret string) (_result *aliyuncdn.Client, err error) {
@@ -182,4 +182,44 @@ func DeployOss(cfg map[string]any) error {
 	}
 	err = client.PutBucketCnameWithCertificate(bucket, putBucketCnameWithCertificateRequest)
 	return err
+}
+
+func ClientMaker(accessKeyId, accessKeySecret string) (*aliyunmarket.Client, error) {
+	config := &aliyunopenapi.Config{
+		AccessKeyId:     tea.String(accessKeyId),
+		AccessKeySecret: tea.String(accessKeySecret),
+		Endpoint:        tea.String("market.aliyuncs.com"),
+	}
+	
+	client, _ := aliyunmarket.NewClient(config)
+	return client, nil
+}
+
+func AliyunCdnAPITest(providerID string) error {
+	providerData, err := access.GetAccess(providerID)
+	if err != nil {
+		return err
+	}
+	providerConfigStr, ok := providerData["config"].(string)
+	if !ok {
+		return fmt.Errorf("api配置错误")
+	}
+	// 解析 JSON 配置
+	var providerConfig map[string]string
+	err = json.Unmarshal([]byte(providerConfigStr), &providerConfig)
+	if err != nil {
+		return err
+	}
+	
+	client, err := ClientMaker(providerConfig["access_key_id"], providerConfig["access_key_secret"])
+	describeApiMeteringRequest := &aliyunmarket.DescribeApiMeteringRequest{
+		PageNum: tea.Int32(1),
+	}
+	
+	_, err = client.DescribeApiMetering(describeApiMeteringRequest)
+	
+	if err != nil {
+		return fmt.Errorf("测试请求失败: %v", err)
+	}
+	return nil
 }

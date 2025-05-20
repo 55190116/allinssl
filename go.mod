@@ -5,6 +5,7 @@ go 1.23.2
 require (
 	github.com/alibabacloud-go/cdn-20180510/v6 v6.0.0
 	github.com/alibabacloud-go/darabonba-openapi/v2 v2.1.7
+	github.com/alibabacloud-go/market-20151101/v4 v4.1.0
 	github.com/alibabacloud-go/tea v1.3.9
 	github.com/aliyun/aliyun-oss-go-sdk v3.0.2+incompatible
 	github.com/gin-contrib/gzip v1.2.3

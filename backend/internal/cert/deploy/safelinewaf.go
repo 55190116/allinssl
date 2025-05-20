@@ -204,3 +204,11 @@ func DeploySafeLineWafSite(cfg map[string]any, logger *public.Logger) error {
 
 	return nil
 }
+
+func SafeLineAPITest(providerID string) error {
+	_, err := RequestSafeLineWaf(&map[string]any{}, "GET", providerID, "api/open/site/group")
+	if err != nil {
+		return fmt.Errorf("测试请求失败: %v", err)
+	}
+	return nil
+}

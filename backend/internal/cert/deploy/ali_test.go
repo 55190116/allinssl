@@ -39,3 +39,12 @@ func TestALiOss(t *testing.T) {
 		t.Logf("DeployAliCdn succeeded")
 	}
 }
+
+func TestAliyunCdnAPITest(t *testing.T) {
+	result := AliyunCdnAPITest("10")
+	if result != nil {
+		t.Fatalf("SSHAPITest failed: %v", result)
+	} else {
+		t.Log("SSHAPITest success")
+	}
+}
