@@ -48,9 +48,6 @@ docker run -itd \
   -e ALLINSSL_URL=allinssl \
   allinssl/allinssl:latest
 ```
-- 访问地址：http://ip:7979/allinssl
-- 默认账号：allinssl
-- 默认密码：allinssldocker
 
 ### 编译安装
   - 编译安装时需要注意可执行文件的名称和运行目录，在`allinssl.sh`中需要修改为对应的名称和路径否则可能导致脚本不可用
@@ -60,6 +57,23 @@ docker run -itd \
     2. 编译go程序（allinssl）
     3. 运行可执行文件启动服务
        - Linux: 执行 `./allinssl start`
+
+### 从 Releases 页面下载构建二进制文件
+1. 打开 [releases 下载页面](https://github.com/allinssl/allinssl/releases)
+2. 下载最新版本的二进制文件
+3. 解压缩文件，并通过终端或者CMD进入解压目录
+4. 获取登陆地址，账号和密码
+   - 账号和登陆地址：
+    - Linux: `./allinssl 15`
+    - Windows: `.\allinssl 15`
+  - 密码：
+    - Linux: `./allinssl 6`
+    - Windows: `.\allinssl 6`
+5. 运行可执行文件启动服务，请保持终端打开，或者自行配置进程守护
+   - Linux: 执行 `./allinssl start`
+   - Windows: 终端进入到解压目录，执行 `.\allinssl start`
+6. 访问 `http://your-server-ip:port/安全入口`，使用账号和密码登录
+7. 更多命令行操作请参考 [命令行操作](#💻-命令行操作)
 
 ### 首次配置
 1. 访问 `http://your-server-ip:port/安全入口`
@@ -160,8 +174,7 @@ allinssl 17: 卸载ALLinSSL 🗑️
 
 **感谢以下用户对本项目的支持和贡献：**
 - [@寒雨馨](https://www.hanyuxin.cn/)
-- [@suguer](https://github.com/suguer)
-- [@Kbanma](https://github.com/Kbanma)
+
 
 ## 📜 许可证
 本项目采用 [AGPL-3.0 license](./LICENSE) 开源协议
