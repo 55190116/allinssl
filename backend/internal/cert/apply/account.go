@@ -29,7 +29,7 @@ func (u *MyUser) GetPrivateKey() crypto.PrivateKey {
 	return u.key
 }
 
-func SaveUserToDB(db *public.Sqlite, user *MyUser) error {
+func SaveUserToDB(db *public.Sqlite, user *MyUser, Type string) error {
 	keyBytes, err := x509.MarshalPKCS8PrivateKey(user.key)
 	if err != nil {
 		return err
@@ -53,13 +53,13 @@ func SaveUserToDB(db *public.Sqlite, user *MyUser) error {
 		"reg":         regBytes,
 		"create_time": now,
 		"update_time": now,
-		"type":        "Let's Encrypt",
+		"type":        Type,
 	})
 	return err
 }
 
-func LoadUserFromDB(db *public.Sqlite, email string) (*MyUser, error) {
-	data, err := db.Where(`email=?`, []interface{}{email}).Select()
+func LoadUserFromDB(db *public.Sqlite, email string, Type string) (*MyUser, error) {
+	data, err := db.Where(`email=? and type=?`, []interface{}{email, Type}).Select()
 	if err != nil {
 		return nil, err
 	}

@@ -32,7 +32,6 @@ func Sign(c *gin.Context) {
 		public.FailMsg(c, err.Error())
 		return
 	}
-	s.Connect()
 	defer s.Close()
 	s.TableName = "users"
 	res, err := s.Where("username=?", []interface{}{form.Username}).Select()

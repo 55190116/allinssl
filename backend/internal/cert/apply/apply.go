@@ -22,17 +22,33 @@ import (
 	"github.com/go-acme/lego/v4/providers/dns/volcengine"
 	"github.com/go-acme/lego/v4/providers/dns/westcn"
 	"github.com/go-acme/lego/v4/registration"
+	"net/http"
+	"net/url"
 	"strconv"
 	"strings"
 	"time"
 )
+
+var AlgorithmMap = map[string]certcrypto.KeyType{
+	"RSA2048": certcrypto.RSA2048,
+	"RSA3072": certcrypto.RSA3072,
+	"RSA4096": certcrypto.RSA4096,
+	"RSA8192": certcrypto.RSA8192,
+	"EC256":   certcrypto.EC256,
+	"EC384":   certcrypto.EC384,
+}
+
+var CADirURLMap = map[string]string{
+	"Let's Encrypt": "https://acme-v02.api.letsencrypt.org/directory",
+	"zerossl":       "https://acme.zerossl.com/v2/DV90",
+	"google":        "https://dv.acme-v02.api.pki.goog/directory",
+}
 
 func GetSqlite() (*public.Sqlite, error) {
 	s, err := public.NewSqlite("data/data.db", "")
 	if err != nil {
 		return nil, err
 	}
-	s.Connect()
 	s.TableName = "_accounts"
 	return s, nil
 }
@@ -77,15 +93,177 @@ func GetDNSProvider(providerName string, creds map[string]string) (challenge.Pro
 		config.SecretKey = creds["secret_key"]
 		return volcengine.NewDNSProviderConfig(config)
 
-	// case "godaddy":
-	// 	config := godaddy.NewDefaultConfig()
-	// 	config.APIKey = creds["api_key"]
-	// 	config.APISecret = creds["api_secret"]
-	// 	return godaddy.NewDNSProviderConfig(config)
-
 	default:
 		return nil, fmt.Errorf("不支持的 DNS Provider: %s", providerName)
 	}
+}
+
+func GetAcmeClient(db *public.Sqlite, email, algorithm, ca, proxy, eabId string, logger *public.Logger) (*lego.Client, error) {
+	user, err := LoadUserFromDB(db, email, ca)
+	if err != nil {
+		logger.Debug("acme账号不存在，注册新账号")
+		privateKey, _ := ecdsa.GenerateKey(elliptic.P384(), rand.Reader)
+		user = &MyUser{
+			Email: email,
+			key:   privateKey,
+		}
+
+		config := lego.NewConfig(user)
+		config.Certificate.KeyType = AlgorithmMap[algorithm]
+		config.CADirURL = CADirURLMap[ca]
+		if proxy != "" {
+			// 构建代理 HTTP 客户端
+			proxyURL, err := url.Parse(proxy) // 替换为你的代理地址
+			if err != nil {
+				return nil, fmt.Errorf("无效的代理地址: %v", err)
+			}
+			httpClient := &http.Client{
+				Transport: &http.Transport{
+					Proxy: http.ProxyURL(proxyURL),
+				},
+				Timeout: 30 * time.Second,
+			}
+			config.HTTPClient = httpClient
+		}
+		client, err := lego.NewClient(config)
+		if err != nil {
+			return nil, err
+		}
+		logger.Debug("正在注册账号：" + email)
+		var reg *registration.Resource
+		switch ca {
+		case "Let's Encrypt":
+			reg, err = client.Registration.Register(registration.RegisterOptions{TermsOfServiceAgreed: true})
+		case "zerossl", "google":
+			// 获取EAB参数
+			var eabData map[string]any
+			if eabId == "" {
+				data, err := access.GetAllEAB(ca)
+				if err != nil {
+					return nil, err
+				}
+				if len(data) <= 0 {
+					return nil, fmt.Errorf("未找到EAB信息")
+				}
+				eabData = data[0]
+			} else {
+				eabData, err = access.GetEAB(eabId)
+				if err != nil {
+					return nil, err
+				}
+				if eabData == nil {
+					return nil, fmt.Errorf("未找到EAB信息")
+				}
+			}
+			Kid := eabData["kid"].(string)
+			HmacEncoded := eabData["HmacEncoded"].(string)
+			reg, err = client.Registration.RegisterWithExternalAccountBinding(registration.RegisterEABOptions{
+				TermsOfServiceAgreed: true,
+				Kid:                  Kid,
+				HmacEncoded:          HmacEncoded,
+			})
+		default:
+			reg, err = client.Registration.Register(registration.RegisterOptions{TermsOfServiceAgreed: true})
+		}
+		if err != nil {
+			return nil, err
+		}
+		user.Registration = reg
+
+		err = SaveUserToDB(db, user, ca)
+		if err != nil {
+			return nil, err
+		}
+		logger.Debug("acme账号注册并保存成功")
+		return client, nil
+	} else {
+		config := lego.NewConfig(user)
+		config.Certificate.KeyType = AlgorithmMap[algorithm]
+		config.CADirURL = CADirURLMap[ca]
+		if proxy != "" {
+			// 构建代理 HTTP 客户端
+			proxyURL, err := url.Parse(proxy) // 替换为你的代理地址
+			if err != nil {
+				return nil, fmt.Errorf("无效的代理地址: %v", err)
+			}
+			httpClient := &http.Client{
+				Transport: &http.Transport{
+					Proxy: http.ProxyURL(proxyURL),
+				},
+				Timeout: 30 * time.Second,
+			}
+			config.HTTPClient = httpClient
+		}
+
+		// 初始化 ACME 客户端
+		client, err := lego.NewClient(config)
+		if err != nil {
+			return nil, err
+		}
+		return client, nil
+	}
+}
+
+func GetCert(runId string, domainArr []string, endDay int, logger *public.Logger) (map[string]any, error) {
+	if runId == "" {
+		return nil, fmt.Errorf("参数错误：_runId")
+	}
+	s, err := public.NewSqlite("data/data.db", "")
+	if err != nil {
+		return nil, err
+	}
+	s.TableName = "workflow_history"
+	defer s.Close()
+	// 查询 workflowId
+	wh, err := s.Where("id=?", []interface{}{runId}).Select()
+	if err != nil {
+		return nil, err
+	}
+	if len(wh) <= 0 {
+		return nil, fmt.Errorf("未获取到对应的workflowId")
+	}
+	s.TableName = "cert"
+	certs, err := s.Where("workflow_id=?", []interface{}{wh[0]["workflow_id"]}).Select()
+	if err != nil {
+		return nil, err
+	}
+	if len(certs) <= 0 {
+		return nil, fmt.Errorf("未获取到当前工作流下的证书")
+	}
+	layout := "2006-01-02 15:04:05"
+	var maxDays float64
+	var maxItem map[string]any
+	for i := range certs {
+		if !public.ContainsAllIgnoreBRepeats(strings.Split(certs[i]["domains"].(string), ","), domainArr) {
+			continue
+		}
+		endTimeStr, ok := certs[i]["end_time"].(string)
+		if !ok {
+			continue
+		}
+		endTime, err := time.Parse(layout, endTimeStr)
+		if err != nil {
+			continue
+		}
+		diff := endTime.Sub(time.Now()).Hours() / 24
+		if diff > maxDays {
+			maxDays = diff
+			maxItem = certs[i]
+		}
+	}
+	if maxItem == nil {
+		return nil, fmt.Errorf("未获取到对应的证书")
+	}
+	if int(maxDays) <= endDay {
+		return nil, fmt.Errorf("证书已过期或即将过期，剩余天数：%d 小于%d天", int(maxDays), endDay)
+	}
+	// 证书未过期，直接返回
+	logger.Debug(fmt.Sprintf("上次证书申请成功,域名：%s，剩余天数：%d 大于%d天，已跳过申请复用此证书", maxItem["domains"], int(maxDays), endDay))
+	return map[string]any{
+		"cert":       maxItem["cert"],
+		"key":        maxItem["key"],
+		"issuerCert": maxItem["issuer_cert"],
+	}, nil
 }
 
 func Apply(cfg map[string]any, logger *public.Logger) (map[string]any, error) {
@@ -107,6 +285,44 @@ func Apply(cfg map[string]any, logger *public.Logger) (map[string]any, error) {
 	if !ok {
 		return nil, fmt.Errorf("参数错误：provider")
 	}
+	endDay := 30
+	switch v := cfg["end_day"].(type) {
+	case float64:
+		endDay = int(v)
+	case int:
+		endDay = v
+	case string:
+		if v != "" {
+			endDay, err = strconv.Atoi(v)
+			if err != nil {
+				return nil, fmt.Errorf("参数错误：end_day")
+			}
+		}
+	case int64:
+		endDay = int(v)
+	}
+	algorithm, ok := cfg["algorithm"].(string)
+	if !ok {
+		algorithm = "RSA2048"
+	}
+	ca, ok := cfg["ca"].(string)
+	if !ok {
+		ca = "Let's Encrypt"
+	}
+	proxy, ok := cfg["proxy"].(string)
+	if !ok {
+		proxy = ""
+	}
+	var eabId string
+	switch v := cfg["eabId"].(type) {
+	case float64:
+		eabId = strconv.Itoa(int(v))
+	case string:
+		eabId = v
+	default:
+		eabId = ""
+	}
+
 	var providerID string
 	switch v := cfg["provider_id"].(type) {
 	case float64:
@@ -178,100 +394,15 @@ func Apply(cfg map[string]any, logger *public.Logger) (map[string]any, error) {
 	if !ok {
 		return nil, fmt.Errorf("参数错误：_runId")
 	}
-	if runId != "" {
-		s, err := public.NewSqlite("data/data.db", "")
-		if err != nil {
-			return nil, err
-		}
-		s.Connect()
-		s.TableName = "workflow_history"
-		defer s.Close()
-		// 查询 workflowId
-		wh, err := s.Where("id=?", []interface{}{runId}).Select()
-		if err != nil {
-			return nil, err
-		}
-		if len(wh) > 0 {
-			s.TableName = "cert"
-			certs, err := s.Where("workflow_id=?", []interface{}{wh[0]["workflow_id"]}).Select()
-			if err != nil {
-				return nil, err
-			}
-			if len(certs) > 0 {
-				layout := "2006-01-02 15:04:05"
-				var maxDays float64
-				var maxItem map[string]any
-				for i := range certs {
-					if !public.ContainsAllIgnoreBRepeats(strings.Split(certs[i]["domains"].(string), ","), domainArr) {
-						continue
-					}
-					endTimeStr, ok := certs[i]["end_time"].(string)
-					if !ok {
-						continue
-					}
-					endTime, err := time.Parse(layout, endTimeStr)
-					if err != nil {
-						continue
-					}
-					diff := endTime.Sub(time.Now()).Hours() / 24
-					if diff > maxDays {
-						maxDays = diff
-						maxItem = certs[i]
-					}
-				}
-				certObj := maxItem
-				// 判断证书是否过期
-				cfgEnd, ok := cfg["end_day"].(int)
-				if !ok || cfgEnd <= 0 {
-					cfgEnd = 30
-				}
-
-				if int(maxDays) > cfgEnd {
-					// 证书未过期，直接返回
-					logger.Debug(fmt.Sprintf("上次证书申请成功,域名：%s，剩余天数：%d 大于%d天，已跳过申请复用此证书", certObj["domains"], int(maxDays), cfgEnd))
-					return map[string]any{
-						"cert":       certObj["cert"],
-						"key":        certObj["key"],
-						"issuerCert": certObj["issuer_cert"],
-					}, nil
-				}
-			}
-		}
+	certData, err := GetCert(runId, domainArr, endDay, logger)
+	if err != nil {
+		logger.Debug("未获取到符合条件的本地证书:" + err.Error())
+	} else {
+		return certData, nil
 	}
 	logger.Debug("正在申请证书，域名: " + domains)
-
-	user, err := LoadUserFromDB(db, email)
-	if err != nil {
-		logger.Debug("acme账号不存在，注册新账号")
-		privateKey, _ := ecdsa.GenerateKey(elliptic.P384(), rand.Reader)
-		user = &MyUser{
-			Email: email,
-			key:   privateKey,
-		}
-
-		config := lego.NewConfig(user)
-		config.Certificate.KeyType = certcrypto.EC384
-
-		client, err := lego.NewClient(config)
-		if err != nil {
-			return nil, err
-		}
-		logger.Debug("正在注册账号：" + email)
-		reg, err := client.Registration.Register(registration.RegisterOptions{TermsOfServiceAgreed: true})
-		if err != nil {
-			return nil, err
-		}
-		user.Registration = reg
-
-		err = SaveUserToDB(db, user)
-		if err != nil {
-			return nil, err
-		}
-		logger.Debug("账号注册并保存成功")
-	}
-
-	// 初始化 ACME 客户端
-	client, err := lego.NewClient(lego.NewConfig(user))
+	// 创建 ACME 客户端
+	client, err := GetAcmeClient(db, email, algorithm, ca, proxy, eabId, logger)
 	if err != nil {
 		return nil, err
 	}

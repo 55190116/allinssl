@@ -83,8 +83,8 @@ func SiteMonitor() {
 						os.Remove(path)
 					}
 				}()
-				wg.Wait()
 			}
 		}
 	}
+	wg.Wait()
 }

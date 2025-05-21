@@ -4,6 +4,7 @@ import (
 	"crypto"
 	"crypto/ecdsa"
 	"crypto/ed25519"
+	"crypto/rand"
 	"crypto/rsa"
 	"crypto/sha256"
 	"crypto/x509"
@@ -67,7 +68,7 @@ func VerifyCertificateAndKey(cert *x509.Certificate, privateKey crypto.PrivateKe
 	case *rsa.PrivateKey:
 		signature, err = rsa.SignPKCS1v15(nil, key, crypto.SHA256, message)
 	case *ecdsa.PrivateKey:
-		signature, err = key.Sign(nil, message, crypto.SHA256)
+		signature, err = key.Sign(rand.Reader, message, crypto.SHA256)
 	case ed25519.PrivateKey:
 		signature = ed25519.Sign(key, message)
 	default:

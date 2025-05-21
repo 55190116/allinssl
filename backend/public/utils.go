@@ -22,7 +22,6 @@ func GetSettingIgnoreError(key string) string {
 	if err != nil {
 		return ""
 	}
-	s.Connect()
 	defer s.Close()
 	s.TableName = "settings"
 	res, err := s.Where("key=?", []interface{}{key}).Select()
@@ -44,7 +43,6 @@ func UpdateSetting(key, val string) error {
 	if err != nil {
 		return err
 	}
-	s.Connect()
 	defer s.Close()
 	s.TableName = "settings"
 	_, err = s.Where("key=?", []interface{}{key}).Update(map[string]any{"value": val})
@@ -60,14 +58,13 @@ func GetSettingsFromType(typ string) ([]map[string]any, error) {
 	if err != nil {
 		return nil, err
 	}
-	s.Connect()
 	defer s.Close()
 	s.TableName = "settings"
 	res, err := s.Where("type=?", []interface{}{typ}).Select()
 	if err != nil {
 		return nil, err
 	}
-	
+
 	return res, nil
 }
 
@@ -79,14 +76,14 @@ func GetFreePort() (int, error) {
 		return 0, err
 	}
 	defer ln.Close()
-	
+
 	addr := ln.Addr().String()
 	// 提取端口号
 	parts := strings.Split(addr, ":")
 	if len(parts) < 2 {
 		return 0, fmt.Errorf("invalid address: %s", addr)
 	}
-	
+
 	var port int
 	fmt.Sscanf(parts[len(parts)-1], "%d", &port)
 	return port, nil
@@ -105,7 +102,7 @@ func RandomString(length int) string {
 func RandomStringWithCharset(length int, charset string) (string, error) {
 	result := make([]byte, length)
 	charsetLen := big.NewInt(int64(len(charset)))
-	
+
 	for i := 0; i < length; i++ {
 		num, err := rand.Int(rand.Reader, charsetLen)
 		if err != nil {
@@ -113,7 +110,7 @@ func RandomStringWithCharset(length int, charset string) (string, error) {
 		}
 		result[i] = charset[num.Int64()]
 	}
-	
+
 	return string(result), nil
 }
 
@@ -121,7 +118,7 @@ func RandomStringWithCharset(length int, charset string) (string, error) {
 func GenerateUUID() string {
 	// 生成一个新的 UUID
 	uuidStr := strings.ReplaceAll(uuid.New().String(), "-", "")
-	
+
 	// 返回 UUID 的字符串表示
 	return uuidStr
 }
@@ -131,7 +128,7 @@ func GetLocalIP() (string, error) {
 	if err != nil {
 		return "", err
 	}
-	
+
 	for _, iface := range interfaces {
 		if iface.Flags&net.FlagUp == 0 {
 			continue // 接口未启用
@@ -139,12 +136,12 @@ func GetLocalIP() (string, error) {
 		if iface.Flags&net.FlagLoopback != 0 {
 			continue // 忽略回环地址
 		}
-		
+
 		addrs, err := iface.Addrs()
 		if err != nil {
 			continue
 		}
-		
+
 		for _, addr := range addrs {
 			var ip net.IP
 			switch v := addr.(type) {
@@ -153,14 +150,14 @@ func GetLocalIP() (string, error) {
 			case *net.IPAddr:
 				ip = v.IP
 			}
-			
+
 			// 只返回 IPv4 内网地址
 			if ip != nil && ip.To4() != nil && !ip.IsLoopback() {
 				return ip.String(), nil
 			}
 		}
 	}
-	
+
 	return "", fmt.Errorf("没有找到内网 IP")
 }
 
@@ -170,16 +167,16 @@ func GetPublicIP() (string, error) {
 		return "", fmt.Errorf("请求失败: %v", err)
 	}
 	defer resp.Body.Close()
-	
+
 	if resp.StatusCode != http.StatusOK {
 		return "", fmt.Errorf("HTTP状态错误: %v", resp.Status)
 	}
-	
+
 	body, err := io.ReadAll(resp.Body)
 	if err != nil {
 		return "", fmt.Errorf("读取响应失败: %v", err)
 	}
-	
+
 	return string(body), nil
 }
 
@@ -189,7 +186,7 @@ func ContainsAllIgnoreBRepeats(a, b []string) bool {
 	for _, item := range a {
 		setA[item] = struct{}{}
 	}
-	
+
 	// 遍历 B 的唯一元素，判断是否在 A 中
 	seen := make(map[string]struct{})
 	for _, item := range b {
@@ -207,19 +204,19 @@ func ContainsAllIgnoreBRepeats(a, b []string) bool {
 // ExecCommand 执行系统命令，并返回 stdout、stderr 和错误
 func ExecCommand(command string) (string, string, error) {
 	var cmd *exec.Cmd
-	
+
 	// 根据操作系统选择解释器
 	if runtime.GOOS == "windows" {
 		cmd = exec.Command("cmd", "/C", command)
 	} else {
 		cmd = exec.Command("bash", "-c", command)
 	}
-	
+
 	var stdout, stderr bytes.Buffer
 	cmd.Stdout = &stdout
 	cmd.Stderr = &stderr
-	
+
 	err := cmd.Run()
-	
+
 	return stdout.String(), stderr.String(), err
 }

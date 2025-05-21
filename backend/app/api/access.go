@@ -135,6 +135,148 @@ func DelAccess(c *gin.Context) {
 	return
 }
 
+func GetAllEAB(c *gin.Context) {
+	var form struct {
+		CA string `form:"ca"`
+	}
+	err := c.Bind(&form)
+	if err != nil {
+		public.FailMsg(c, err.Error())
+		return
+	}
+	eabList, err := access.GetAllEAB(form.CA)
+	if err != nil {
+		public.FailMsg(c, err.Error())
+		return
+	}
+	public.SuccessData(c, eabList, 0)
+	return
+}
+
+func GetEABList(c *gin.Context) {
+	var form struct {
+		Search string `form:"search"`
+		Page   int64  `form:"p"`
+		Limit  int64  `form:"limit"`
+	}
+	err := c.Bind(&form)
+	if err != nil {
+		public.FailMsg(c, err.Error())
+		return
+	}
+	eabList, count, err := access.GetEABList(form.Search, form.Page, form.Limit)
+	if err != nil {
+		public.FailMsg(c, err.Error())
+		return
+	}
+	public.SuccessData(c, eabList, count)
+	return
+}
+
+func AddEAB(c *gin.Context) {
+	var form struct {
+		Name        string `form:"name"`
+		Kid         string `form:"Kid"`
+		HmacEncoded string `form:"HmacEncoded"`
+		CA          string `form:"ca"`
+	}
+	err := c.Bind(&form)
+	if err != nil {
+		public.FailMsg(c, err.Error())
+		return
+	}
+	form.Name = strings.TrimSpace(form.Name)
+	form.Kid = strings.TrimSpace(form.Kid)
+	form.HmacEncoded = strings.TrimSpace(form.HmacEncoded)
+	form.CA = strings.TrimSpace(form.CA)
+	if form.Name == "" {
+		public.FailMsg(c, "名称不能为空")
+		return
+	}
+	if form.Kid == "" {
+		public.FailMsg(c, "ID不能为空")
+		return
+	}
+	if form.HmacEncoded == "" {
+		public.FailMsg(c, "HmacEncoded不能为空")
+		return
+	}
+	if form.CA == "" {
+		public.FailMsg(c, "CA不能为空")
+		return
+	}
+	err = access.AddEAB(form.Name, form.Kid, form.HmacEncoded, form.CA)
+	if err != nil {
+		public.FailMsg(c, err.Error())
+	}
+	public.SuccessMsg(c, "添加成功")
+	return
+}
+
+func UpdEAB(c *gin.Context) {
+	var form struct {
+		ID          string `form:"id"`
+		Name        string `form:"name"`
+		Kid         string `form:"Kid"`
+		HmacEncoded string `form:"HmacEncoded"`
+		CA          string `form:"ca"`
+	}
+	err := c.Bind(&form)
+	if err != nil {
+		public.FailMsg(c, err.Error())
+		return
+	}
+	form.Name = strings.TrimSpace(form.Name)
+	form.Kid = strings.TrimSpace(form.Kid)
+	form.HmacEncoded = strings.TrimSpace(form.HmacEncoded)
+	form.CA = strings.TrimSpace(form.CA)
+	if form.Name == "" {
+		public.FailMsg(c, "名称不能为空")
+		return
+	}
+	if form.Kid == "" {
+		public.FailMsg(c, "ID不能为空")
+		return
+	}
+	if form.HmacEncoded == "" {
+		public.FailMsg(c, "HmacEncoded不能为空")
+		return
+	}
+	if form.CA == "" {
+		public.FailMsg(c, "CA不能为空")
+		return
+	}
+	err = access.UpdEAB(form.ID, form.Name, form.Kid, form.HmacEncoded, form.CA)
+	if err != nil {
+		public.FailMsg(c, err.Error())
+	}
+	public.SuccessMsg(c, "修改成功")
+	return
+}
+
+func DelEAB(c *gin.Context) {
+	var form struct {
+		ID string `form:"id"`
+	}
+	err := c.Bind(&form)
+	if err != nil {
+		public.FailMsg(c, err.Error())
+		return
+	}
+	form.ID = strings.TrimSpace(form.ID)
+	if form.ID == "" {
+		public.FailMsg(c, "ID不能为空")
+		return
+	}
+	err = access.DelEAB(form.ID)
+	if err != nil {
+		public.FailMsg(c, err.Error())
+		return
+	}
+	public.SuccessMsg(c, "删除成功")
+	return
+}
+
 func TestAccess(c *gin.Context) {
 	var form struct {
 		ID   string `form:"id"`
@@ -149,7 +291,7 @@ func TestAccess(c *gin.Context) {
 		public.FailMsg(c, "类型不能为空")
 		return
 	}
-	
+
 	var result error
 	switch form.Type {
 	case "btwaf":
@@ -171,12 +313,12 @@ func TestAccess(c *gin.Context) {
 	default:
 		public.FailMsg(c, "不支持测试的提供商")
 	}
-	
+
 	if result != nil {
 		public.FailMsg(c, result.Error())
 		return
 	}
-	
+
 	public.SuccessMsg(c, "请求测试成功！")
 	return
 }

@@ -16,7 +16,6 @@ func GetSqlite() (*public.Sqlite, error) {
 	if err != nil {
 		return nil, err
 	}
-	s.Connect()
 	s.TableName = "report"
 	return s, nil
 }
@@ -29,7 +28,7 @@ func GetList(search string, p, limit int64) ([]map[string]any, int, error) {
 		return data, 0, err
 	}
 	defer s.Close()
-	
+
 	var limits []int64
 	if p >= 0 && limit >= 0 {
 		limits = []int64{0, limit}
@@ -38,7 +37,7 @@ func GetList(search string, p, limit int64) ([]map[string]any, int, error) {
 			limits[1] = p * limit
 		}
 	}
-	
+
 	if search != "" {
 		count, err = s.Where("name like ?", []interface{}{"%" + search + "%"}).Count()
 		data, err = s.Where("name like ?", []interface{}{"%" + search + "%"}).Limit(limits).Order("update_time", "desc").Select()
@@ -66,7 +65,7 @@ func GetReport(id string) (map[string]any, error) {
 		return nil, fmt.Errorf("没有找到此通知配置")
 	}
 	return data[0], nil
-	
+
 }
 
 func AddReport(Type, config, name string) error {
@@ -148,7 +147,7 @@ func Notify(params map[string]any) error {
 }
 
 func NotifyMail(params map[string]any) error {
-	
+
 	if params == nil {
 		return fmt.Errorf("缺少参数")
 	}
@@ -164,18 +163,18 @@ func NotifyMail(params map[string]any) error {
 	if err != nil {
 		return fmt.Errorf("解析配置失败: %v", err)
 	}
-	
+
 	e := email.NewEmail()
 	e.From = config["sender"]
 	e.To = []string{config["receiver"]}
 	e.Subject = params["subject"].(string)
-	
+
 	e.Text = []byte(params["body"].(string))
-	
+
 	addr := fmt.Sprintf("%s:%s", config["smtpHost"], config["smtpPort"])
-	
+
 	auth := smtp.PlainAuth("", config["sender"], config["password"], config["smtpHost"])
-	
+
 	// 使用 SSL（通常是 465）
 	if config["smtpPort"] == "465" {
 		tlsConfig := &tls.Config{
@@ -192,7 +191,7 @@ func NotifyMail(params map[string]any) error {
 		}
 		return nil
 	}
-	
+
 	// 普通明文发送（25端口，非推荐）
 	err = e.Send(addr, auth)
 	if err != nil {

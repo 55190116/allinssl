@@ -45,7 +45,7 @@ func SessionAuthMiddleware() gin.HandlerFunc {
 			}
 			// 返回登录页
 			c.Redirect(http.StatusFound, "/login")
-			// c.Abort()
+			c.Abort()
 			return
 		} else {
 			if session.Get("secure") == nil || last == nil {
