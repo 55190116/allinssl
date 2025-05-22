@@ -2,6 +2,7 @@ package deploy
 
 import (
 	"ALLinSSL/backend/internal/access"
+	"ALLinSSL/backend/internal/cert/deploy/client/aliyun"
 	"encoding/json"
 	"fmt"
 	aliyuncdn "github.com/alibabacloud-go/cdn-20180510/v6/client"
@@ -11,6 +12,7 @@ import (
 	"github.com/aliyun/aliyun-oss-go-sdk/oss"
 	"strconv"
 	"strings"
+	"time"
 )
 
 func ClientAliCdn(accessKey, accessSecret string) (_result *aliyuncdn.Client, err error) {
@@ -221,5 +223,78 @@ func AliyunCdnAPITest(providerID string) error {
 	if err != nil {
 		return fmt.Errorf("测试请求失败: %v", err)
 	}
+	return nil
+}
+
+func DeployAliyunWaf(cfg map[string]any) error {
+	cert, ok := cfg["certificate"].(map[string]any)
+	if !ok {
+		return fmt.Errorf("证书不存在")
+	}
+	var providerID string
+	switch v := cfg["provider_id"].(type) {
+	case float64:
+		providerID = strconv.Itoa(int(v))
+	case string:
+		providerID = v
+	default:
+		return fmt.Errorf("参数错误：provider_id")
+	}
+	providerData, err := access.GetAccess(providerID)
+	if err != nil {
+		return err
+	}
+	providerConfigStr, ok := providerData["config"].(string)
+	if !ok {
+		return fmt.Errorf("api配置错误")
+	}
+	var providerConfig map[string]string
+	err = json.Unmarshal([]byte(providerConfigStr), &providerConfig)
+	if err != nil {
+		return err
+	}
+	regionId, ok := cfg["region"].(string)
+	if !ok {
+		return fmt.Errorf("参数错误：region")
+	}
+	wafclient, err := aliyun.ClientAliWaf(providerConfig["access_key_id"], providerConfig["access_key_secret"], regionId)
+	if err != nil {
+		return err
+	}
+	domain, ok := cfg["domain"].(string)
+	if !ok {
+		return fmt.Errorf("参数错误：domain")
+	}
+	// 设置证书
+	keyPem, ok := cert["key"].(string)
+	if !ok {
+		return fmt.Errorf("证书错误：key")
+	}
+	certPem, ok := cert["cert"].(string)
+	if !ok {
+		return fmt.Errorf("证书错误：cert")
+	}
+	//根据地区获取实例ID 目前一个地区只能有一个waf实例
+	instanceId, err := wafclient.IGetInstanceId()
+	if err != nil {
+		return fmt.Errorf("获取地区实例ID失败: %v", err)
+	}
+	//查询接入详情
+	domainDesc, err := wafclient.IDescribeDomainDetail(*instanceId, domain)
+	if err != nil {
+		return fmt.Errorf("获取域名配置详情失败: %v", err)
+	}
+	//上传证书
+	certName := fmt.Sprintf("%s_allinssl_%d", domain, time.Now().UnixMilli())
+	certId, err := wafclient.ICreateCerts(certName, certPem, keyPem, *instanceId)
+	if err != nil {
+		return fmt.Errorf("创建证书失败: %v", err)
+	}
+	//更新接入
+	err = wafclient.IUpdateDomain(domainDesc, *instanceId, *certId)
+	if err != nil {
+		return fmt.Errorf("更新证书失败: %v", err)
+	}
+	
 	return nil
 }

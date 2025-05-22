@@ -3,10 +3,14 @@ module ALLinSSL
 go 1.23.2
 
 require (
+	github.com/alibabacloud-go/cas-20200407/v4 v4.0.0
 	github.com/alibabacloud-go/cdn-20180510/v6 v6.0.0
 	github.com/alibabacloud-go/darabonba-openapi/v2 v2.1.7
 	github.com/alibabacloud-go/market-20151101/v4 v4.1.0
+	github.com/alibabacloud-go/openapi-util v0.1.1
 	github.com/alibabacloud-go/tea v1.3.9
+	github.com/alibabacloud-go/tea-utils/v2 v2.0.7
+	github.com/alibabacloud-go/waf-openapi-20211001/v5 v5.1.2
 	github.com/aliyun/aliyun-oss-go-sdk v3.0.2+incompatible
 	github.com/gin-contrib/gzip v1.2.3
 	github.com/gin-contrib/sessions v1.0.3
@@ -29,10 +33,7 @@ require (
 	github.com/alibabacloud-go/alibabacloud-gateway-spi v0.0.5 // indirect
 	github.com/alibabacloud-go/debug v1.0.1 // indirect
 	github.com/alibabacloud-go/endpoint-util v1.1.0 // indirect
-	github.com/alibabacloud-go/openapi-util v0.1.1 // indirect
-	github.com/alibabacloud-go/tea-utils/v2 v2.0.7 // indirect
 	github.com/aliyun/alibaba-cloud-sdk-go v1.63.100 // indirect
-	github.com/aliyun/credentials-go v1.4.6 // indirect
 	github.com/baidubce/bce-sdk-go v0.9.223 // indirect
 	github.com/bytedance/sonic v1.13.2 // indirect
 	github.com/bytedance/sonic/loader v0.2.4 // indirect
