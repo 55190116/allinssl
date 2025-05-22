@@ -92,13 +92,38 @@ func GetDNSProvider(providerName string, creds map[string]string) (challenge.Pro
 		config.AccessKey = creds["access_key"]
 		config.SecretKey = creds["secret_key"]
 		return volcengine.NewDNSProviderConfig(config)
-
+	
 	default:
 		return nil, fmt.Errorf("不支持的 DNS Provider: %s", providerName)
 	}
 }
 
-func GetAcmeClient(db *public.Sqlite, email, algorithm, ca, proxy, eabId string, logger *public.Logger) (*lego.Client, error) {
+func GetAcmeClient(db *public.Sqlite, email, algorithm, proxy, eabId string, logger *public.Logger) (*lego.Client, error) {
+	var (
+		ca      string
+		eabData map[string]any
+		err     error
+	)
+	switch eabId {
+	case "let", "":
+		ca = "Let's Encrypt"
+	default:
+		eabData, err = access.GetEAB(eabId)
+		if err != nil {
+			return nil, err
+		}
+		if eabData == nil {
+			return nil, fmt.Errorf("未找到EAB信息")
+		}
+		if eabData["Kid"] == nil {
+			return nil, fmt.Errorf("Kid不能为空")
+		}
+		if eabData["HmacEncoded"] == nil {
+			return nil, fmt.Errorf("HmacEncoded不能为空")
+		}
+		ca = eabData["ca"].(string)
+	}
+	
 	user, err := LoadUserFromDB(db, email, ca)
 	if err != nil {
 		logger.Debug("acme账号不存在，注册新账号")
@@ -107,101 +132,54 @@ func GetAcmeClient(db *public.Sqlite, email, algorithm, ca, proxy, eabId string,
 			Email: email,
 			key:   privateKey,
 		}
-
-		config := lego.NewConfig(user)
-		config.Certificate.KeyType = AlgorithmMap[algorithm]
-		config.CADirURL = CADirURLMap[ca]
-		if proxy != "" {
-			// 构建代理 HTTP 客户端
-			proxyURL, err := url.Parse(proxy) // 替换为你的代理地址
-			if err != nil {
-				return nil, fmt.Errorf("无效的代理地址: %v", err)
-			}
-			httpClient := &http.Client{
-				Transport: &http.Transport{
-					Proxy: http.ProxyURL(proxyURL),
-				},
-				Timeout: 30 * time.Second,
-			}
-			config.HTTPClient = httpClient
-		}
-		client, err := lego.NewClient(config)
+	}
+	config := lego.NewConfig(user)
+	config.Certificate.KeyType = AlgorithmMap[algorithm]
+	config.CADirURL = CADirURLMap[ca]
+	if proxy != "" {
+		// 构建代理 HTTP 客户端
+		proxyURL, err := url.Parse(proxy) // 替换为你的代理地址
 		if err != nil {
-			return nil, err
+			return nil, fmt.Errorf("无效的代理地址: %v", err)
 		}
+		httpClient := &http.Client{
+			Transport: &http.Transport{
+				Proxy: http.ProxyURL(proxyURL),
+			},
+			Timeout: 30 * time.Second,
+		}
+		config.HTTPClient = httpClient
+	}
+	client, err := lego.NewClient(config)
+	if err != nil {
+		return nil, err
+	}
+	if user.Registration == nil {
 		logger.Debug("正在注册账号：" + email)
 		var reg *registration.Resource
-		switch ca {
-		case "Let's Encrypt":
-			reg, err = client.Registration.Register(registration.RegisterOptions{TermsOfServiceAgreed: true})
-		case "zerossl", "google":
-			// 获取EAB参数
-			var eabData map[string]any
-			if eabId == "" {
-				data, err := access.GetAllEAB(ca)
-				if err != nil {
-					return nil, err
-				}
-				if len(data) <= 0 {
-					return nil, fmt.Errorf("未找到EAB信息")
-				}
-				eabData = data[0]
-			} else {
-				eabData, err = access.GetEAB(eabId)
-				if err != nil {
-					return nil, err
-				}
-				if eabData == nil {
-					return nil, fmt.Errorf("未找到EAB信息")
-				}
-			}
-			Kid := eabData["kid"].(string)
+		if eabData != nil {
+			Kid := eabData["Kid"].(string)
 			HmacEncoded := eabData["HmacEncoded"].(string)
 			reg, err = client.Registration.RegisterWithExternalAccountBinding(registration.RegisterEABOptions{
 				TermsOfServiceAgreed: true,
 				Kid:                  Kid,
 				HmacEncoded:          HmacEncoded,
 			})
-		default:
+		} else {
 			reg, err = client.Registration.Register(registration.RegisterOptions{TermsOfServiceAgreed: true})
 		}
 		if err != nil {
 			return nil, err
 		}
 		user.Registration = reg
-
+		
 		err = SaveUserToDB(db, user, ca)
 		if err != nil {
 			return nil, err
 		}
 		logger.Debug("acme账号注册并保存成功")
-		return client, nil
-	} else {
-		config := lego.NewConfig(user)
-		config.Certificate.KeyType = AlgorithmMap[algorithm]
-		config.CADirURL = CADirURLMap[ca]
-		if proxy != "" {
-			// 构建代理 HTTP 客户端
-			proxyURL, err := url.Parse(proxy) // 替换为你的代理地址
-			if err != nil {
-				return nil, fmt.Errorf("无效的代理地址: %v", err)
-			}
-			httpClient := &http.Client{
-				Transport: &http.Transport{
-					Proxy: http.ProxyURL(proxyURL),
-				},
-				Timeout: 30 * time.Second,
-			}
-			config.HTTPClient = httpClient
-		}
-
-		// 初始化 ACME 客户端
-		client, err := lego.NewClient(config)
-		if err != nil {
-			return nil, err
-		}
-		return client, nil
 	}
+	return client, nil
 }
 
 func GetCert(runId string, domainArr []string, endDay int, logger *public.Logger) (map[string]any, error) {
@@ -272,7 +250,7 @@ func Apply(cfg map[string]any, logger *public.Logger) (map[string]any, error) {
 		return nil, err
 	}
 	defer db.Close()
-
+	
 	email, ok := cfg["email"].(string)
 	if !ok {
 		return nil, fmt.Errorf("参数错误：email")
@@ -305,10 +283,6 @@ func Apply(cfg map[string]any, logger *public.Logger) (map[string]any, error) {
 	if !ok {
 		algorithm = "RSA2048"
 	}
-	ca, ok := cfg["ca"].(string)
-	if !ok {
-		ca = "Let's Encrypt"
-	}
 	proxy, ok := cfg["proxy"].(string)
 	if !ok {
 		proxy = ""
@@ -322,7 +296,7 @@ func Apply(cfg map[string]any, logger *public.Logger) (map[string]any, error) {
 	default:
 		eabId = ""
 	}
-
+	
 	var providerID string
 	switch v := cfg["provider_id"].(type) {
 	case float64:
@@ -348,7 +322,7 @@ func Apply(cfg map[string]any, logger *public.Logger) (map[string]any, error) {
 			return nil, fmt.Errorf("参数错误：name_server")
 		}
 	}
-
+	
 	var skipCheck bool
 	if cfg["skip_check"] == nil {
 		// 默认跳过预检查
@@ -383,12 +357,12 @@ func Apply(cfg map[string]any, logger *public.Logger) (map[string]any, error) {
 			return nil, fmt.Errorf("参数错误：skip_check")
 		}
 	}
-
+	
 	domainArr := strings.Split(domains, ",")
 	for i := range domainArr {
 		domainArr[i] = strings.TrimSpace(domainArr[i])
 	}
-
+	
 	// 获取上次申请的证书
 	runId, ok := cfg["_runId"].(string)
 	if !ok {
@@ -402,7 +376,7 @@ func Apply(cfg map[string]any, logger *public.Logger) (map[string]any, error) {
 	}
 	logger.Debug("正在申请证书，域名: " + domains)
 	// 创建 ACME 客户端
-	client, err := GetAcmeClient(db, email, algorithm, ca, proxy, eabId, logger)
+	client, err := GetAcmeClient(db, email, algorithm, proxy, eabId, logger)
 	if err != nil {
 		return nil, err
 	}
@@ -421,13 +395,13 @@ func Apply(cfg map[string]any, logger *public.Logger) (map[string]any, error) {
 	if err != nil {
 		return nil, err
 	}
-
+	
 	// DNS 验证
 	provider, err := GetDNSProvider(providerStr, providerConfig)
 	if err != nil {
 		return nil, fmt.Errorf("创建 DNS provider 失败: %v", err)
 	}
-
+	
 	if skipCheck {
 		// 跳过预检查
 		err = client.Challenge.SetDNS01Provider(provider,
@@ -444,7 +418,7 @@ func Apply(cfg map[string]any, logger *public.Logger) (map[string]any, error) {
 	if err != nil {
 		return nil, err
 	}
-
+	
 	// fmt.Println(strings.Split(domains, ","))
 	request := certificate.ObtainRequest{
 		Domains: domainArr,
@@ -454,18 +428,18 @@ func Apply(cfg map[string]any, logger *public.Logger) (map[string]any, error) {
 	if err != nil {
 		return nil, err
 	}
-
+	
 	certStr := string(certObj.Certificate)
 	keyStr := string(certObj.PrivateKey)
 	issuerCertStr := string(certObj.IssuerCertificate)
-
+	
 	// 保存证书和私钥
 	data := map[string]any{
 		"cert":       certStr,
 		"key":        keyStr,
 		"issuerCert": issuerCertStr,
 	}
-
+	
 	_, err = cert.SaveCert("workflow", keyStr, certStr, issuerCertStr, runId)
 	if err != nil {
 		return nil, err

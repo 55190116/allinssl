@@ -62,7 +62,7 @@ func GetEABList(search string, p, limit int64) ([]map[string]any, int, error) {
 	return data, int(count), nil
 }
 
-func AddEAB(name, Kid, HmacEncoded, ca string) error {
+func AddEAB(name, Kid, HmacEncoded, ca, mail string) error {
 	s, err := GetSqliteEAB()
 	if err != nil {
 		return err
@@ -76,11 +76,12 @@ func AddEAB(name, Kid, HmacEncoded, ca string) error {
 		"ca":          ca,
 		"update_time": now,
 		"create_time": now,
+		"mail":        mail,
 	})
 	return err
 }
 
-func UpdEAB(id, name, Kid, HmacEncoded, ca string) error {
+func UpdEAB(id, name, Kid, HmacEncoded, ca, mail string) error {
 	s, err := GetSqliteEAB()
 	if err != nil {
 		return err
@@ -93,6 +94,7 @@ func UpdEAB(id, name, Kid, HmacEncoded, ca string) error {
 		"HmacEncoded": HmacEncoded,
 		"ca":          ca,
 		"update_time": now,
+		"mail":        mail,
 	})
 	return err
 }
@@ -113,7 +115,7 @@ func GetEAB(id string) (map[string]interface{}, error) {
 	if err != nil {
 		return nil, err
 	}
-	s.Close()
+	defer s.Close()
 	data, err := s.Where("id = ?", []interface{}{id}).Find()
 	if err != nil {
 		return nil, err

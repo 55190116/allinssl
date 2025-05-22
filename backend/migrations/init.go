@@ -187,7 +187,8 @@ func init() {
 		HmacEncoded TEXT    not null,
 		ca          TEXT    not null,
 		create_time TEXT,
-		update_time TEXT
+		update_time TEXT,
+		mail        TEXT    not null
 	);
 
 	`)

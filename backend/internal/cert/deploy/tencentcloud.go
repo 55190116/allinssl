@@ -29,6 +29,7 @@ func UploadToTX(client *ssl.Client, key, cert string) (string, error) {
 	request := ssl.NewUploadCertificateRequest()
 	request.CertificatePublicKey = common.StringPtr(cert)
 	request.CertificatePrivateKey = common.StringPtr(key)
+	request.Repeatable = common.BoolPtr(false)
 	// 返回的resp是一个UploadCertificateResponse的实例，与请求对象对应
 	response, err := client.UploadCertificate(request)
 	if _, ok := err.(*errors.TencentCloudSDKError); ok {
@@ -53,7 +54,7 @@ func DeployToTX(cfg map[string]any) error {
 	if !ok {
 		return fmt.Errorf("证书错误：cert")
 	}
-
+	
 	var providerID string
 	switch v := cfg["provider_id"].(type) {
 	case float64:
@@ -83,26 +84,35 @@ func DeployToTX(cfg map[string]any) error {
 		region = r
 	}
 	client := ClientTencentcloud(providerConfig["secret_id"], providerConfig["secret_key"], region)
-
+	
 	// 上传证书
 	certificateId, err := UploadToTX(client, strings.TrimSpace(keyPem), strings.TrimSpace(certPem))
 	if err != nil {
 		return err
 	}
 	// fmt.Println(certificateId)
-
+	
 	request := ssl.NewDeployCertificateInstanceRequest()
-
+	
 	request.CertificateId = common.StringPtr(certificateId)
-	if cfg["resource_type"] == "cdn" {
+	resourceType := cfg["resource_type"].(string)
+	switch resourceType {
+	case "cdn", "waf", "teo":
 		domain, ok := cfg["domain"].(string)
 		if !ok {
 			return fmt.Errorf("参数错误：domain")
 		}
-		request.InstanceIdList = common.StringPtrs([]string{domain})
-		request.ResourceType = common.StringPtr("cdn")
-	}
-	if cfg["resource_type"] == "cos" {
+		domain = strings.TrimSpace(domain)
+		domainArray := strings.Split(domain, ",")
+		if len(domainArray) == 0 {
+			return fmt.Errorf("参数错误：domain")
+		}
+		for i, d := range domainArray {
+			domainArray[i] = strings.TrimSpace(d)
+		}
+		request.InstanceIdList = common.StringPtrs(domainArray)
+		request.ResourceType = common.StringPtr(resourceType)
+	case "cos":
 		domain, ok := cfg["domain"].(string)
 		if !ok {
 			return fmt.Errorf("参数错误：domain")
@@ -118,7 +128,7 @@ func DeployToTX(cfg map[string]any) error {
 		request.InstanceIdList = common.StringPtrs([]string{fmt.Sprintf("%s|%s|%s", region, bucket, domain)})
 		request.ResourceType = common.StringPtr("cos")
 	}
-
+	
 	// 返回的resp是一个DeployCertificateInstanceResponse的实例，与请求对象对应
 	response, err := client.DeployCertificateInstance(request)
 	if _, ok := err.(*errors.TencentCloudSDKError); ok {

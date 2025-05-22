@@ -180,6 +180,7 @@ func AddEAB(c *gin.Context) {
 		Kid         string `form:"Kid"`
 		HmacEncoded string `form:"HmacEncoded"`
 		CA          string `form:"ca"`
+		Mail        string `form:"mail"`
 	}
 	err := c.Bind(&form)
 	if err != nil {
@@ -190,6 +191,7 @@ func AddEAB(c *gin.Context) {
 	form.Kid = strings.TrimSpace(form.Kid)
 	form.HmacEncoded = strings.TrimSpace(form.HmacEncoded)
 	form.CA = strings.TrimSpace(form.CA)
+	form.Mail = strings.TrimSpace(form.Mail)
 	if form.Name == "" {
 		public.FailMsg(c, "名称不能为空")
 		return
@@ -206,9 +208,14 @@ func AddEAB(c *gin.Context) {
 		public.FailMsg(c, "CA不能为空")
 		return
 	}
-	err = access.AddEAB(form.Name, form.Kid, form.HmacEncoded, form.CA)
+	if form.Mail == "" {
+		public.FailMsg(c, "Email不能为空")
+		return
+	}
+	err = access.AddEAB(form.Name, form.Kid, form.HmacEncoded, form.CA, form.Mail)
 	if err != nil {
 		public.FailMsg(c, err.Error())
+		return
 	}
 	public.SuccessMsg(c, "添加成功")
 	return
@@ -221,6 +228,7 @@ func UpdEAB(c *gin.Context) {
 		Kid         string `form:"Kid"`
 		HmacEncoded string `form:"HmacEncoded"`
 		CA          string `form:"ca"`
+		Mail        string `form:"mail"`
 	}
 	err := c.Bind(&form)
 	if err != nil {
@@ -231,6 +239,7 @@ func UpdEAB(c *gin.Context) {
 	form.Kid = strings.TrimSpace(form.Kid)
 	form.HmacEncoded = strings.TrimSpace(form.HmacEncoded)
 	form.CA = strings.TrimSpace(form.CA)
+	form.Mail = strings.TrimSpace(form.Mail)
 	if form.Name == "" {
 		public.FailMsg(c, "名称不能为空")
 		return
@@ -247,7 +256,11 @@ func UpdEAB(c *gin.Context) {
 		public.FailMsg(c, "CA不能为空")
 		return
 	}
-	err = access.UpdEAB(form.ID, form.Name, form.Kid, form.HmacEncoded, form.CA)
+	if form.Mail == "" {
+		public.FailMsg(c, "mail不能为空")
+		return
+	}
+	err = access.UpdEAB(form.ID, form.Name, form.Kid, form.HmacEncoded, form.CA, form.Mail)
 	if err != nil {
 		public.FailMsg(c, err.Error())
 	}
@@ -313,6 +326,7 @@ func TestAccess(c *gin.Context) {
 		result = deploy.QiniuAPITest(form.ID)
 	default:
 		public.FailMsg(c, "不支持测试的提供商")
+		return
 	}
 
 	if result != nil {
@@ -337,7 +351,7 @@ func GetSiteList(c *gin.Context) {
 		public.FailMsg(c, err.Error())
 		return
 	}
-	
+
 	var siteList []any
 	switch form.Type {
 	case "btpanel":
@@ -345,11 +359,11 @@ func GetSiteList(c *gin.Context) {
 	default:
 		public.FailMsg(c, "不支持的提供商")
 	}
-	
+
 	if err != nil {
 		public.FailMsg(c, fmt.Sprintf("获取网站列表失败%v", err))
 		return
 	}
-	
+
 	public.SuccessData(c, siteList, len(siteList))
 }
