@@ -1,8 +1,6 @@
 // 基础节点
 export const END = 'end' // 结束节点
 export const DEFAULT = 'default' // 默认节点
-
-
 export const START = 'start' // 开始节点
 export const BRANCH = 'branch' // 分支节点（并行分支和条件分支）
 export const CONDITION = 'condition' // 条件子节点

@@ -9,18 +9,21 @@ export interface CertListParams {
 
 /** 证书项 */
 export interface CertItem {
-	id: string
-	name: string
-	domains: string
-	issuer: string
-	create_time: string
-	expire_time: string
-	sha256: string
 	cert: string
-	key: string
-	status: number
-	source: 'upload' | 'apply'
+	create_time: string
+	domains: string
 	end_day: string
+	end_time: string
+	history_id: string
+	id: number
+	issuer: string
+	issuer_cert: string
+	key: string
+	sha256: string
+	source: string
+	start_time: string
+	update_time: string
+	workflow_id: string
 }
 
 /** 证书列表响应 */
@@ -72,4 +75,47 @@ export interface DownloadCertParams {
 /** 下载证书响应 */
 export interface DownloadCertResponse extends AxiosResponseData {
 	data: string
+}
+
+/**
+ * @description 商业证书产品条目类型
+ */
+export interface ProductItem {
+	pid: number
+	brand: string
+	type: string
+	add_price: number
+	other_price: number
+	title: string
+	code: string
+	num: number
+	price: number
+	discount: number
+	ipssl?: number
+	state: number
+	install_price: number
+	src_price: number
+}
+
+/**
+ * @description 商业证书产品按类型分类的集合
+ */
+export interface ProductsType {
+	dv: ProductItem[]
+	ov: ProductItem[]
+	ev: ProductItem[]
+}
+
+/**
+ * @description 免费证书产品条目类型
+ */
+export interface FreeProductItem {
+	pid: number
+	brand: string
+	type: string
+	title: string
+	code: string
+	num: number
+	valid_days: number
+	features: string[]
 }

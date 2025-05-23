@@ -1,7 +1,7 @@
 import { NCard, NButton, NList, NListItem, NTag, NSpace, NGrid, NGridItem, NSwitch } from 'naive-ui'
 import { useController } from '../useController'
 import { useStore } from '../useStore'
-import SvgIcon from '@components/svgIcon'
+import SvgIcon from '@components/SvgIcon'
 import { $t } from '@locales/index'
 
 /**

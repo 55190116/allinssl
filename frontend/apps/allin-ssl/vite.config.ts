@@ -155,6 +155,7 @@ export default defineConfig({
 			'@certManage': path.resolve(__dirname, 'src/views/certManage'),
 			'@certApply': path.resolve(__dirname, 'src/views/certApply'),
 			'@autoDeploy': path.resolve(__dirname, 'src/views/autoDeploy'),
+			'@workflowView': path.resolve(__dirname, 'src/views/autoDeploy/children/workflowView'),
 			'@autoApiManage': path.resolve(__dirname, 'src/views/autoApiManage'),
 			'@home': path.resolve(__dirname, 'src/views/home'),
 			'@monitor': path.resolve(__dirname, 'src/views/monitor'),

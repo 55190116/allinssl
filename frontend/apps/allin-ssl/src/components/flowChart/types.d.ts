@@ -13,14 +13,15 @@ import {
 	DEFAULT,
 } from './lib/alias'
 import type { FormRules } from 'naive-ui'
+import type { Component } from 'vue'
 
 // 拖拽效果
 export interface FlowNodeProps {
 	isEdit: boolean
 	type: 'quick' | 'advanced'
 	node: FlowNode
+	taskComponents?: Record<string, Component>
 }
-
 
 export interface FlowNode {
 	id: string
@@ -139,6 +140,12 @@ interface BaseNodeProps {
 	node: BaseNodeData<Record<string, unknown>>
 }
 
+// 定义组件包装器接受的props
+export interface NodeWrapProps {
+	node?: BaseNodeData | BranchNodeData | ExecuteResultBranchNodeData
+	depth?: number
+}
+
 /**
  * 验证结果接口
  * @property valid - 验证是否通过
@@ -200,6 +207,9 @@ export interface ApplyNodeConfig {
 	// 基本选项
 	domains: string // 域名
 	email: string // 邮箱
+	eabId: string // CA授权ID（EAB ID）
+	ca: string // CA类型
+	proxy: string // 代理地址
 	provider_id: string // DNS提供商授权ID
 	provider: string // DNS提供商
 	end_day: number // 续签间隔
@@ -228,8 +238,14 @@ export interface DeployConfig<
 		| '1panel-site'
 		| 'tencentcloud-cdn'
 		| 'tencentcloud-cos'
+		| 'tencentcloud-waf'
+		| 'tencentcloud-teo'
 		| 'aliyun-cdn'
 		| 'aliyun-oss'
+		| 'aliyun-waf'
+		| 'baidu-cdn'
+		| 'qiniu-cdn'
+		| 'qiniu-oss'
 		| 'safeline-site'
 		| 'safeline-panel'
 		| 'btpanel-dockersite',
@@ -274,6 +290,12 @@ export interface DeployCDNConfig {
 	domain: string
 }
 
+// 部署阿里云WAF
+export interface DeployWAFConfig {
+	domain: string
+	region: string
+}
+
 // 部署腾讯云COS/阿里云OSS
 export interface DeployStorageConfig {
 	domain: string
@@ -305,6 +327,7 @@ export type DeployNodeConfig = DeployConfig<
 	| Deploy1PanelConfig // 部署节点配置（1Panel）
 	| Deploy1PanelSiteConfig // 部署节点配置（1Panel站点）
 	| DeployCDNConfig // 部署节点配置（腾讯云CDN/阿里云CDN）
+	| DeployWAFConfig // 部署节点配置（阿里云WAF）
 	| DeployStorageConfig // 部署节点配置（腾讯云COS/阿里云OSS）
 	| DeploySafelineConfig // 部署节点配置（雷池WAF）
 	| DeploySafelineSiteConfig // 部署节点配置（雷池WAF站点）
@@ -332,21 +355,8 @@ interface UploadNodeConfig {
 	key: string
 }
 
-
-
-
-
 // 部署节点配置（ssh）
 // export type DeployNodeConfigSSH = DeployNodeConfig<'ssh', DeploySSHConfig>
 
-
-
 // 部署节点配置（宝塔面板）
 // export type DeployNodeConfigBTPanel = DeployNodeConfig<'btpanel', DeployBTPanelConfig>
-
-
-
-
-
-
-

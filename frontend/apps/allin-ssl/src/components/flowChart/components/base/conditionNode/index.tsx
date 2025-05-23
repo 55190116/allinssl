@@ -1,12 +1,12 @@
 import { v4 as uuidv4 } from 'uuid'
-import nodeOptions from '@components/flowChart/lib/config'
-import { useStore } from '@components/flowChart/useStore'
-import { CONDITION } from '@components/flowChart/lib/alias'
+import nodeOptions from '@components/FlowChart/lib/config'
+import { useStore } from '@components/FlowChart/useStore'
+import { CONDITION } from '@components/FlowChart/lib/alias'
 
-import NodeWrap from '@components/flowChart/components/render/nodeWrap'
-import AddNode from '@components/flowChart/components/other/addNode'
+import NodeWrap from '@components/FlowChart/components/render/nodeWrap'
+import AddNode from '@components/FlowChart/components/other/addNode'
 import styles from '../branchNode/index.module.css'
-import type { BaseRenderNodeOptions, ExecuteResultBranchNodeData } from '@components/flowChart/types'
+import type { BaseRenderNodeOptions, ExecuteResultBranchNodeData } from '@components/FlowChart/types'
 
 export default defineComponent({
 	name: 'BranchNode',

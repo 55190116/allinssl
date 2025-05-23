@@ -1,12 +1,12 @@
 import { FormRules } from 'naive-ui'
 import { useModal, useForm, useFormHooks, useLoadingMask, useModalHooks } from '@baota/naive-ui/hooks'
 import { useError } from '@baota/hooks/error'
-import { isDomain, isWildcardDomain } from '@baota/utils/business'
+import { isDomain, isDomainGroup, isWildcardDomain } from '@baota/utils/business'
 import { useStore as useWorkflowViewStore } from '@autoDeploy/children/workflowView/useStore'
 import { $t } from '@locales/index'
 import { useStore } from './useStore'
-import CertificateForm from './components/freeProductModal'
-import DnsProviderSelect from '@components/dnsProviderSelect'
+import CertificateForm from './components/FreeProductModal'
+import DnsProviderSelect from '@components/DnsProviderSelect'
 
 // 错误处理
 const { handleError } = useError()
@@ -127,7 +127,7 @@ export const useCertificateFormController = () => {
 			message: $t('t_7_1746667592468'),
 			trigger: 'input',
 			validator: (rule: any, value: any, callback: any) => {
-				if (isDomain(value) || isWildcardDomain(value)) {
+				if (isDomain(value) || isWildcardDomain(value) || isDomainGroup(value, ',')) {
 					callback()
 				} else {
 					callback(new Error($t('t_7_1746667592468')))
@@ -174,7 +174,7 @@ export const useCertificateFormController = () => {
 	}
 
 	// 使用表单hooks
-	const { component, fetch } = useForm({
+	const { component: CertificateForm, fetch } = useForm({
 		config,
 		defaultValue: formData,
 		request,
@@ -195,6 +195,6 @@ export const useCertificateFormController = () => {
 	})
 
 	return {
-		component,
+		CertificateForm,
 	}
 }

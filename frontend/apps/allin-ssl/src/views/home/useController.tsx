@@ -1,140 +1,182 @@
-import { useRouter } from 'vue-router'
-import { useStore } from './useStore'
+import { useRouter } from 'vue-router';
+import { onMounted } from 'vue'; // 新增：导入 onMounted
+import { NTag } from 'naive-ui';
 
-import { NTag, type DataTableColumns } from 'naive-ui'
-import type { WorkflowHistoryItem } from '@/types/public'
-import styles from './index.module.css'
-import { $t } from '@locales/index'
+// Type Imports
+import type { Ref } from 'vue'; // 新增：导入 Ref 类型
+import type { DataTableColumns } from 'naive-ui';
+import type { OverviewData, WorkflowHistoryItem } from '@/types/public'; // 新增：导入 OverviewData 类型
 
-const { overviewData, fetchOverviewData } = useStore()
+// Absolute Internal Imports - Utilities
+import { $t } from '@locales/index';
+
+// Relative Internal Imports
+import { useStore } from './useStore';
+
+// Side-effect Imports
+import styles from './index.module.css';
 
 /**
- * 首页控制器
- *
- * @description 处理首页视图的业务逻辑，包括状态转换、数据格式化等功能
- * @returns {object} 返回首页视图所需的状态和方法
+ * @interface HomeControllerExposes
+ * @description 首页 Controller 暴露给视图的接口定义。
+ * @property {Ref<OverviewData>} overviewData - 概览数据。
+ * @property {(type?: string) => void} pushToWorkflow - 跳转到工作流页面。
+ * @property {(type?: string) => void} pushToCert - 跳转到证书申请页面。
+ * @property {(type?: string) => void} pushToMonitor - 跳转到监控页面。
+ * @property {() => void} pushToCertManage - 跳转到证书管理页面。
+ * @property {(state: number) => 'success' | 'error' | 'warning' | 'default'} getWorkflowStateType - 获取工作流状态对应的标签类型。
+ * @property {(state: number) => string} getWorkflowStateText - 获取工作流状态对应的文本。
+ * @property {(time: string) => string} formatExecTime - 格式化执行时间。
+ * @property {() => DataTableColumns<WorkflowHistoryItem>} createColumns - 创建表格列配置。
  */
-export const useController = () => {
+interface HomeControllerExposes {
+	overviewData: Ref<OverviewData>;
+	pushToWorkflow: (type?: string) => void;
+	pushToCert: (type?: string) => void;
+	pushToMonitor: (type?: string) => void;
+	pushToCertManage: () => void;
+	getWorkflowStateType: (state: number) => 'success' | 'error' | 'warning' | 'default';
+	getWorkflowStateText: (state: number) => string;
+	formatExecTime: (time: string) => string;
+	createColumns: () => DataTableColumns<WorkflowHistoryItem>;
+}
+
+/**
+ * 首页控制器 (Composable Function)
+ *
+ * @description 处理首页视图的业务逻辑，包括状态转换、数据格式化、页面导航等功能。
+ * @returns {HomeControllerExposes} 返回首页视图所需的状态和方法。
+ */
+export function useController(): HomeControllerExposes {
 	// 路由实例
-	const router = useRouter()
+	const router = useRouter();
+	// 从 Store 中获取状态和方法
+	const { overviewData, fetchOverviewData } = useStore();
 
 	// -------------------- 业务逻辑处理 --------------------
 	/**
-	 * @description 获取工作流状态对应的标签类型
-	 * @param {number} state - 工作流状态值
-	 * @returns {string} NTag组件的type属性值
+	 * 获取工作流状态对应的标签类型。
+	 * @function getWorkflowStateType
+	 * @param {number} state - 工作流状态值。
+	 * @returns {'success' | 'error' | 'warning' | 'default'} NTag 组件的 type 属性值。
 	 */
-	const getWorkflowStateType = (state: number): 'success' | 'error' | 'warning' | 'default' => {
+	function getWorkflowStateType(state: number): 'success' | 'error' | 'warning' | 'default' {
 		switch (state) {
 			case 1:
-				return 'success' // 成功状态
+				return 'success'; // 成功状态
 			case 0:
-				return 'warning' // 失败状态
+				return 'warning'; // 正在运行状态 (根据原代码逻辑，0是warning，-1是error)
 			case -1:
-				return 'error' // 执行中状态
+				return 'error'; // 失败状态
 			default:
-				return 'default' // 未知状态
+				return 'default'; // 未知状态
 		}
 	}
 
 	/**
-	 * @description 获取工作流状态对应的文本说明
-	 * @param {number} state - 工作流状态值
-	 * @returns {string} 状态的中文描述
+	 * 获取工作流状态对应的文本说明。
+	 * @function getWorkflowStateText
+	 * @param {number} state - 工作流状态值。
+	 * @returns {string} 状态的中文描述。
 	 */
-	const getWorkflowStateText = (state: number): string => {
+	function getWorkflowStateText(state: number): string {
 		switch (state) {
 			case 1:
-				return '成功'
+				return  $t('t_8_1745227838023');
 			case 0:
-				return '正在运行'
+				return $t('t_0_1747795605426');
 			case -1:
-				return '失败'
+				return $t('t_9_1745227838305');
 			default:
-				return '未知'
+				return $t('t_11_1745227838422');
 		}
 	}
 
 	/**
-	 * @description 格式化执行时间为本地化的日期时间字符串
-	 * @param {string} time - ISO格式的时间字符串
-	 * @returns {string} 格式化后的本地时间字符串
+	 * 格式化执行时间为本地化的日期时间字符串。
+	 * @function formatExecTime
+	 * @param {string} time - ISO 格式的时间字符串。
+	 * @returns {string} 格式化后的本地时间字符串。
 	 */
-	const formatExecTime = (time: string): string => {
-		return new Date(time).toLocaleString()
+	function formatExecTime(time: string): string {
+		return new Date(time).toLocaleString();
 	}
 
 	/**
-	 * @description 创建工作流历史表格列配置
-	 * @returns {DataTableColumns<WorkflowHistoryItem>} 工作流历史表格列配置
+	 * 创建工作流历史表格列配置。
+	 * @function createColumns
+	 * @returns {DataTableColumns<WorkflowHistoryItem>} 工作流历史表格列配置。
 	 */
-	const createColumns = (): DataTableColumns<WorkflowHistoryItem> => {
+	function createColumns(): DataTableColumns<WorkflowHistoryItem> {
 		return [
 			{
-				title: $t('t_2_1745289353944'),
+				title: $t('t_2_1745289353944'), // 名称
 				key: 'name',
 			},
 			{
-				title: $t('t_0_1746590054456'),
+				title: $t('t_0_1746590054456'), // 状态
 				key: 'state',
 				render: (row: WorkflowHistoryItem) => {
-					const stateType = getWorkflowStateType(row.state)
-					const stateText = getWorkflowStateText(row.state)
+					const stateType = getWorkflowStateType(row.state);
+					const stateText = getWorkflowStateText(row.state);
 					return (
 						<NTag type={stateType} size="small" class={`${styles.stateText} ${styles[stateType]}`}>
 							{stateText}
 						</NTag>
-					)
+					);
 				},
 			},
 			{
-				title: $t('t_1_1746590060448'),
+				title: $t('t_1_1746590060448'), // 模式
 				key: 'mode',
 				render: (row: WorkflowHistoryItem) => {
-					return <span class={styles.tableText}>{row.mode || '未知'}</span>
+					return <span class={styles.tableText}>{row.mode || $t('t_11_1745227838422')}</span>;
 				},
 			},
 			{
-				title: $t('t_4_1745227838558'),
+				title: $t('t_4_1745227838558'), // 执行时间
 				key: 'exec_time',
 				render: (row: WorkflowHistoryItem) => <span class={styles.tableText}>{formatExecTime(row.exec_time)}</span>,
 			},
-		]
+		];
 	}
 
 	/**
-	 * @description 跳转至工作流构建页面
-	 * @param {string} type - 类型
+	 * 跳转至工作流构建页面。
+	 * @function pushToWorkflow
+	 * @param {string} [type=''] - 类型参数，可选。
 	 */
-	const pushToWorkflow = (type: string = ''): void => {
-		router.push(`/auto-deploy${type ? `?type=${type}` : ''}`)
+	function pushToWorkflow(type: string = ''): void {
+		router.push(`/auto-deploy${type ? `?type=${type}` : ''}`);
 	}
 
 	/**
-	 * @description 跳转至申请证书页面
-	 * @param {string} type - 类型
+	 * 跳转至申请证书页面。
+	 * @function pushToCert
+	 * @param {string} [type=''] - 类型参数，可选。
 	 */
-	const pushToCert = (type: string = ''): void => {
-		router.push(`/cert-apply${type ? `?type=${type}` : ''}`)
+	function pushToCert(type: string = ''): void {
+		router.push(`/cert-apply${type ? `?type=${type}` : ''}`);
 	}
 
 	/**
-	 * @description 跳转至证书管理
-	 * @param {string} type - 类型
+	 * 跳转至证书管理页面。
+	 * @function pushToCertManage
 	 */
-	const pushToCertManage = (): void => {
-		router.push(`/cert-manage`)
+	function pushToCertManage(): void {
+		router.push(`/cert-manage`);
 	}
 
 	/**
-	 * @description 跳转至添加监控页面
-	 * @param {string} type - 类型
+	 * 跳转至添加监控页面。
+	 * @function pushToMonitor
+	 * @param {string} [type=''] - 类型参数，可选。
 	 */
-	const pushToMonitor = (type: string = ''): void => {
-		router.push(`/monitor${type ? `?type=${type}` : ''}`)
+	function pushToMonitor(type: string = ''): void {
+		router.push(`/monitor${type ? `?type=${type}` : ''}`);
 	}
 
-	onMounted(fetchOverviewData)
+	onMounted(fetchOverviewData);
 
 	// 暴露状态和方法给视图使用
 	return {
@@ -147,5 +189,5 @@ export const useController = () => {
 		getWorkflowStateText,
 		formatExecTime,
 		createColumns,
-	}
+	};
 }

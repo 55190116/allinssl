@@ -92,7 +92,6 @@ export default function useTable<T = Record<string, any>, Z extends Record<strin
 		const component = (props: DataTableProps, context: { slots?: DataTableSlots }) => {
 			const { slots, ...attrs } = props as any
 			const s2 = context
-			console.log(slots, s2)
 			return (
 				<NDataTable
 					remote

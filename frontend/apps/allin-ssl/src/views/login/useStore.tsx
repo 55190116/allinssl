@@ -2,18 +2,45 @@
  * @file 登录模块状态管理
  * @description 负责处理登录相关的状态管理，包括用户认证、token管理和登录状态维护
  */
+// External Libraries
 import { useMessage } from '@baota/naive-ui/hooks'
+
+// Type Imports
+import type { UserInfo, LoginParams } from '@/types/login' // 假设 LoginData 在 types/login 中定义或将在此处定义
+
+// Absolute Internal Imports
 import { getLoginCode, login } from '@api/public'
 import { getCookie } from '@baota/utils/browser'
 import { useError } from '@baota/hooks/error'
-
-import type { UserInfo } from '@/types/login'
+import { ShallowRef } from 'vue'
 
 /** 消息提示 */
 const { success } = useMessage()
 const { handleError } = useError()
+
+// ==================== Store 类型定义 ====================
+/**
+ * Store 返回的公开成员类型
+ */
+interface LoginStoreExposes {
+	loading: Ref<boolean>
+	codeImg: Ref<string>
+	error: ShallowRef<Error | string | null>
+	user: Ref<UserInfo | null>
+	loginData: Ref<LoginParams> // 使用 LoginData 接口
+	rememberMe: Ref<boolean>
+	forgotPasswordRef: Ref<HTMLAnchorElement | null>
+	mustCode: Ref<boolean>
+	handleLogin: (params: { username: string; password: string; code?: string }) => Promise<void>
+	handleLogout: () => void
+	handleGetCode: () => Promise<void>
+	checkMustCode: () => void
+	resetForm: () => void
+	clearToken: () => void
+}
+
 // ==================== Store 定义 ====================
-export const useLoginStore = defineStore('login-store', () => {
+export const useLoginStore = defineStore('login-store', (): LoginStoreExposes => {
 	// -------------------- 状态定义 --------------------
 	/** 认证相关状态 */
 	const user = ref<UserInfo | null>(null)
@@ -22,11 +49,7 @@ export const useLoginStore = defineStore('login-store', () => {
 	const mustCode = ref<boolean>(false) // 是否必须验证码
 
 	/** 表单相关状态 */
-	const loginData = ref<{
-		username: string
-		password: string
-		code?: string
-	}>({
+	const loginData = ref<LoginParams>({
 		username: '',
 		password: '',
 		code: '',
@@ -36,13 +59,13 @@ export const useLoginStore = defineStore('login-store', () => {
 	const forgotPasswordRef = ref<HTMLAnchorElement | null>(null)
 
 	// 初始化登录请求
-	const { fetch, error, data, defaultData, message, loading } = login()
+	const { fetch, error, data, message, loading } = login()
 	// -------------------- 工具方法 --------------------
 
 	/**
 	 * 重置表单状态
 	 */
-	const resetForm = () => {
+	const resetForm = (): void => {
 		loginData.value.username = ''
 		loginData.value.password = ''
 		rememberMeRef.value = false
@@ -52,21 +75,20 @@ export const useLoginStore = defineStore('login-store', () => {
 	/**
 	 * 清除token
 	 */
-	const clearToken = () => {
+	const clearToken = (): void => {
 		useToken.value = null
 	}
 
 	// -------------------- 核心业务逻辑 --------------------
 	/**
 	 * 登录处理
-	 * @param {string} username - 用户名
-	 * @param {string} password - 密码
-	 * @returns {Promise<void>}
+	 * @param params - 包含用户名、密码和可选验证码的对象
+	 * @returns Promise，操作完成时 resolve
 	 */
 	const handleLogin = async (params: { username: string; password: string; code?: string }): Promise<void> => {
 		try {
-			error.value = null // 错误信息
-			message.value = true // 消息提示
+			error.value = null // 清除之前的错误信息
+			message.value = true // 触发消息提示 (假设这是控制 NMessage 的开关)
 			// 发送登录请求
 			await fetch(params)
 			const { status } = data.value
@@ -89,7 +111,7 @@ export const useLoginStore = defineStore('login-store', () => {
 	 * 登出处理
 	 * 清除用户信息和token，并重定向到登录页
 	 */
-	const handleLogout = () => {
+	const handleLogout = (): void => {
 		// 清除所有状态
 		user.value = null
 		useToken.value = null
@@ -99,22 +121,23 @@ export const useLoginStore = defineStore('login-store', () => {
 
 	/**
 	 * 获取登录验证码
+	 * @returns Promise，操作完成时 resolve
 	 */
-	const handleGetCode = async () => {
+	const handleGetCode = async (): Promise<void> => {
 		try {
-			const { data } = await getLoginCode()
-			codeImg.value = data.data
-		} catch (error) {
-			handleError(error)
+			const { data: codeData } = await getLoginCode() // 重命名 data 避免与外部 data 冲突
+			codeImg.value = codeData.data
+		} catch (err) {
+			// 明确捕获的 error 类型
+			handleError(err)
 		}
 	}
 
 	/**
 	 *  检测是否必须验证码
 	 */
-	const checkMustCode = () => {
+	const checkMustCode = (): void => {
 		const res = getCookie('must_code', false)
-		console.log('res', res)
 		mustCode.value = Number(res) === 1
 		if (mustCode.value) handleGetCode()
 	}
@@ -126,7 +149,6 @@ export const useLoginStore = defineStore('login-store', () => {
 		codeImg,
 		error,
 		user,
-		// token: useToken,
 		loginData,
 		rememberMe: rememberMeRef,
 		forgotPasswordRef,
@@ -144,9 +166,9 @@ export const useLoginStore = defineStore('login-store', () => {
 
 /**
  * 登录Store Hook
- * @returns {Object} 登录Store的响应式状态和方法
+ * @returns 登录Store的响应式状态和方法
  */
 export const useStore = () => {
 	const store = useLoginStore()
-	return { ...store, ...storeToRefs(store) }
+	return { ...store, ...storeToRefs(store) } // 确保返回类型与 LoginStoreExposes 兼容
 }

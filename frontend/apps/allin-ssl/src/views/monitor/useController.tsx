@@ -1,5 +1,8 @@
-import { FormRules, NButton, NSpace, NSwitch, type DataTableColumns } from 'naive-ui'
+import { computed, onMounted, onUnmounted } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
+import { FormRules, NButton, NSpace, NSwitch, type DataTableColumns } from 'naive-ui'
+
+// 钩子和工具
 import {
 	useModal,
 	useTable,
@@ -13,11 +16,15 @@ import {
 import { useError } from '@baota/hooks/error'
 import { isDomain } from '@baota/utils/business'
 import { $t } from '@locales/index'
-import { useStore } from './useStore'
-import MonitorForm from './components/monitorForm'
-import NotifyProviderSelect from '@components/notifyProviderSelect'
-import TypeIcon from '@components/typeIcon'
 
+// Store和组件
+import { useStore } from './useStore'
+import MonitorForm from './components/AddMonitorModel'
+import NotifyProviderSelect from '@components/NotifyProviderSelect'
+import TypeIcon from '@components/TypeIcon'
+
+// 类型导入
+import type { Ref } from 'vue'
 import type {
 	AddSiteMonitorParams,
 	SiteMonitorItem,
@@ -25,31 +32,50 @@ import type {
 	UpdateSiteMonitorParams,
 } from '@/types/monitor'
 
-// 消息和对话框
+/**
+ * 监控管理控制器接口定义
+ */
+interface MonitorControllerExposes {
+	// 表格相关
+	MonitorTable: ReturnType<typeof useTable>['component']
+	MonitorTablePage: ReturnType<typeof useTablePage>['component']
+	loading: Ref<boolean>
+	param: Ref<SiteMonitorListParams>
+	data: Ref<{ list: SiteMonitorItem[]; total: number }>
+	fetch: () => Promise<void>
+
+	// 表单和操作相关
+	openAddForm: () => void
+	isDetectionAddMonitor: () => void
+}
+
+// 从Store中获取方法
 const {
 	fetchMonitorList,
 	deleteExistingMonitor,
 	setMonitorStatus,
 	monitorForm,
 	addNewMonitor,
-	updateMonitorForm,
-	resetMonitorForm,
 	updateExistingMonitor,
+	resetMonitorForm,
+	updateMonitorForm,
 } = useStore()
 
 // 错误处理
 const { handleError } = useError()
 
 /**
- * useController
- * @description 监控管理业务逻辑控制器
- * @returns {object} 返回controller对象
+ * 监控管理业务逻辑控制器
+ * @description 处理监控列表页面的业务逻辑，包括表格展示、添加、编辑、删除等操作
+ * @returns {MonitorControllerExposes} 返回controller对象
  */
-export const useController = () => {
+export const useController = (): MonitorControllerExposes => {
 	const route = useRoute()
 	const router = useRouter()
+
 	/**
-	 * @description 创建表格列配置
+	 * 创建表格列配置
+	 * @description 定义监控表格的列结构和渲染方式
 	 * @returns {DataTableColumns<SiteMonitorItem>} 返回表格列配置数组
 	 */
 	const createColumns = (): DataTableColumns<SiteMonitorItem> => [
@@ -142,7 +168,10 @@ export const useController = () => {
 		},
 	]
 
-	// 表格实例
+	/**
+	 * 表格实例
+	 * @description 创建表格实例并管理相关状态
+	 */
 	const {
 		component: MonitorTable,
 		loading,
@@ -161,7 +190,10 @@ export const useController = () => {
 		watchValue: ['p', 'limit'],
 	})
 
-	// 分页实例
+	/**
+	 * 分页实例
+	 * @description 创建表格分页组件
+	 */
 	const { component: MonitorTablePage } = useTablePage({
 		param,
 		total,
@@ -172,9 +204,10 @@ export const useController = () => {
 	})
 
 	/**
-	 * @description 打开添加监控弹窗
+	 * 打开添加监控弹窗
+	 * @description 显示添加监控的表单弹窗
 	 */
-	const openAddForm = () => {
+	const openAddForm = (): void => {
 		useModal({
 			title: $t('t_11_1745289354516'),
 			area: 500,
@@ -187,10 +220,11 @@ export const useController = () => {
 	}
 
 	/**
-	 * @description 打开编辑监控弹窗
-	 * @param {SiteMonitorItem} item - 监控项
+	 * 打开编辑监控弹窗
+	 * @description 显示编辑监控的表单弹窗
+	 * @param {SiteMonitorItem} data - 要编辑的监控项数据
 	 */
-	const openEditForm = (data: SiteMonitorItem) => {
+	const openEditForm = (data: SiteMonitorItem): void => {
 		useModal({
 			title: $t('t_20_1745289354598'),
 			area: 500,
@@ -204,10 +238,11 @@ export const useController = () => {
 	}
 
 	/**
-	 * @description 确认删除监控
-	 * @param {number} id - 监控ID
+	 * 确认删除监控
+	 * @description 显示删除确认对话框
+	 * @param {SiteMonitorItem} row - 要删除的监控项
 	 */
-	const confirmDelete = (row: SiteMonitorItem) => {
+	const confirmDelete = (row: SiteMonitorItem): void => {
 		useDialog({
 			title: $t('t_0_1745294710530'),
 			content: $t('t_22_1745289359036'),
@@ -221,18 +256,20 @@ export const useController = () => {
 	}
 
 	/**
-	 * @description 切换监控状态
-	 * @param {ExtendedSiteMonitorItem} row - 监控项
+	 * 切换监控状态
+	 * @description 启用或禁用监控
+	 * @param {SiteMonitorItem} row - 监控项
 	 */
-	const toggleStatus = async (row: SiteMonitorItem) => {
+	const toggleStatus = async (row: SiteMonitorItem): Promise<void> => {
 		await setMonitorStatus({ id: row.id, active: Number(row.active) ? 0 : 1 })
 		fetch()
 	}
 
 	/**
-	 * @description 检测是否需要添加工作流
+	 * 检测是否需要添加工作流
+	 * @description 从URL参数判断是否需要自动打开添加表单
 	 */
-	const isDetectionAddMonitor = () => {
+	const isDetectionAddMonitor = (): void => {
 		const { type } = route.query
 		if (type?.includes('create')) {
 			openAddForm()
@@ -253,11 +290,20 @@ export const useController = () => {
 }
 
 /**
- * @description 监控表单控制器
- * @returns {object} 返回controller对象
+ * 监控表单控制器接口定义
  */
-export const useMonitorFormController = (data: UpdateSiteMonitorParams | null = null) => {
-	// 消息和对话框
+interface MonitorFormControllerExposes {
+	component: ReturnType<typeof useForm>['component']
+}
+
+/**
+ * 监控表单控制器
+ * @description 处理监控添加/编辑表单的业务逻辑
+ * @param {UpdateSiteMonitorParams | null} data - 编辑时的初始数据
+ * @returns {MonitorFormControllerExposes} 返回控制器对象
+ */
+export const useMonitorFormController = (data: UpdateSiteMonitorParams | null = null): MonitorFormControllerExposes => {
+	// 表单工具
 	const { useFormInput, useFormCustom, useFormInputNumber } = useFormHooks()
 
 	// 加载遮罩
@@ -266,7 +312,10 @@ export const useMonitorFormController = (data: UpdateSiteMonitorParams | null = 
 	// 消息和对话框
 	const { confirm } = useModalHooks()
 
-	// 表单配置
+	/**
+	 * 表单配置
+	 * @description 定义表单字段和布局
+	 */
 	const config = computed(() => [
 		useFormInput('名称', 'name'),
 		useFormInput('域名', 'domain'),
@@ -279,17 +328,15 @@ export const useMonitorFormController = (data: UpdateSiteMonitorParams | null = 
 					value={monitorForm.value.report_type}
 					valueType="type"
 					onUpdate:value={(item) => {
-						console.log(item)
 						monitorForm.value.report_type = item.value
 					}}
 				/>
 			)
 		}),
-		// useFormSelect('类型', 'report_type', alarmList.value, { placeholder: '请选择类型，不能为空' }),
 	])
 
 	/**
-	 * @description 表单验证规则
+	 * 表单验证规则
 	 */
 	const rules = {
 		name: { required: true, message: '请输入名称', trigger: 'input' },
@@ -310,17 +357,16 @@ export const useMonitorFormController = (data: UpdateSiteMonitorParams | null = 
 	} as FormRules
 
 	/**
-	 * @description 提交表单
-	 * @param {AddSiteMonitorParams} params - 添加监控参数
-	 * @param {Ref<FormInst | null>} formRef - 表单实例
+	 * 表单提交处理
+	 * @description 根据当前模式处理表单提交
+	 * @param {AddSiteMonitorParams | UpdateSiteMonitorParams} params - 表单数据
 	 */
-	const request = async (params: AddSiteMonitorParams | UpdateSiteMonitorParams) => {
+	const request = async (params: AddSiteMonitorParams | UpdateSiteMonitorParams): Promise<void> => {
 		try {
 			if (data) {
 				await updateExistingMonitor({ ...params, id: data.id })
 			} else {
 				const { id, ...rest } = params
-				console.log(rest)
 				await addNewMonitor(rest)
 			}
 		} catch (error) {
@@ -328,7 +374,9 @@ export const useMonitorFormController = (data: UpdateSiteMonitorParams | null = 
 		}
 	}
 
-	// 使用表单hooks
+	/**
+	 * 使用表单hooks创建表单组件
+	 */
 	const { component, fetch } = useForm({
 		config,
 		defaultValue: monitorForm,
@@ -336,7 +384,10 @@ export const useMonitorFormController = (data: UpdateSiteMonitorParams | null = 
 		rules,
 	})
 
-	// 关联确认按钮
+	/**
+	 * 关联确认按钮
+	 * @description 处理表单提交逻辑
+	 */
 	confirm(async (close) => {
 		try {
 			openLoad()
@@ -349,10 +400,12 @@ export const useMonitorFormController = (data: UpdateSiteMonitorParams | null = 
 		}
 	})
 
+	// 组件挂载时更新表单数据
 	onMounted(() => {
-		updateMonitorForm(data) // 更新监控表单
+		updateMonitorForm(data)
 	})
 
+	// 组件卸载时重置表单
 	onUnmounted(resetMonitorForm)
 
 	return {

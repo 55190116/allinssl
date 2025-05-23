@@ -1,5 +1,5 @@
 import { computed, ref, effectScope, onScopeDispose, watch } from 'vue'
-import { useDark, useLocalStorage } from '@vueuse/core'
+import { useLocalStorage } from '@vueuse/core'
 import { darkTheme, lightTheme, useThemeVars } from 'naive-ui'
 import themes from './model'
 
@@ -131,16 +131,12 @@ export const useTheme = (name?: ThemeName) => {
 			// 加载主题样式
 			const themeConfig = await themeItem.import()
 			const themeStyles = await themeItem.styleContent() // 获取主题样式内容
-
 			// 加载新样式
 			if (themeStyles || themeStyles) {
 				loadDynamicCss(themeStyles as string, 'theme-style')
 			}
 			// 更新激活的主题
 			themeActiveOverrides.value = themeConfig
-
-			console.log('themeActiveOverrides', themeActiveOverrides.value)
-			console.log('themeOverrides', themeOverrides.value)
 		} catch (error) {
 			console.error(`加载主题失败 ${themeName}:`, error)
 		}

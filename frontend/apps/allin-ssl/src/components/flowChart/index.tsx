@@ -1,7 +1,7 @@
 import { NButton, NIcon, NInput } from 'naive-ui'
 import { SaveOutlined, ArrowLeftOutlined } from '@vicons/antd'
 import { $t } from '@locales/index'
-import SvgIcon from '@components/svgIcon'
+import SvgIcon from '@components/SvgIcon'
 
 import { useController } from './useController'
 import { useStore } from './useStore'
@@ -28,8 +28,13 @@ export default defineComponent({
 			type: Object as PropType<FlowNode>,
 			default: () => ({}),
 		},
+		// 任务节点列表
+		taskComponents: {
+			type: Object as PropType<Record<string, Component>>,
+			default: () => ({}),
+		},
 	},
-	setup(props: FlowNodeProps) {
+	setup(props: FlowNodeProps, { slots }) {
 		const cssVars = useThemeCssVar([
 			'borderColor',
 			'dividerColor',
@@ -40,11 +45,13 @@ export default defineComponent({
 			'bodyColor',
 		])
 		const { flowData, selectedNodeId, flowZoom, resetFlowData } = useStore()
-		const { initData, handleSaveConfig, handleZoom, handleSelectNode, goBack } = useController({
+		const { initData, handleSaveConfig, handleZoom, goBack } = useController({
 			type: props?.type,
 			node: props?.node,
 			isEdit: props?.isEdit,
 		})
+		// 提供任务节点组件映射给后代组件使用
+		provide('taskComponents', props.taskComponents)
 		onMounted(initData)
 		onUnmounted(resetFlowData)
 		return () => (
@@ -80,7 +87,7 @@ export default defineComponent({
 						{/* 流程容器*/}
 						<div class={styles.flowProcess} style={{ transform: `scale(${flowZoom.value / 100})` }}>
 							{/* 渲染流程节点 */}
-							<NodeWrap node={flowData.value.childNode} onSelect={handleSelectNode} />
+							<NodeWrap node={flowData.value.childNode} />
 							{/* 流程结束节点  */}
 							<EndNode />
 						</div>
@@ -96,6 +103,8 @@ export default defineComponent({
 						</div>
 					</div>
 				</div>
+				{/* 保留原有插槽 */}
+				{slots.default?.()}
 			</div>
 		)
 	},

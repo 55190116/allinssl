@@ -1,15 +1,12 @@
 import { v4 as uuidv4 } from 'uuid'
-import { useModal, useMessage } from '@baota/naive-ui/hooks'
+import { useMessage } from '@baota/naive-ui/hooks'
 import { $t } from '@locales/index'
-import { useStore } from '@components/flowChart/useStore'
+import { useStore } from '@components/FlowChart/useStore'
 import { useStore as useWorkflowViewStore } from '@autoDeploy/children/workflowView/useStore'
-import { CONDITION, EXECUTE_RESULT_CONDITION } from '@components/flowChart/lib/alias'
-import FlowChart from '@components/flowChart/components/other/drawer'
-
-import { useNodeValidator } from '@components/flowChart/lib/verify'
+import { useNodeValidator } from '@components/FlowChart/lib/verify'
 import { useError } from '@baota/hooks/error'
 
-import type { BaseNodeData, BranchNodeData, FlowNodeProps, NodeNum, StartNodeConfig } from '@components/flowChart/types'
+import type { BaseNodeData, BranchNodeData, FlowNodeProps, NodeNum, StartNodeConfig } from '@components/FlowChart/types'
 
 const message = useMessage()
 const {
@@ -26,6 +23,7 @@ const {
 
 const { workflowData, addNewWorkflow, updateWorkflowData, resetWorkflowData } = useWorkflowViewStore()
 const { handleError } = useError()
+
 /**
  * 流程图控制器
  * 用于处理流程图的业务逻辑和用户交互
@@ -35,69 +33,6 @@ export const useController = (props: FlowNodeProps = { type: 'quick', node: flow
 	// 使用store获取所有需要的方法和状态
 	const router = useRouter()
 	const route = useRoute()
-	/**
-	 * 当前选中的节点数据
-	 * @type {ComputedRef<BaseNodeData | null>}
-	 */
-	const selectedNode = computed(() => {
-		if (!selectedNodeId.value) return null
-		// 使用findNodeRecursive查找节点
-		return findNodeRecursive(flowData.value.childNode, selectedNodeId.value)
-	})
-
-	/**
-	 * 节点标题
-	 * @type {ComputedRef<string>}
-	 */
-	const nodeTitle = computed(() => {
-		if (!selectedNode.value) return $t('t_6_1744861190121')
-		return selectedNode.value.name
-	})
-
-	/**
-	 * 递归查找节点
-	 * @param {BaseNodeData | BranchNodeData} node - 当前节点
-	 * @param {string} targetId - 目标节点ID
-	 * @returns {BaseNodeData | null} 找到的节点或null
-	 */
-	const findNodeRecursive = (node: BaseNodeData | BranchNodeData, targetId: string): BaseNodeData | null => {
-		if (node.id === targetId) return node as BaseNodeData
-
-		// 优先检查子节点
-		if (node.childNode) {
-			const found = findNodeRecursive(node.childNode, targetId)
-			if (found) return found
-		}
-
-		// 检查条件节点
-		if ((node as BranchNodeData).conditionNodes?.length) {
-			for (const conditionNode of (node as BranchNodeData).conditionNodes) {
-				const found = findNodeRecursive(conditionNode, targetId)
-				if (found) return found
-			}
-		}
-		return null
-	}
-
-	/**
-	 * 选择节点
-	 * @param {string} nodeId 节点ID
-	 * @param {NodeNum} nodeType 节点类型
-	 */
-	const handleSelectNode = (nodeId: string, nodeType: NodeNum) => {
-		if (nodeType === CONDITION || nodeType === EXECUTE_RESULT_CONDITION) {
-			selectedNodeId.value = ''
-		} else {
-			selectedNodeId.value = nodeId
-			useModal({
-				title: `${selectedNode.value?.name}${$t('t_1_1745490731990')}`,
-				area: '60rem',
-				component: () => <FlowChart node={selectedNode.value} />,
-				confirmText: $t('t_2_1744861190040'),
-				footer: true,
-			})
-		}
-	}
 
 	/**
 	 * 保存节点配置
@@ -197,10 +132,7 @@ export const useController = (props: FlowNodeProps = { type: 'quick', node: flow
 	return {
 		flowData,
 		selectedNodeId,
-		selectedNode,
-		nodeTitle,
 		handleSaveConfig,
-		handleSelectNode,
 		handleZoom,
 		handleRun,
 		goBack,

@@ -6,7 +6,7 @@ import { useError } from '@baota/hooks/error'
 import { $t } from '@locales/index'
 import { useStore } from './useStore'
 
-import EmailChannelForm from './components/emailChannelForm'
+import EmailChannelForm from './components/EmailChannelForm'
 import type { ReportMail, AddReportParams, SaveSettingParams, ReportType } from '@/types/setting'
 
 const {

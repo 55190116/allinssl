@@ -1,5 +1,5 @@
 import { useHistoryController } from '@autoDeploy/useController'
-import BaseComponent from '@components/baseComponent'
+import BaseComponent from '@components/BaseLayout'
 import { $t } from '@locales/index'
 import { NButton } from 'naive-ui'
 
@@ -25,7 +25,7 @@ export default defineComponent({
 					v-slots={{
 						header: () => (
 							<div class="flex items-center justify-between mb-[1.6rem]">
-								<NButton type="primary" onClick={() => fetch()}>
+								<NButton type="default" onClick={() => fetch()}>
 									{$t('t_9_1746667589516')}
 								</NButton>
 							</div>

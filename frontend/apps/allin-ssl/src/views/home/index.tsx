@@ -1,13 +1,24 @@
-import { NCard, NSpin, NIcon, NEmpty, NDataTable, NButton } from 'naive-ui'
-import { CloudMonitoring, Flow, ArrowRight } from '@vicons/carbon'
-import { Certificate20Regular } from '@vicons/fluent'
-import { $t } from '@locales/index'
+import { defineComponent } from 'vue'; // 修改：移除 computed
+import { NCard, NSpin, NIcon, NEmpty, NDataTable, NButton } from 'naive-ui';
+import { CloudMonitoring, Flow, ArrowRight } from '@vicons/carbon';
+import { Certificate20Regular } from '@vicons/fluent';
+import { useThemeCssVar } from '@baota/naive-ui/theme';
 
-import { useController } from './useController'
-import { useStore } from './useStore'
+// Absolute Internal Imports - Utilities
+import { $t } from '@locales/index';
 
-import styles from './index.module.css'
+// Relative Internal Imports
+import { useController } from './useController';
+import { useStore } from './useStore';
 
+// Side-effect Imports
+import styles from './index.module.css';
+
+/**
+ * @component HomeView
+ * @description 首页视图组件。
+ * 负责展示应用概览信息、工作流历史以及快捷入口。
+ */
 export default defineComponent({
 	name: 'HomeView',
 	setup() {
@@ -15,33 +26,42 @@ export default defineComponent({
 		const { overviewData, pushToWorkflow, pushToCert, pushToMonitor, pushToCertManage, createColumns } = useController()
 		const columns = createColumns()
 
+		// 参考 layout/index.tsx 的用法，直接获取需要的 Naive UI 主题变量
+		// useThemeCssVar 会将这些 camelCase 变量名转换为 kebab-case CSS 变量 (e.g., successColor -> --n-success-color)
+		// 并将它们应用到绑定 style 的元素上。
+		const cssVars = useThemeCssVar(['successColor', 'errorColor', 'warningColor', 'primaryColor']);
+
 		return () => (
-			<div class="mx-auto max-w-[1600px] w-full p-6">
+			<div class="mx-auto max-w-[1600px] w-full p-6" style={cssVars.value}>
 				<NSpin show={loading.value}>
-					<div class="flex flex-col h-full gap-8 overflow-auto">
+					<div class="flex flex-col h-full gap-8">
 						{/* 概览模块 */}
 						<div class="grid grid-cols-1 md:grid-cols-3 gap-4">
 							{/* 自动化工作流概览卡片 */}
 							<div onClick={() => pushToWorkflow()} class="cursor-pointer relative">
-								<div class="absolute right-0 top-0 w-24 h-24 rounded-full bg-blue-50 opacity-70 -z-10"></div>
+								<div
+									class={`absolute right-0 top-0 w-24 h-24 rounded-full opacity-70 -z-10 ${styles.bgUtilDecorative}`}
+								></div>
 								<NCard class="transition-all duration-300 rounded-[0.6rem]" hoverable={true} bordered={false}>
 									<div class="flex items-center justify-center">
 										<div class="flex-1">
 											<div class={styles.tableText}>{$t('t_2_1746773350970')}</div>
-											<div class="flex items-center space-x-5">
+											<div class="flex items-center xl:space-x-5 lg:space-x-4 md:space-x-3 space-x-3">
 												<div>
-													<span class="text-[2.4rem] font-bold">{overviewData.value.workflow.count}</span>
+													<span class="xl:text-[2.4rem] lg:text-[2.2rem] md:text-[2rem] text-[1.8rem] font-bold">
+														{overviewData.value.workflow.count}
+													</span>
 													<p class={styles.tableText}>{$t('t_3_1746773348798')}</p>
 												</div>
-												<div class="border-l-2 pl-[2rem] ml-[3rem] h-[5rem] lining-[5rem]">
+												<div class="border-l-2 xl:pl-[2rem] xl:ml-[3rem] lg:pl-[1.5rem] lg:ml-[2.5rem] md:pl-[1.5rem] md:ml-[2rem] pl-[1rem] ml-[1.5rem] min-h-[5rem] flex flex-col justify-center">
 													<div class="flex items-center space-x-1">
-														<span class="w-4 h-4 rounded-full mr-[.6rem] bg-green-500"></span>
+														<span class={`w-4 h-4 rounded-full mr-[.6rem] ${styles.bgUtilSuccess}`}></span>
 														<span class={styles.tableText}>
 															{$t('t_0_1746782379424')}: {overviewData.value.workflow.active}
 														</span>
 													</div>
 													<div class="flex items-center space-x-1 mt-3">
-														<span class="w-4 h-4 rounded-full mr-[.6rem] bg-red-500"></span>
+														<span class={`w-4 h-4 rounded-full mr-[.6rem] ${styles.bgUtilError}`}></span>
 														<span class={styles.tableText}>
 															{$t('t_4_1746773348957')}: {overviewData.value.workflow.failure}
 														</span>
@@ -60,25 +80,29 @@ export default defineComponent({
 
 							{/* 证书管理概览卡片 */}
 							<div onClick={() => pushToCertManage()} class="cursor-pointer relative">
-								<div class="absolute right-0 top-0 w-24 h-24 rounded-full bg-blue-50 opacity-70 -z-10"></div>
+								<div
+									class={`absolute right-0 top-0 w-24 h-24 rounded-full opacity-70 -z-10 ${styles.bgUtilDecorative}`}
+								></div>
 								<NCard class="transition-all duration-300 rounded-[0.6rem]" hoverable={true} bordered={false}>
 									<div class="flex items-center justify-center">
 										<div class="flex-1">
 											<div class={styles.tableText}>{$t('t_2_1744258111238')}</div>
-											<div class="flex items-center space-x-5">
+											<div class="flex items-center xl:space-x-5 lg:space-x-4 md:space-x-3 space-x-3">
 												<div>
-													<span class="text-[2.4rem] font-bold">{overviewData.value.cert.count}</span>
+													<span class="xl:text-[2.4rem] lg:text-[2.2rem] md:text-[2rem] text-[1.8rem] font-bold">
+														{overviewData.value.cert.count}
+													</span>
 													<p class={styles.tableText}>{$t('t_3_1746773348798')}</p>
 												</div>
-												<div class="border-l-2 pl-[2rem] ml-[3rem] h-[5rem] lining-[5rem]">
+												<div class="border-l-2 xl:pl-[2rem] xl:ml-[3rem] lg:pl-[1.5rem] lg:ml-[2.5rem] md:pl-[1.5rem] md:ml-[2rem] pl-[1rem] ml-[1.5rem] min-h-[5rem] flex flex-col justify-center">
 													<div class="flex items-center space-x-1">
-														<span class="w-4 h-4 rounded-full mr-[.6rem] bg-yellow-500"></span>
+														<span class={`w-4 h-4 rounded-full mr-[.6rem] ${styles.bgUtilWarning}`}></span>
 														<span class={styles.tableText}>
 															{$t('t_5_1746773349141')}: {overviewData.value.cert.will}
 														</span>
 													</div>
 													<div class="flex items-center space-x-1 mt-3">
-														<span class="w-4 h-4 rounded-full mr-[.6rem] bg-red-500"></span>
+														<span class={`w-4 h-4 rounded-full mr-[.6rem] ${styles.bgUtilError}`}></span>
 														<span class={styles.tableText}>
 															{$t('t_0_1746001199409')}: {overviewData.value.cert.end}
 														</span>
@@ -97,19 +121,23 @@ export default defineComponent({
 
 							{/* 实时监控概览卡片 */}
 							<div onClick={() => pushToMonitor()} class="cursor-pointer relative">
-								<div class="absolute right-0 top-0 w-24 h-24 rounded-full bg-blue-50 opacity-70 -z-10"></div>
+								<div
+									class={`absolute right-0 top-0 w-24 h-24 rounded-full opacity-70 -z-10 ${styles.bgUtilDecorative}`}
+								></div>
 								<NCard class="transition-all duration-300 rounded-[0.6rem]" hoverable={true} bordered={false}>
 									<div class="flex items-center justify-center">
 										<div class="flex-1">
 											<div class={styles.tableText}>{$t('t_6_1746773349980')}</div>
-											<div class="flex items-center space-x-5">
+											<div class="flex items-center xl:space-x-5 lg:space-x-4 md:space-x-3 space-x-3">
 												<div>
-													<span class="text-[2.4rem] font-bold">{overviewData.value.site_monitor.count}</span>
+													<span class="xl:text-[2.4rem] lg:text-[2.2rem] md:text-[2rem] text-[1.8rem] font-bold">
+														{overviewData.value.site_monitor.count}
+													</span>
 													<p class={styles.tableText}>{$t('t_3_1746773348798')}</p>
 												</div>
-												<div class="border-l-2 pl-[2rem] ml-[3rem]  h-[5rem] lining-[5rem]">
+												<div class="border-l-2 xl:pl-[2rem] xl:ml-[3rem] lg:pl-[1.5rem] lg:ml-[2.5rem] md:pl-[1.5rem] md:ml-[2rem] pl-[1rem] ml-[1.5rem] min-h-[5rem] flex flex-col justify-center">
 													<div class="flex items-center space-x-1">
-														<span class="w-4 h-4 rounded-full mr-[.6rem] bg-red-500"></span>
+														<span class={`w-4 h-4 rounded-full mr-[.6rem] ${styles.bgUtilError}`}></span>
 														<span class={styles.tableText}>
 															{$t('t_7_1746773349302')}: {overviewData.value.site_monitor.exception}
 														</span>
@@ -226,5 +254,5 @@ export default defineComponent({
 				</NSpin>
 			</div>
 		)
-	},
+	}
 })

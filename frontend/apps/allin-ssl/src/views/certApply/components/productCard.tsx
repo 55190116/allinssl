@@ -44,20 +44,6 @@ export default defineComponent({
 		},
 	},
 	setup(props) {
-		// 获取域名类型文本
-		const domainTypeText = computed(() => {
-			const title = props.product.title.toLowerCase()
-			if (title.includes('通配符') && title.includes('多域名')) {
-				return '多域名通配符'
-			} else if (title.includes('通配符')) {
-				return '通配符'
-			} else if (title.includes('多域名')) {
-				return '多域名'
-			} else {
-				return '单域名'
-			}
-		})
-
 		// 判断是否为通配符证书
 		const isWildcard = computed(() => {
 			return props.product.title.toLowerCase().includes('通配符')
@@ -73,7 +59,7 @@ export default defineComponent({
 			props.onBuy(props.product.pid)
 		}
 
-		// 获取品牌图标 
+		// 获取品牌图标
 		const getBrandIcon = (brand: string) => {
 			const brandLower = brand.toLowerCase()
 			if (brandLower.includes('sectigo')) return '/static/icons/sectigo-ico.png'
@@ -81,7 +67,6 @@ export default defineComponent({
 			if (brandLower.includes('锐安信')) return '/static/icons/ssltrus-ico.png'
 			if (brandLower.includes("let's encrypt")) return '/static/icons/letsencrypt-icon.svg'
 			if (brandLower.includes('宝塔证书')) return '/static/icons/btssl.svg'
-			
 		}
 
 		return () => (

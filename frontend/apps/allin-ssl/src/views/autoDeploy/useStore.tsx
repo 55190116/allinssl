@@ -6,6 +6,7 @@ import {
 	updateWorkflowExecType,
 	enableWorkflow,
 } from '@/api/workflow'
+import { getEabList, addEab, deleteEab } from '@/api/access'
 import { useError } from '@baota/hooks/error'
 // import { useMessage } from '@baota/naive-ui/hooks'
 import { $t } from '@locales/index'
@@ -17,6 +18,8 @@ import type {
 	UpdateWorkflowExecTypeParams,
 	EnableWorkflowParams,
 } from '@/types/workflow'
+import type { EabItem, EabListParams, EabAddParams } from '@/types/access'
+import type { TableResponse } from '@baota/naive-ui/types/table'
 
 const { handleError } = useError()
 
@@ -39,6 +42,15 @@ export const useWorkflowStore = defineStore('workflow-store', () => {
 		{ label: '快速部署模板', value: 'quick', description: '快速上线应用，简化流程' },
 		{ label: '高级自定义模板', value: 'advanced', description: '完全自定义的部署流程' },
 	])
+
+	// CA授权管理相关数据
+	// CA授权表单数据
+	const caFormData = ref<EabAddParams>({
+		name: '',
+		Kid: '',
+		HmacEncoded: '',
+		ca: 'zerossl',
+	})
 
 	// -------------------- 工具方法 --------------------
 	/**
@@ -136,12 +148,69 @@ export const useWorkflowStore = defineStore('workflow-store', () => {
 		}
 	}
 
+	/**
+	 * 获取CA授权列表
+	 * @param {EabListParams} params - 请求参数
+	 * @returns {Promise<TableResponse<EabItem>>} 返回表格数据结构
+	 */
+	const fetchEabList = async <T = EabItem,>({ p, limit }: EabListParams) => {
+		try {
+			const { data, count } = await getEabList({ p, limit }).fetch()
+			return { list: (data || []) as T[], total: count }
+		} catch (error) {
+			handleError(error)
+			return { list: [], total: 0 }
+		}
+	}
+
+	/**
+	 * 添加CA授权
+	 * @param {EabAddParams} params - CA授权数据
+	 */
+	const addNewEab = async (formData: EabAddParams): Promise<void> => {
+		try {
+			const { message, fetch } = addEab(formData)
+			message.value = true
+			await fetch()
+			resetCaForm() // 重置表单
+		} catch (error) {
+			handleError(error)
+		}
+	}
+
+	/**
+	 * 删除CA授权
+	 * @param {string} id - CA授权ID
+	 */
+	const deleteExistingEab = async (id: string): Promise<void> => {
+		try {
+			const { message, fetch } = deleteEab({ id })
+			message.value = true
+			await fetch()
+		} catch (error) {
+			handleError(error).default($t('t_40_1745227838872'))
+		}
+	}
+
+	/**
+	 * 重置CA表单
+	 */
+	const resetCaForm = () => {
+		caFormData.value = {
+			name: '',
+			Kid: '',
+			HmacEncoded: '',
+			ca: 'zerossl',
+		}
+	}
+
 	return {
 		// 状态
 		refreshTable,
 		isEditWorkFlow,
 		workflowFormData,
 		workflowTemplateOptions,
+		caFormData,
 
 		// 方法
 		fetchWorkflowList,
@@ -150,6 +219,10 @@ export const useWorkflowStore = defineStore('workflow-store', () => {
 		executeExistingWorkflow,
 		setWorkflowActive,
 		setWorkflowExecType,
+		fetchEabList,
+		addNewEab,
+		deleteExistingEab,
+		resetCaForm,
 	}
 })
 

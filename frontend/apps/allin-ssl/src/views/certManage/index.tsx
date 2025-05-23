@@ -1,12 +1,11 @@
 import { NInput, NButton } from 'naive-ui'
 import { useTheme, useThemeCssVar } from '@baota/naive-ui/theme'
-import { PlusOutlined } from '@vicons/antd'
 import { Search } from '@vicons/carbon'
 import { $t } from '@locales/index'
 import { useController } from './useController'
 
-import BaseComponent from '@components/baseComponent'
-import EmptyState from '@components/emptyState'
+import BaseComponent from '@components/BaseLayout'
+import EmptyState from '@components/TableEmptyState'
 
 /**
  * 证书管理组件
@@ -27,8 +26,7 @@ export default defineComponent({
 						v-slots={{
 							headerLeft: () => (
 								<NButton type="primary" size="large" class="px-5" onClick={openUploadModal}>
-									<PlusOutlined class="text-[var(--text-color-3)] w-[1.6rem]" />
-									<span class="px-2">{$t('t_13_1745227838275')}</span>
+									{$t('t_13_1745227838275')}
 								</NButton>
 							),
 							headerRight: () => (

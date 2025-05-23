@@ -1,20 +1,21 @@
+import { defineComponent } from 'vue'
 import { NInput, NButton } from 'naive-ui'
-import { PlusOutlined } from '@vicons/antd'
 import { Search } from '@vicons/carbon'
 import { $t } from '@locales/index'
 import { useThemeCssVar } from '@baota/naive-ui/theme'
 import { useController } from './useController'
 
-import EmptyState from '@components/emptyState/index'
-import BaseComponent from '@components/baseComponent'
+import EmptyState from '@components/TableEmptyState'
+import BaseComponent from '@components/BaseLayout'
 
 /**
  * 授权API管理页面组件
+ * @description 展示授权API列表、提供添加、编辑、删除等功能的主页面组件
  */
 export default defineComponent({
 	name: 'AuthApiManage',
 	setup() {
-		const { ApiTable, ApiTablePage, param, fetch, data, openAddForm } = useController()
+		const { ApiTable, ApiTablePage, param, fetch, total, openAddForm } = useController()
 		const cssVar = useThemeCssVar(['contentPadding', 'borderColor', 'headerHeight', 'iconColorHover'])
 
 		return () => (
@@ -24,8 +25,7 @@ export default defineComponent({
 						v-slots={{
 							headerLeft: () => (
 								<NButton type="primary" size="large" class="px-5" onClick={openAddForm}>
-									<PlusOutlined class="text-[var(--text-color-3)] w-[1.6rem]" />
-									<span class="px-2">{$t('t_0_1745289355714')}</span>
+									{$t('t_0_1745289355714')}
 								</NButton>
 							),
 							headerRight: () => (
@@ -41,12 +41,12 @@ export default defineComponent({
 									class="min-w-[300px]"
 									v-slots={{
 										suffix: () => (
-											<div class="flex items-center" onClick={fetch}>
-												<Search class="text-[var(--text-color-3)] w-[1.6rem] cursor-pointer font-bold" />
+											<div class="flex items-center cursor-pointer" onClick={fetch}>
+												<Search class="text-[var(--text-color-3)] w-[1.6rem] font-bold" />
 											</div>
 										),
 									}}
-								></NInput>
+								/>
 							),
 							content: () => (
 								<div class="rounded-lg">
@@ -64,7 +64,7 @@ export default defineComponent({
 										v-slots={{
 											prefix: () => (
 												<span>
-													{$t('t_15_1745227839354')} {data.value.total} {$t('t_16_1745227838930')}
+													{$t('t_15_1745227839354')} {total.value} {$t('t_16_1745227838930')}
 												</span>
 											),
 										}}
@@ -72,7 +72,7 @@ export default defineComponent({
 								</div>
 							),
 						}}
-					></BaseComponent>
+					/>
 				</div>
 			</div>
 		)

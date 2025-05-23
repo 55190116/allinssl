@@ -126,7 +126,6 @@ const processFormItemSlots = (slot?: { prefix?: Array<() => JSX.Element>; suffix
 				render: item,
 			}))
 		: []
-
 	const suffixElements = slot?.suffix
 		? slot.suffix.map((item: () => JSX.Element) => ({
 				type: 'render' as const,
@@ -293,12 +292,12 @@ export default function useForm<T>(options: UseFormOptions<T>) {
 
 			// 处理插槽元素：使用配置的插槽函数渲染内容
 			if (isSlotElement(element)) {
+				console.log(element, 'element')
 				return slots?.[element.slot]?.(data as unknown as Ref<T>, formRef) ?? null
 			}
 
 			// 处理自定义渲染元素：调用自定义渲染函数
 			if (isRenderElement(element)) {
-				console.log(data, 'data')
 				return element.render(data as unknown as Ref<T>, formRef)
 			}
 			// 处理基础表单元素：使用组件映射表渲染对应组件
@@ -635,7 +634,7 @@ const useFormRadio = (
 	itemAttrs?: FormItemProps & { class?: string },
 	slot?: { prefix?: Array<() => JSX.Element>; suffix?: Array<() => JSX.Element> },
 ) => {
-	return createFormItem(label, key, 'radio', { options, ...other }, itemAttrs, slot)
+	return createFormItem(label, key, 'radio', { options, ...other }, itemAttrs, slot || {})
 }
 
 /**
@@ -651,7 +650,7 @@ const useFormRadioButton = (
 	itemAttrs?: FormItemProps & { class?: string },
 	slot?: { prefix?: Array<() => JSX.Element>; suffix?: Array<() => JSX.Element> },
 ) => {
-	return createFormItem(label, key, 'radioButton', { options, ...other }, itemAttrs, slot)
+	return createFormItem(label, key, 'radioButton', { options, ...other }, itemAttrs, slot || {})
 }
 /**
  * 创建一个表单复选框
@@ -666,7 +665,7 @@ const useFormCheckbox = (
 	itemAttrs?: FormItemProps & { class?: string },
 	slot?: { prefix?: Array<() => JSX.Element>; suffix?: Array<() => JSX.Element> },
 ) => {
-	return createFormItem(label, key, 'checkbox', { options, ...other } as any, itemAttrs, slot)
+	return createFormItem(label, key, 'checkbox', { options, ...other } as any, itemAttrs, slot || {})
 }
 
 /**
@@ -679,7 +678,7 @@ const useFormSwitch = (
 	key: string,
 	other?: SwitchProps & { class?: string },
 	itemAttrs?: FormItemProps & { class?: string },
-	slot?: SwitchSlots,
+	slot?: { prefix?: Array<() => JSX.Element>; suffix?: Array<() => JSX.Element> },
 ) => {
 	return createFormItem(label, key, 'switch', { ...other }, itemAttrs, slot)
 }
@@ -739,9 +738,9 @@ const useFormMore = (isMore: Ref<boolean>, content?: string) => {
 	return {
 		type: 'custom',
 		render: () => (
-			<NDivider class="cursor-pointer w-full !m-[1rem]" onClick={() => (isMore.value = !isMore.value)}>
+			<NDivider class="cursor-pointer w-full" style={{ marginTop: '0' }} onClick={() => (isMore.value = !isMore.value)}>
 				<div class="flex items-center w-full" style={{ color }}>
-					<span class="mr-[4px]">
+					<span class="mr-[4px] text-[1.4em]">
 						{!isMore.value ? hookT('expand') : hookT('collapse')}
 						{content || hookT('moreConfig')}
 					</span>

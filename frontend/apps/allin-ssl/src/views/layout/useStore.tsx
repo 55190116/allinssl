@@ -1,16 +1,30 @@
-import { useError } from '@baota/hooks/error'
+// 外部库依赖
+import { defineStore, storeToRefs } from 'pinia'
+import { ref, computed } from 'vue'
+import { useLocalStorage, useSessionStorage } from '@vueuse/core'
 
-import type { RouteName } from './types'
-import { DnsProviderOption, NotifyProviderOption } from '@/types/setting'
+// 类型导入 - 从全局类型文件导入
+import type {
+	RouteName,
+	LayoutStoreInterface, // 替换 LayoutStoreExposes
+	PushSourceTypeItem, // 导入 PushSourceTypeItem
+} from '@/types/layout' // 调整路径
+import type { DnsProviderOption, NotifyProviderOption } from '@/types/setting'
+
+// 内部模块导入 - Hooks
+import { useError } from '@baota/hooks/error'
+// 内部模块导入 - API
 import { getReportList } from '@api/setting'
 import { getAccessAllList } from '@api/index'
+// 内部模块导入 - 工具函数
 import { $t } from '@locales/index'
 
 /**
  * @description 布局相关的状态管理
  * @warn 包含部分硬编码的业务数据，需要从API获取
  */
-export const useLayoutStore = defineStore('layout-store', () => {
+export const useLayoutStore = defineStore('layout-store', (): LayoutStoreInterface => {
+	// 使用导入的 LayoutStoreInterface
 	const { handleError } = useError()
 
 	// ==============================
@@ -40,7 +54,7 @@ export const useLayoutStore = defineStore('layout-store', () => {
 	/**
 	 * @description 布局内边距
 	 */
-	const layoutPadding = computed(() => {
+	const layoutPadding = computed<string>(() => {
 		return menuActive.value !== 'home' ? 'var(--n-content-padding)' : '0'
 	})
 
@@ -50,42 +64,9 @@ export const useLayoutStore = defineStore('layout-store', () => {
 	const locales = useLocalStorage<string>('locales-active', 'zhCN')
 
 	/**
-	 * @description 主机提供商
+	 * @description 推送消息提供商 (保持 PushSourceTypeItem 和 pushSourceType)
 	 */
-	const sourceTypes = ref({
-		// 主机提供商
-		ssh: { name: 'SSH', access: ['host'] },
-		btpanel: { name: $t('t_10_1745735765165'), access: ['host'] },
-		btwaf: { name: '宝塔WAF', access: ['host'] },
-		'1panel': { name: '1Panel', access: ['host'] },
-		aliyun: { name: $t('t_2_1747019616224'), access: ['dns', 'host'] },
-		tencentcloud: { name: $t('t_3_1747019616129'), access: ['dns', 'host'] },
-		huaweicloud: { name: '华为云', access: ['dns'] },
-		cloudflare: { name: 'Cloudflare', access: ['dns'] },
-		baidu: { name: '百度云', access: ['dns'] },
-		safeline: { name: '雷池WAF', access: ['host'] },
-		volcengine: { name: '火山引擎', access: ['dns'] },
-		westcn: { name: '西部数码', access: ['dns'] },
-	})
-
-	/**
-	 * @description 主机提供商衍生类型
-	 */
-	const sourceDerivationTypes = ref({
-		// 网站
-		'btpanel-site': { name: $t('t_11_1745735766456') },
-		'1panel-site': { name: $t('t_13_1745735766084') },
-		// 云服务
-		'aliyun-cdn': { name: $t('t_16_1745735766712') },
-		'aliyun-oss': { name: $t('t_2_1746697487164') },
-		'tencentcloud-cdn': { name: $t('t_14_1745735766121') },
-		'tencentcloud-cos': { name: $t('t_15_1745735768976') },
-	})
-
-	/**
-	 * @description 消息通知提供商
-	 */
-	const pushSourceType = ref({
+	const pushSourceType = ref<Record<string, PushSourceTypeItem>>({
 		mail: { name: $t('t_68_1745289354676') },
 		dingtalk: { name: $t('t_32_1746773348993') },
 		wecom: { name: $t('t_33_1746773350932') },
@@ -93,8 +74,6 @@ export const useLayoutStore = defineStore('layout-store', () => {
 		webhook: { name: 'WebHook' },
 	})
 
-	// ==============================
-	// UI 交互方法
 	// ==============================
 	// UI 交互方法
 	// ==============================
@@ -106,33 +85,19 @@ export const useLayoutStore = defineStore('layout-store', () => {
 		isCollapsed.value = !isCollapsed.value
 	}
 
-	/**
-	 * @description 展开侧边栏
-	 */
-	const handleCollapse = () => {
+	const handleCollapse = (): void => {
 		isCollapsed.value = true
 	}
 
-	/**
-	 * @description 收起侧边栏
-	 */
-
-	const handleExpand = () => {
+	const handleExpand = (): void => {
 		isCollapsed.value = false
 	}
 
-	/**
-	 * @description 更新菜单激活状态
-	 * @param active - 激活状态
-	 */
 	const updateMenuActive = (active: RouteName): void => {
 		if (active === 'logout') return
 		menuActive.value = active
 	}
 
-	/**
-	 * @description 重置数据信息
-	 */
 	const resetDataInfo = (): void => {
 		menuActive.value = 'home'
 		sessionStorage.removeItem('menu-active')
@@ -150,13 +115,14 @@ export const useLayoutStore = defineStore('layout-store', () => {
 		try {
 			notifyProvider.value = []
 			const { data } = await getReportList({ p: 1, search: '', limit: 1000 }).fetch()
-			notifyProvider.value = data?.map((item) => {
-				return {
-					label: item.name,
-					value: item.id.toString(),
-					type: item.type,
-				}
-			})
+			notifyProvider.value =
+				data?.map((item) => {
+					return {
+						label: item.name,
+						value: item.id.toString(),
+						type: item.type,
+					}
+				}) || [] // 添加空数组作为备选，以防 data 为 null/undefined
 		} catch (error) {
 			handleError(error)
 		}
@@ -164,24 +130,10 @@ export const useLayoutStore = defineStore('layout-store', () => {
 
 	/**
 	 * @description 获取DNS提供商
-	 * @param type - 类型
+	 * @param type - 类型 (简化了联合类型，实际使用时可根据需要定义更精确的类型别名)
 	 * @returns DNS提供商
 	 */
-	const fetchDnsProvider = async (
-		type:
-			| 'btpanel'
-			| 'aliyun'
-			| 'ssh'
-			| 'tencentcloud'
-			| '1panel'
-			| 'dns'
-			| 'baidu'
-			| 'huaweicloud'
-			| 'cloudflare'
-			| 'baidu'
-			| ''
-			| 'btwaf' = '',
-	): Promise<void> => {
+	const fetchDnsProvider = async (type: string = ''): Promise<void> => {
 		try {
 			dnsProvider.value = []
 			const { data } = await getAccessAllList({ type }).fetch()
@@ -199,43 +151,31 @@ export const useLayoutStore = defineStore('layout-store', () => {
 
 	/**
 	 * @description 重置DNS提供商
+	 *
 	 */
 	const resetDnsProvider = (): void => {
 		dnsProvider.value = []
 	}
 
-	// ==============================
-	// 表单处理方法
-	// ==============================
-
 	return {
-		// 状态
-		locales,
+		isCollapsed,
 		notifyProvider,
 		dnsProvider,
-		isCollapsed,
-		layoutPadding,
 		menuActive,
-		sourceTypes,
-		sourceDerivationTypes,
+		layoutPadding,
+		locales,
 		pushSourceType,
-
-		// 方法
-		resetDataInfo,
-		updateMenuActive,
 		toggleCollapse,
 		handleCollapse,
 		handleExpand,
+		updateMenuActive,
+		resetDataInfo,
 		fetchNotifyProvider,
 		fetchDnsProvider,
 		resetDnsProvider,
 	}
 })
 
-/**
- * @description 辅助函数：获取布局相关的状态和方法
- * @returns 组合了store实例和响应式引用的对象
- */
 export const useStore = () => {
 	const store = useLayoutStore()
 	return { ...store, ...storeToRefs(store) }

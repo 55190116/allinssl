@@ -6,7 +6,7 @@ import { useCertificateFormController } from '@certApply/useController'
 export default defineComponent({
 	name: 'CertificateForm',
 	setup() {
-		const { component: CertificateForm } = useCertificateFormController()
+		const { CertificateForm } = useCertificateFormController()
 		return () => <CertificateForm labelPlacement="top" class="max-w-[50rem] mx-auto" />
 	},
 })

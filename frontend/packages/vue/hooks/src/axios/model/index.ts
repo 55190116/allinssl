@@ -1,5 +1,7 @@
-import axios, { AxiosInstance, AxiosRequestConfig, AxiosResponse, InternalAxiosRequestConfig } from 'axios'
+import axios from 'axios'
 import { requestMiddleware, responseMiddleware, errorMiddleware } from './other'
+
+import type { AxiosError, AxiosInstance, AxiosRequestConfig, AxiosResponse, InternalAxiosRequestConfig } from 'axios'
 
 /**
  * 中间件类型定义
@@ -10,7 +12,7 @@ import { requestMiddleware, responseMiddleware, errorMiddleware } from './other'
 export type Middleware = {
 	request?: (config: AxiosRequestConfig) => AxiosRequestConfig | Promise<AxiosRequestConfig>
 	response?: (response: AxiosResponse) => AxiosResponse | Promise<AxiosResponse>
-	error?: (error: unknown) => unknown
+	error?: (error: AxiosError) => AxiosError | Promise<AxiosError>
 }
 
 /**
@@ -135,8 +137,8 @@ class HttpClient {
 	 * @param config - 请求配置
 	 * @returns Promise<AxiosResponse<T>> - 返回请求响应
 	 */
-	public async get<T = unknown>(url: string, config: AxiosRequestConfig = {}): Promise<AxiosResponse<T>> {
-		return this.request<T>({ ...config, url, method: 'get' })
+	public async get<T = unknown>(url: string, config: AxiosRequestConfig = {}) {
+		return this.request<T>({ ...config, url, method: 'get' }) as Promise<AxiosResponse<T>>
 	}
 
 	/**
@@ -146,12 +148,8 @@ class HttpClient {
 	 * @param config - 请求配置
 	 * @returns Promise<AxiosResponse<T>> - 返回请求响应
 	 */
-	public async post<T = unknown>(
-		url: string,
-		data?: Record<string, unknown>,
-		config: AxiosRequestConfig = {},
-	): Promise<AxiosResponse<T>> {
-		return this.request<T>({ ...config, url, data, method: 'post' })
+	public async post<T = unknown>(url: string, data?: Record<string, unknown>, config: AxiosRequestConfig = {}) {
+		return this.request<T>({ ...config, url, data, method: 'post' }) as Promise<AxiosResponse<T>>
 	}
 
 	/**
@@ -161,12 +159,8 @@ class HttpClient {
 	 * @param config - 请求配置
 	 * @returns Promise<AxiosResponse<T>> - 返回请求响应
 	 */
-	public async put<T = unknown>(
-		url: string,
-		data?: Record<string, unknown>,
-		config: AxiosRequestConfig = {},
-	): Promise<AxiosResponse<T>> {
-		return this.request<T>({ ...config, url, data, method: 'put' })
+	public async put<T = unknown>(url: string, data?: Record<string, unknown>, config: AxiosRequestConfig = {}) {
+		return this.request<T>({ ...config, url, data, method: 'put' }) as Promise<AxiosResponse<T>>
 	}
 
 	/**
@@ -175,8 +169,8 @@ class HttpClient {
 	 * @param config - 请求配置
 	 * @returns Promise<AxiosResponse<T>> - 返回请求响应
 	 */
-	public async delete<T = unknown>(url: string, config: AxiosRequestConfig = {}): Promise<AxiosResponse<T>> {
-		return this.request<T>({ ...config, url, method: 'delete' })
+	public async delete<T = unknown>(url: string, config: AxiosRequestConfig = {}) {
+		return this.request<T>({ ...config, url, method: 'delete' }) as Promise<AxiosResponse<T>>
 	}
 }
 

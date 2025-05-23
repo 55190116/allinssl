@@ -1,8 +1,11 @@
+import { defineStore, storeToRefs } from 'pinia'
+import { ref, computed } from 'vue'
 import { getSiteMonitorList, addSiteMonitor, updateSiteMonitor, deleteSiteMonitor, setSiteMonitor } from '@/api/monitor'
 import { useMessage } from '@baota/naive-ui/hooks'
 import { useError } from '@baota/hooks/error'
 import { $t } from '@locales/index'
 
+import type { Ref } from 'vue'
 import type {
 	SiteMonitorItem,
 	SiteMonitorListParams,
@@ -18,13 +21,33 @@ const { handleError } = useError()
 const message = useMessage()
 
 /**
+ * 定义Store暴露的类型
+ */
+interface MonitorStoreExposes {
+	// 状态
+	monitorForm: Ref<AddSiteMonitorParams & UpdateSiteMonitorParams>
+
+	// 方法
+	fetchMonitorList: <T = SiteMonitorItem>(params: SiteMonitorListParams) => Promise<TableResponse<T>>
+	addNewMonitor: (params: AddSiteMonitorParams) => Promise<boolean>
+	updateExistingMonitor: (params: UpdateSiteMonitorParams) => Promise<boolean>
+	deleteExistingMonitor: (params: DeleteSiteMonitorParams) => Promise<boolean>
+	setMonitorStatus: (params: SetSiteMonitorParams) => Promise<boolean>
+	resetMonitorForm: () => void
+	updateMonitorForm: (params?: UpdateSiteMonitorParams | null) => void
+	submitForm: () => Promise<boolean>
+}
+
+/**
  * 监控管理状态 Store
  * @description 用于管理监控相关的状态和操作，包括监控列表、添加、编辑等
  */
-export const useMonitorStore = defineStore('monitor-store', () => {
+export const useMonitorStore = defineStore('monitor-store', (): MonitorStoreExposes => {
 	// -------------------- 状态定义 --------------------
 
-	// 添加/编辑监控表单
+	/**
+	 * 添加/编辑监控表单状态
+	 */
 	const monitorForm = ref<AddSiteMonitorParams & UpdateSiteMonitorParams>({
 		id: 0,
 		name: '',
@@ -33,7 +56,7 @@ export const useMonitorStore = defineStore('monitor-store', () => {
 		report_type: '',
 	})
 
-	// -------------------- 工具方法 --------------------
+	// -------------------- 方法定义 --------------------
 	/**
 	 * 获取监控列表
 	 * @description 根据分页参数获取监控列表数据
@@ -59,7 +82,7 @@ export const useMonitorStore = defineStore('monitor-store', () => {
 	 * @param {AddSiteMonitorParams} params - 添加监控参数
 	 * @returns {Promise<boolean>} 是否添加成功
 	 */
-	const addNewMonitor = async (params: AddSiteMonitorParams) => {
+	const addNewMonitor = async (params: AddSiteMonitorParams): Promise<boolean> => {
 		try {
 			const { fetch, message } = addSiteMonitor(params)
 			message.value = true
@@ -77,7 +100,7 @@ export const useMonitorStore = defineStore('monitor-store', () => {
 	 * @param {UpdateSiteMonitorParams} params - 更新监控参数
 	 * @returns {Promise<boolean>} 是否更新成功
 	 */
-	const updateExistingMonitor = async (params: UpdateSiteMonitorParams) => {
+	const updateExistingMonitor = async (params: UpdateSiteMonitorParams): Promise<boolean> => {
 		try {
 			const { fetch, message } = updateSiteMonitor(params)
 			message.value = true
@@ -92,12 +115,12 @@ export const useMonitorStore = defineStore('monitor-store', () => {
 	/**
 	 * 删除监控
 	 * @description 删除指定ID的监控
-	 * @param {number} id - 监控ID
+	 * @param {DeleteSiteMonitorParams} params - 删除监控参数
 	 * @returns {Promise<boolean>} 是否删除成功
 	 */
-	const deleteExistingMonitor = async ({ id }: DeleteSiteMonitorParams) => {
+	const deleteExistingMonitor = async (params: DeleteSiteMonitorParams): Promise<boolean> => {
 		try {
-			const { fetch, message } = deleteSiteMonitor({ id })
+			const { fetch, message } = deleteSiteMonitor(params)
 			message.value = true
 			await fetch()
 			return true
@@ -111,9 +134,9 @@ export const useMonitorStore = defineStore('monitor-store', () => {
 	 * 设置监控状态
 	 * @description 设置指定ID的监控状态
 	 * @param {SetSiteMonitorParams} params - 设置监控状态参数
-	 * @returns {Promise<AxiosResponseData>} 返回响应数据
+	 * @returns {Promise<boolean>} 是否设置成功
 	 */
-	const setMonitorStatus = async (params: SetSiteMonitorParams) => {
+	const setMonitorStatus = async (params: SetSiteMonitorParams): Promise<boolean> => {
 		try {
 			const { fetch, message } = setSiteMonitor(params)
 			message.value = true
@@ -126,16 +149,20 @@ export const useMonitorStore = defineStore('monitor-store', () => {
 	}
 
 	/**
-	 * @description 更新监控表单
-	 * @param {UpdateSiteMonitorParams} params - 更新监控参数
+	 * 更新监控表单
+	 * @description 用于编辑时填充表单数据
+	 * @param {UpdateSiteMonitorParams | null} params - 更新监控参数
 	 */
-	const updateMonitorForm = (params: UpdateSiteMonitorParams | null = monitorForm.value) => {
+	const updateMonitorForm = (params: UpdateSiteMonitorParams | null = monitorForm.value): void => {
 		const { id, name, domain, cycle, report_type } = params || monitorForm.value
 		monitorForm.value = { id, name, domain, cycle, report_type }
 	}
 
-	// 重置表单
-	const resetMonitorForm = () => {
+	/**
+	 * 重置表单
+	 * @description 清空表单数据
+	 */
+	const resetMonitorForm = (): void => {
 		monitorForm.value = {
 			id: 0,
 			name: '',
@@ -145,8 +172,12 @@ export const useMonitorStore = defineStore('monitor-store', () => {
 		}
 	}
 
-	// 提交表单
-	const submitForm = async () => {
+	/**
+	 * 提交表单
+	 * @description 根据表单状态自动判断是添加还是更新操作
+	 * @returns {Promise<boolean>} 是否提交成功
+	 */
+	const submitForm = async (): Promise<boolean> => {
 		const { id, ...params } = monitorForm.value
 		if (id) {
 			return updateExistingMonitor({ id, ...params }) // 编辑模式
@@ -155,6 +186,7 @@ export const useMonitorStore = defineStore('monitor-store', () => {
 		}
 	}
 
+	// 返回所有状态和方法
 	return {
 		monitorForm,
 		fetchMonitorList,
@@ -171,7 +203,7 @@ export const useMonitorStore = defineStore('monitor-store', () => {
 /**
  * 组合式 API 使用 Store
  * @description 提供对监控管理 Store 的访问，并返回响应式引用
- * @returns {Object} 包含所有 store 状态和方法的对象
+ * @returns {MonitorStoreExposes} 包含所有 store 状态和方法的对象
  */
 export const useStore = () => {
 	const store = useMonitorStore()

@@ -1,6 +1,7 @@
 import {
 	FormInst,
 	FormItemRule,
+	FormProps,
 	FormRules,
 	NButton,
 	NFlex,
@@ -29,30 +30,38 @@ import { useError } from '@baota/hooks/error'
 import { isEmail, isIp, isPort, isUrl } from '@baota/utils/business'
 import { $t } from '@locales/index'
 import { useStore } from './useStore'
+import { ApiProjectConfig } from '@config/data'
+import type { AccessItem, AccessListParams, AddAccessParams, SshAccessConfig, UpdateAccessParams } from '@/types/access'
+import type { VNode, Ref } from 'vue'
+import { testAccess } from '@/api/access'
 
-import type {
-	AccessItem,
-	AccessListParams,
-	AddAccessParams,
-	AliyunAccessConfig,
-	CloudflareAccessConfig,
-	HuaWeiCloudAccessConfig,
-	PanelAccessConfig,
-	SshAccessConfig,
-	TencentCloudAccessConfig,
-	UpdateAccessParams,
-	WestcnAccessConfig,
-} from '@/types/access'
-import type { FormConfig } from '@baota/naive-ui/types/form'
-
-import ApiManageForm from './components/apiManageForm'
-import SvgIcon from '@components/svgIcon'
-import TypeIcon from '@components/typeIcon'
-import { useStore as useLayoutStore } from '@layout/useStore'
+import ApiManageForm from './components/ApiManageModel'
+import SvgIcon from '@components/SvgIcon'
+import TypeIcon from '@components/TypeIcon'
 import { noSideSpace } from '@lib/utils'
+import { JSX } from 'vue/jsx-runtime'
 
-const { sourceTypes } = useLayoutStore()
-// 状态和方法
+/**
+ * 授权API管理控制器接口
+ */
+interface AuthApiManageControllerExposes {
+	loading: Ref<boolean>
+	fetch: () => Promise<void>
+	ApiTable: (props: Record<string, unknown>, context: Record<string, unknown>) => JSX.Element
+	ApiTablePage: (props: Record<string, unknown>, context: Record<string, unknown>) => JSX.Element
+	param: Ref<AccessListParams>
+	total: Ref<number>
+	openAddForm: () => void
+}
+
+/**
+ * API表单控制器接口
+ */
+interface ApiFormControllerExposes {
+	ApiManageForm: (props: FormProps, context: Record<string, unknown>) => JSX.Element
+}
+
+// 获取Store中的状态和方法
 const {
 	accessTypeMap,
 	apiFormProps,
@@ -63,16 +72,31 @@ const {
 	resetApiForm,
 } = useStore()
 
-// 消息和对话框
+// 错误处理钩子
 const { handleError } = useError()
 
 /**
- * @description 授权API管理业务逻辑控制器
- * @returns {Object} 返回授权API相关的状态数据和处理方法
+ * 授权API管理业务逻辑控制器
+ * @description 处理授权API相关的业务逻辑，包括列表展示、表单操作等
+ * @returns {AuthApiManageControllerExposes} 返回授权API相关的状态数据和处理方法
  */
-export const useController = () => {
+export const useController = (): AuthApiManageControllerExposes => {
 	/**
-	 * @description 创建表格列配置
+	 * 测试授权API
+	 * @param {AccessItem} row - 授权API信息
+	 */
+	const handleTestAccess = async (row: AccessItem): Promise<void> => {
+		try {
+			const { fetch, message } = testAccess({ id: row.id, type: row.type })
+			message.value = true
+			fetch()
+		} catch (error) {
+			handleError(error)
+		}
+	}
+
+	/**
+	 * 创建表格列配置
 	 * @returns {DataTableColumns<AccessItem>} 返回表格列配置数组
 	 */
 	const createColumns = (): DataTableColumns<AccessItem> => [
@@ -119,12 +143,15 @@ export const useController = () => {
 		{
 			title: $t('t_8_1745215914610'),
 			key: 'actions',
-			width: 180,
+			width: 240,
 			align: 'right',
 			fixed: 'right',
 			render: (row) => {
 				return (
 					<NSpace justify="end">
+						<NButton size="tiny" strong secondary type="primary" onClick={() => handleTestAccess(row)}>
+							{$t('t_16_1746676855270')}
+						</NButton>
 						<NButton size="tiny" strong secondary type="primary" onClick={() => openEditForm(row)}>
 							{$t('t_11_1745215915429')}
 						</NButton>
@@ -142,7 +169,6 @@ export const useController = () => {
 		component: ApiTable,
 		loading,
 		param,
-		data,
 		total,
 		fetch,
 	} = useTable<AccessItem, AccessListParams>({
@@ -166,12 +192,10 @@ export const useController = () => {
 		},
 	})
 
-	// 定时执行，
-
 	/**
-	 * @description 打开添加授权API弹窗
+	 * 打开添加授权API弹窗
 	 */
-	const openAddForm = () => {
+	const openAddForm = (): void => {
 		useModal({
 			title: $t('t_0_1745289355714'),
 			area: 500,
@@ -185,10 +209,10 @@ export const useController = () => {
 	}
 
 	/**
-	 * @description 打开编辑授权API弹窗
+	 * 打开编辑授权API弹窗
 	 * @param {AccessItem} row - 授权API信息
 	 */
-	const openEditForm = (row: AccessItem) => {
+	const openEditForm = (row: AccessItem): void => {
 		useModal({
 			title: $t('t_4_1745289354902'),
 			area: 500,
@@ -203,10 +227,10 @@ export const useController = () => {
 	}
 
 	/**
-	 * @description 确认删除授权API
-	 * @param {number} id - 授权API ID
+	 * 确认删除授权API
+	 * @param {string} id - 授权API ID
 	 */
-	const confirmDelete = (id: string) => {
+	const confirmDelete = (id: string): void => {
 		useDialog({
 			title: $t('t_5_1745289355718'),
 			content: $t('t_6_1745289358340'),
@@ -228,22 +252,32 @@ export const useController = () => {
 		ApiTable,
 		ApiTablePage,
 		param,
-		data,
+		total,
 		openAddForm,
 	}
 }
 
 /**
- * @description 授权API表单控制器
- * @returns {object} 返回controller对象
+ * 表单控制器Props接口
  */
-export const useApiFormController = (props: { data: AccessItem }) => {
+interface ApiFormControllerProps {
+	data?: AccessItem
+}
+
+/**
+ * 授权API表单控制器
+ * @description 处理授权API表单相关的业务逻辑
+ * @param {ApiFormControllerProps} props - 表单控制器属性
+ * @returns {ApiFormControllerExposes} 返回表单控制器对象
+ */
+export const useApiFormController = (props: ApiFormControllerProps): ApiFormControllerExposes => {
 	const { confirm } = useModalHooks() // 弹窗挂载方法
 	const { open: openLoad, close: closeLoad } = useLoadingMask({ text: $t('t_0_1746667592819') })
 	const { useFormInput, useFormRadioButton, useFormSwitch, useFormTextarea, useFormCustom } = useFormHooks()
 	const param = (props.data?.id ? ref({ ...props.data, config: JSON.parse(props.data.config) }) : apiFormProps) as Ref<
 		AddAccessParams | UpdateAccessParams
 	>
+
 	// 表单规则
 	const rules = {
 		name: {
@@ -328,11 +362,22 @@ export const useApiFormController = (props: { data: AccessItem }) => {
 							cloudflare: $t('t_0_1747042966820'),
 							btpanel: $t('t_1_1747042969705'),
 							btwaf: $t('t_1_1747300384579'),
+							godaddy: $t('t_0_1747984137443'),
 						}
 						return callback(new Error(mapTips[param.value.type as keyof typeof mapTips]))
 					}
 					callback()
 				},
+			},
+			api_secret: {
+				required: true,
+				message: $t('t_1_1747984133312'),
+				trigger: 'input',
+			},
+			access_secret: {
+				required: true,
+				message: $t('t_2_1747984134626'),
+				trigger: 'input',
 			},
 			api_token: {
 				required: true,
@@ -362,6 +407,7 @@ export const useApiFormController = (props: { data: AccessItem }) => {
 							huawei: $t('t_2_1747271295877'),
 							baidu: $t('t_3_1747271294475'),
 							volcengine: $t('t_3_1747365600828'),
+							qiniu: $t('t_3_1747984134586'),
 						}
 						return callback(new Error(mapTips[param.value.type as keyof typeof mapTips]))
 					}
@@ -396,11 +442,13 @@ export const useApiFormController = (props: { data: AccessItem }) => {
 	}
 
 	// 类型列表
-	const typeList = Object.entries(sourceTypes.value).map(([key, value]) => ({
-		label: value.name,
-		value: key,
-		access: value.access,
-	}))
+	const typeList = Object.entries(ApiProjectConfig)
+		.filter(([_, value]) => !(typeof value.notApi === 'boolean' && !value.notApi))
+		.map(([key, value]) => ({
+			label: value.name,
+			value: key,
+			access: value.type || [],
+		}))
 
 	const typeUrlMap = new Map<string, string>([
 		['btwaf', '宝塔WAF-URL'],
@@ -411,7 +459,7 @@ export const useApiFormController = (props: { data: AccessItem }) => {
 
 	// 表单配置
 	const config = computed(() => {
-		const items: FormConfig = [
+		const items = [
 			useFormInput($t('t_2_1745289353944'), 'name'),
 			useFormCustom(() => {
 				return (
@@ -435,6 +483,8 @@ export const useApiFormController = (props: { data: AccessItem }) => {
 				)
 			}),
 		]
+
+		// 根据不同类型渲染不同的表单项
 		switch (param.value.type) {
 			case 'ssh':
 				items.push(
@@ -524,6 +574,18 @@ export const useApiFormController = (props: { data: AccessItem }) => {
 					useFormInput('Password', 'config.password', { allowInput: noSideSpace }),
 				)
 				break
+			case 'godaddy':
+				items.push(
+					useFormInput('API Key', 'config.api_key', { allowInput: noSideSpace }),
+					useFormInput('API Secret', 'config.api_secret', { allowInput: noSideSpace }),
+				)
+				break
+			case 'qiniu':
+				items.push(
+					useFormInput('AccessKey', 'config.access_key', { allowInput: noSideSpace }),
+					useFormInput('AccessSecret', 'config.access_secret', { allowInput: noSideSpace }),
+				)
+				break
 			default:
 				break
 		}
@@ -578,12 +640,24 @@ export const useApiFormController = (props: { data: AccessItem }) => {
 						secret_key: '',
 					}
 					break
+				case 'godaddy':
+					param.value.config = {
+						api_key: '',
+						api_secret: '',
+					}
+					break
+				case 'qiniu':
+					param.value.config = {
+						access_key: '',
+						access_secret: '',
+					}
+					break
 			}
 		},
 	)
 
 	/**
-	 * @description 渲染单选标签
+	 * 渲染单选标签
 	 * @param {Record<string, any>} option - 选项
 	 * @returns {VNode} 渲染后的VNode
 	 */
@@ -600,7 +674,7 @@ export const useApiFormController = (props: { data: AccessItem }) => {
 	}
 
 	/**
-	 * @description 渲染标签
+	 * 渲染标签
 	 * @param {Record<string, any>} option - 选项
 	 * @returns {VNode} 渲染后的VNode
 	 */
@@ -612,24 +686,28 @@ export const useApiFormController = (props: { data: AccessItem }) => {
 					<NText>{option.label}</NText>
 				</NFlex>
 				<NFlex class="pr-[1rem]">
-					{option.access.map((item: string) => {
-						return (
-							<NTag type={item === 'dns' ? 'success' : 'info'} size="small" key={item}>
-								{accessTypeMap[item as keyof typeof accessTypeMap]}
-							</NTag>
-						)
-					})}
+					{option.access &&
+						option.access.map((item: string) => {
+							return (
+								<NTag type={item === 'dns' ? 'success' : 'info'} size="small" key={item}>
+									{accessTypeMap[item as keyof typeof accessTypeMap]}
+								</NTag>
+							)
+						})}
 				</NFlex>
 			</NFlex>
 		)
 	}
 
 	/**
-	 * @description 提交授权API表单
+	 * 提交授权API表单
 	 * @param {UpdateAccessParams | AddAccessParams} param 请求参数
 	 * @param {Ref<FormInst>} formRef 表单实例
 	 */
-	const submitApiManageForm = async (param: UpdateAccessParams | AddAccessParams, formRef: Ref<FormInst>) => {
+	const submitApiManageForm = async (
+		param: UpdateAccessParams | AddAccessParams,
+		_formRef: Ref<FormInst>,
+	): Promise<void> => {
 		try {
 			const data = { ...param, config: JSON.stringify(param.config) } as UpdateAccessParams<string>
 			if ('id' in param) {
@@ -638,8 +716,8 @@ export const useApiFormController = (props: { data: AccessItem }) => {
 			} else {
 				await addNewAccess(data as AddAccessParams<string>)
 			}
-		} catch (_) {
-			return handleError(new Error($t('t_4_1746667590873')))
+		} catch (error) {
+			throw handleError(new Error($t('t_4_1746667590873')))
 		}
 	}
 
@@ -669,3 +747,4 @@ export const useApiFormController = (props: { data: AccessItem }) => {
 		ApiManageForm,
 	}
 }
+

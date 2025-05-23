@@ -28,7 +28,7 @@ import type {
 	FormProps,
 	GridItemProps,
 } from 'naive-ui'
-import type { Ref, ShallowRef } from 'vue'
+import type { Ref, ShallowRef, ComputedRef, ToRefs } from 'vue'
 
 /** 选项接口 */
 export interface RadioOptionItem extends Partial<RadioProps> {
@@ -153,9 +153,7 @@ export interface FormItemConfig extends Partial<FormItemProps> {
 // }
 
 /** 表单配置类型 */
-export type FormBaseConfig = (FormItemConfig | GridItemConfig | FormItemCustomConfig)[]
-
-/** 表单配置类型-动态表单 */
+export type FormBaseConfig = (FormItemConfi| GridItemConfig | FormItemCustomConfig)[]/** 表单配置类型-动态表单 */
 export type FormConfig = Ref<FormBaseConfig> | ComputedRef<FormBaseConfig> | FormBaseConfig
 
 /** 表单 Hook 配置项接口 */

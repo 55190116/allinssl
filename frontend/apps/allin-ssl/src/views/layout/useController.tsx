@@ -1,37 +1,47 @@
+// 外部库依赖
+import { ref, computed, watch, onMounted, h } from 'vue' // 从 vue 导入
 import { NIcon } from 'naive-ui'
-import { RouterLink, useRoute } from 'vue-router'
+import { RouterLink, useRoute, useRouter, type RouteRecordRaw } from 'vue-router'
+
+// 类型导入 - 从全局类型文件导入
+import type { MenuOption } from 'naive-ui/es/menu/src/interface'
+import type {
+	RouteName,
+	IconMap, // 导入 IconMap
+	LayoutControllerExposes, // 导入 LayoutControllerExposes
+} from '../../types/layout' // 调整路径
+
+// 内部模块导入 - Hooks
 import { useMessage, useDialog } from '@baota/naive-ui/hooks'
 import { useError } from '@baota/hooks/error'
+// 内部模块导入 - API
 import { signOut } from '@api/public'
-import { routes } from '@router/index'
-import { $t } from '@locales/index'
+// 内部模块导入 - Store
 import { useStore } from './useStore'
+// 内部模块导入 - 配置
+import { routes } from '@router/index' // 假设 routes 是 RouteRecordRaw[]
+// 内部模块导入 - 工具函数
+import { $t } from '@locales/index'
 
+// 图标导入
 import { SettingsOutline, LogOutOutline } from '@vicons/ionicons5'
 import { CloudMonitoring, Home, Flow } from '@vicons/carbon'
 import { Certificate20Regular, AddSquare24Regular } from '@vicons/fluent'
 import { ApiOutlined } from '@vicons/antd'
 
-import type { MenuOption } from 'naive-ui/es/menu/src/interface'
-import type { RouteName } from './types'
-
-/**
- * @description 图标映射类型
- */
-type IconMap = Record<RouteName, Component>
 
 /**
  * @description 布局控制器
  * @returns 返回布局相关状态和方法
  */
-export const useController = () => {
+export const useController = (): LayoutControllerExposes => { // 使用导入的 LayoutControllerExposes
 	const store = useStore()
-	const router = useRouter()
+	const router = useRouter() // 从 vue-router 导入
 	const route = useRoute()
 	const message = useMessage()
-	// const { useFormInput } = useFormHooks()
 	const { handleError } = useError()
-	const { resetDataInfo, menuActive, updateMenuActive } = store
+	// 从 store 中解构需要的状态和方法
+	const { isCollapsed, menuActive, updateMenuActive, toggleCollapse, handleCollapse, handleExpand, resetDataInfo } = store
 
 	/**
 	 * 当前路由是否为子路由
@@ -41,11 +51,12 @@ export const useController = () => {
 	/**
 	 * 当前子路由配置
 	 */
-	const childRouteConfig = ref<Record<string, any>>({})
+	const childRouteConfig = ref<Partial<RouteRecordRaw>>({}) // 替换 any
 
 	/**
 	 * ==================== 弹窗相关功能 ====================
 	 */
+	// (此处无弹窗相关功能直接定义，而是通过 useDialog hook 使用)
 
 	// ==============================
 	// 图标渲染方法
@@ -57,7 +68,7 @@ export const useController = () => {
 	 * @returns 对应的图标组件
 	 */
 	const renderIcon = (name: RouteName) => {
-		const iconObj: IconMap = {
+		const iconObj: IconMap = { // IconMap 类型来自导入
 			certManage: Certificate20Regular,
 			autoDeploy: Flow,
 			home: Home,
@@ -73,12 +84,14 @@ export const useController = () => {
 	// ==============================
 	// 菜单相关方法
 	// ==============================
-	const menuItems = computed(() => {
-		const routeMenuItems: MenuOption[] = routes.map((route) => ({
-			key: route.name as RouteName,
-			label: () => <RouterLink to={route.path}>{route?.meta?.title as string}</RouterLink>,
-			icon: renderIcon(route.name as RouteName),
-		}))
+	const menuItems = computed<MenuOption[]>(() => { // 添加显式返回类型
+		const routeMenuItems: MenuOption[] = routes
+			.filter((r) => r.meta?.title) // 过滤掉没有 title 的路由，避免渲染空标签
+			.map((r) => ({
+				key: r.name as RouteName,
+				label: () => <RouterLink to={r.path}>{r?.meta?.title as string}</RouterLink>,
+				icon: renderIcon(r.name as RouteName),
+			}))
 		return [
 			...routeMenuItems,
 			{
@@ -93,20 +106,14 @@ export const useController = () => {
 	 * @description 检查当前路由是否为子路由
 	 * @returns {void}
 	 */
-	const checkIsChildRoute = () => {
-		// 获取当前路由路径
+	const checkIsChildRoute = (): void => {
 		const currentPath = route.path
-		// 检查路由是否包含 /children/ 标识子路由
 		isChildRoute.value = currentPath.includes('/children/')
 
-		// 如果是子路由，获取子路由配置
 		if (isChildRoute.value) {
-			// 获取当前激活的主路由
-			const parentRoute = routes.find((route) => route.name === menuActive.value)
-			// 如果找到了父路由，且父路由有子路由配置
+			const parentRoute = routes.find((r) => r.name === menuActive.value)
 			if (parentRoute && parentRoute.children) {
-				// 查找当前的子路由
-				const currentChild = parentRoute.children.find((child) => route.path.includes(child.path))
+				const currentChild = parentRoute.children.find((child: RouteRecordRaw) => route.path.includes(child.path))
 				childRouteConfig.value = currentChild || {}
 			} else {
 				childRouteConfig.value = {}
@@ -118,12 +125,10 @@ export const useController = () => {
 
 	watch(
 		() => route.name,
-		() => {
-			if (route.name !== menuActive.value) {
-				// 更新当前激活的菜单项
-				updateMenuActive(route.name as RouteName)
+		(newName) => { // route.name 可能为 null 或 undefined
+			if (newName && newName !== menuActive.value) {
+				updateMenuActive(newName as RouteName)
 			}
-			// 检查是否为子路由
 			checkIsChildRoute()
 		},
 		{ immediate: true },
@@ -137,7 +142,7 @@ export const useController = () => {
 	 * @description 退出登录
 	 * @returns {Promise<void>}
 	 */
-	const handleLogout = async () => {
+	const handleLogout = async (): Promise<void> => {
 		try {
 			await useDialog({
 				title: $t('t_15_1745457484292'),
@@ -147,11 +152,8 @@ export const useController = () => {
 						message.success($t('t_17_1745457488251'))
 						await signOut().fetch()
 						setTimeout(() => {
-							// 重置数据信息
 							resetDataInfo()
-							// 删除会话存储
 							sessionStorage.clear()
-							// 路由跳转
 							router.push('/login')
 						}, 1000)
 					} catch (error) {
@@ -160,7 +162,8 @@ export const useController = () => {
 				},
 			})
 		} catch (error) {
-			handleError(error)
+			// useDialog 拒绝时会抛出错误，这里可以捕获不处理，或者记录日志
+			// handleError(error) // 如果 useDialog 的拒绝也需要统一处理
 		}
 	}
 
@@ -169,12 +172,19 @@ export const useController = () => {
 	 */
 
 	onMounted(async () => {
-		// 初始化时检查是否为子路由
 		checkIsChildRoute()
 	})
 
 	return {
-		...store,
+		// 从 store 暴露
+		isCollapsed,
+		menuActive,
+		updateMenuActive,
+		toggleCollapse,
+		handleCollapse,
+		handleExpand,
+		resetDataInfo,
+		// controller 自身逻辑
 		handleLogout,
 		menuItems,
 		isChildRoute,

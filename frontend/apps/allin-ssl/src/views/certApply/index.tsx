@@ -1,7 +1,7 @@
 import { useController } from './useController'
 import { NTabs, NTabPane, NEmpty, NIcon } from 'naive-ui'
-import ProductCard from './components/productCard'
-import FreeProductCard from './components/freeProductCard'
+import ProductCard from './components/ProductCard'
+import FreeProductCard from './components/FreeProductCard'
 import { ShoppingCartOutlined, LockOutlined } from '@vicons/antd'
 
 interface SSLTypeItem {
@@ -26,7 +26,7 @@ export default defineComponent({
 
 		return () => (
 			<div class="w-full max-w-[160rem] mx-auto p-[2rem]">
-				<div class="bg-white rounded-[0.8rem] shadow-lg p-[2.4rem] mb-[3rem]">
+				<div class="bg-white rounded-[0.6rem] p-[2.4rem] mb-[3rem]">
 					{/* 主标签页：商业证书/免费证书 */}
 					<NTabs
 						class="rounded-[1.2rem] p-[0.6rem]"

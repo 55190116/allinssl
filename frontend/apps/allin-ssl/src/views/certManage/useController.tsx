@@ -1,4 +1,4 @@
-import { NButton, NSpace, NTag, type DataTableColumns } from 'naive-ui'
+import { NButton, NSpace, NTag, useMessage, type DataTableColumns } from 'naive-ui'
 import {
 	useModal,
 	useTable,
@@ -13,7 +13,6 @@ import { useError } from '@baota/hooks/error'
 import { $t } from '@locales/index'
 
 import { useStore } from './useStore'
-import UploadCert from './components/uploadCertForm'
 
 import type { CertItem, CertListParams } from '@/types/cert'
 
@@ -90,16 +89,13 @@ export const useController = () => {
 			key: 'actions',
 			fixed: 'right' as const,
 			align: 'right',
-			width: 150,
+			width: 200,
 			render: (row: CertItem) => (
 				<NSpace justify="end">
-					<NButton
-						style={{ '--n-text-color': 'var(--text-color-3)' }}
-						size="tiny"
-						strong
-						secondary
-						onClick={() => downloadExistingCert(row.id)}
-					>
+					<NButton size="tiny" strong secondary type="primary" onClick={() => openViewModal(row)}>
+						查看
+					</NButton>
+					<NButton size="tiny" strong secondary type="primary" onClick={() => downloadExistingCert(row.id.toString())}>
 						{$t('t_25_1745227838080')}
 					</NButton>
 					<NButton size="tiny" strong secondary type="error" onClick={() => handleDeleteCert(row)}>
@@ -165,7 +161,10 @@ export const useController = () => {
 		useModal({
 			title: $t('t_13_1745227838275'),
 			area: 600,
-			component: UploadCert,
+			component: () => {
+				const { UploadCertForm } = useUploadCertController()
+				return <UploadCertForm labelPlacement="top" />
+			},
 			footer: true,
 			onUpdateShow: (show) => {
 				if (!show) fetch()
@@ -184,12 +183,28 @@ export const useController = () => {
 			content: $t('t_30_1745227841739'),
 			onPositiveClick: async () => {
 				try {
-					await deleteExistingCert(id)
+					await deleteExistingCert(id.toString())
 					await fetch()
 				} catch (error) {
 					handleError(error)
 				}
 			},
+		})
+	}
+
+	/**
+	 * @description 打开查看证书弹窗
+	 * @param {CertItem} cert - 证书对象
+	 */
+	const openViewModal = (cert: CertItem) => {
+		useModal({
+			title: '查看证书信息',
+			area: 600,
+			component: () => {
+				const { ViewCertForm } = useViewCertController(cert)
+				return <ViewCertForm labelPlacement="top" />
+			},
+			footer: false,
 		})
 	}
 
@@ -202,6 +217,7 @@ export const useController = () => {
 		param,
 		data,
 		openUploadModal,
+		openViewModal,
 	}
 }
 
@@ -245,3 +261,80 @@ export const useUploadCertController = () => {
 	}
 }
 
+/**
+ * @description 查看证书控制器
+ * @param {CertItem} cert - 证书对象
+ */
+export const useViewCertController = (cert: CertItem) => {
+	/**
+	 * @description 复制文本到剪贴板
+	 * @param {string} text - 要复制的文本
+	 */
+	const copyToClipboard = async (text: string) => {
+		const message = useMessage()
+		try {
+			await navigator.clipboard.writeText(text)
+			message.success('复制成功')
+		} catch (error) {
+			// 降级方案：使用传统的复制方法
+			try {
+				const textArea = document.createElement('textarea')
+				textArea.value = text
+				document.body.appendChild(textArea)
+				textArea.select()
+				document.execCommand('copy')
+				document.body.removeChild(textArea)
+				message.success('复制成功')
+			} catch (error) {
+				message.error('复制失败')
+			}
+		}
+	}
+
+	// 合并证书内容（cert + issuer_cert）
+	const combinedCert = cert.cert + (cert.issuer_cert ? '\n' + cert.issuer_cert : '')
+
+	// 表单实例
+	const { component } = useForm({
+		config: [
+			useFormTextarea(
+				$t('t_34_1745227839375'),
+				'cert',
+				{ placeholder: '', rows: 8, readonly: true },
+				{},
+				{
+					suffix: [
+						() => (
+							<NButton size="tiny" type="primary" ghost onClick={() => copyToClipboard(combinedCert)}>
+								{$t('t_4_1747984130327')}
+							</NButton>
+						),
+					],
+				},
+			),
+			useFormTextarea(
+				$t('t_36_1745227838958'),
+				'key',
+				{ placeholder: '', rows: 8, readonly: true },
+				{},
+				{
+					suffix: [
+						() => (
+							<NButton size="tiny" type="primary" ghost onClick={() => copyToClipboard(cert.key)}>
+								{$t('t_4_1747984130327')}
+							</NButton>
+						),
+					],
+				},
+			),
+		],
+		defaultValue: {
+			cert: combinedCert,
+			key: cert.key,
+		},
+	})
+
+	return {
+		ViewCertForm: component,
+	}
+}

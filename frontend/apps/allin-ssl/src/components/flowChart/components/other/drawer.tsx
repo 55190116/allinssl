@@ -1,5 +1,5 @@
 import { NEmpty } from 'naive-ui'
-import type { BaseNodeData } from '@/components/flowChart/types'
+import type { BaseNodeData } from '@components/FlowChart/types'
 import { $t } from '@locales/index'
 
 type AsyncComponentLoader = () => Promise<Component>

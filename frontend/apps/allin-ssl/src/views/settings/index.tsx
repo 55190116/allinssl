@@ -3,10 +3,10 @@ import { SettingOutlined, BellOutlined, InfoCircleOutlined } from '@vicons/antd'
 
 import { useStore } from './useStore'
 import { useController } from './useController'
-import BaseComponent from '@/components/baseComponent'
-import GeneralSettings from './components/generalSettings'
-import NotificationSettings from './components/notificationSettings'
-import AboutSettings from './components/aboutSettings'
+import BaseComponent from '@components/BaseLayout'
+import GeneralSettings from './components/GeneralSettings'
+import NotificationSettings from './components/NotificationSettings'
+import AboutSettings from './components/AboutSettings'
 
 /**
  * 设置页面组件

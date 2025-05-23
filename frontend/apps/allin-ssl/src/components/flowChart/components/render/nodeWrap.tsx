@@ -1,15 +1,15 @@
-import { BRANCH, EXECUTE_RESULT_BRANCH } from '@components/flowChart/lib/alias'
-import BranchNode from '@components/flowChart/components/base/branchNode'
-import ConditionNode from '@components/flowChart/components/base/conditionNode'
-import BaseNode from '@components/flowChart/components/base/baseNode'
-import NodeWrap from '@components/flowChart/components/render/nodeWrap'
+import { BRANCH, EXECUTE_RESULT_BRANCH } from '@components/FlowChart/lib/alias'
+import BranchNode from '@components/FlowChart/components/base/branchNode'
+import ConditionNode from '@components/FlowChart/components/base/conditionNode'
+import BaseNode from '@components/FlowChart/components/base/baseNode'
+import NodeWrap from '@components/FlowChart/components/render/nodeWrap'
 
-import type { BaseNodeData, BranchNodeData, ExecuteResultBranchNodeData } from '@components/flowChart/types'
-
-interface NodeWrapProps {
-	node?: BaseNodeData | BranchNodeData
-	depth?: number
-}
+import type {
+	BaseNodeData,
+	BranchNodeData,
+	ExecuteResultBranchNodeData,
+	NodeWrapProps,
+} from '@components/FlowChart/types'
 
 // 自定义样式
 const styles = {
@@ -32,8 +32,7 @@ export default defineComponent({
 			default: 0,
 		},
 	},
-	emits: ['select'],
-	setup(props: NodeWrapProps, { emit }) {
+	setup(props: NodeWrapProps) {
 		// 计算当前节点的嵌套深度样式类
 		const getDepthClass = () => {
 			if (props.depth && props.depth > 1) {
@@ -42,14 +41,8 @@ export default defineComponent({
 			return styles.flowNodeWrap
 		}
 
-		// 选中节点
-		const handleSelect = (node: BaseNodeData | BranchNodeData | ExecuteResultBranchNodeData) => {
-			if (node.id) emit('select', node.id)
-		}
-
 		return {
 			getDepthClass,
-			handleSelect,
 		}
 	},
 	render() {
@@ -71,9 +64,7 @@ export default defineComponent({
 				{![BRANCH, EXECUTE_RESULT_BRANCH].includes(this.node.type) ? <BaseNode node={this.node} /> : null}
 
 				{/* 判断是否存在子节点 */}
-				{this.node.childNode?.type && (
-					<NodeWrap node={this.node.childNode} depth={nextDepth} onSelect={(nodeId) => this.$emit('select', nodeId)} />
-				)}
+				{this.node.childNode?.type && <NodeWrap node={this.node.childNode} depth={nextDepth} />}
 			</div>
 		)
 	},

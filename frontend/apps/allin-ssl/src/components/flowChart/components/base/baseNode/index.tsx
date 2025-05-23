@@ -1,19 +1,19 @@
 import { v4 as uuidv4 } from 'uuid'
-import { useStore } from '@components/flowChart/useStore'
-import { useController } from '@components/flowChart/useController'
-import nodeOptions from '@components/flowChart/lib/config'
+import { markRaw } from 'vue'
+import { useStore } from '@components/FlowChart/useStore'
+import nodeOptions from '@components/FlowChart/lib/config'
 import { useDialog } from '@baota/naive-ui/hooks'
 import { $t } from '@locales/index'
-import { CONDITION, EXECUTE_RESULT_CONDITION, START } from '@components/flowChart/lib/alias'
-import { useNodeValidator } from '@components/flowChart/lib/verify'
+import { CONDITION, EXECUTE_RESULT_CONDITION, START } from '@components/FlowChart/lib/alias'
+import { useNodeValidator } from '@components/FlowChart/lib/verify'
 
-import AddNode from '@components/flowChart/components/other/addNode/index'
-import SvgIcon from '@components/svgIcon'
+import AddNode from '@components/FlowChart/components/other/addNode/index'
+import SvgIcon from '@components/SvgIcon'
 
-import type { BaseNodeData, NodeNum, BaseRenderNodeOptions, BaseNodeProps } from '@components/flowChart/types'
+import type { BaseNodeData, NodeNum, BaseRenderNodeOptions, BaseNodeProps } from '@components/FlowChart/types'
 
 import styles from './index.module.css'
-import ErrorNode from '../errorNode'
+import ErrorNode from '../errorNode/index'
 
 export default defineComponent({
 	name: 'BaseNode',
@@ -25,6 +25,9 @@ export default defineComponent({
 		},
 	},
 	setup(props: BaseNodeProps) {
+		// 注入任务节点组件映射
+		const taskComponents = inject('taskComponents', {}) as Record<string, Component>
+
 		// ====================== 基础状态数据 ======================
 		const { validator, validate } = useNodeValidator() // 验证器
 		const tempNodeId = ref(props.node.id || uuidv4()) // 节点id
@@ -32,9 +35,9 @@ export default defineComponent({
 		const nodeNameRef = ref<HTMLInputElement | null>(null) // 节点名称输入框
 		const isShowEditNodeName = ref(false) // 是否显示编辑节点名称
 		const inputValue = ref(props.node.name) // 输入框值
-		const renderNodeContent = shallowRef() // 节点组件
-		const { removeNode, updateNode } = useStore()
-		const { handleSelectNode } = useController()
+		const renderNodeContent = ref() // 节点组件
+		const nodeContentRef = ref() // 节点内容
+		const { removeNode, updateNode, selectedNodeId, selectedNode } = useStore()
 
 		// ====================== 节点状态数据 ======================
 		// 错误状态
@@ -72,7 +75,6 @@ export default defineComponent({
 			return '#FFFFFF'
 		})
 
-		const nodeComponents = import.meta.glob('../../task/**/index.tsx')
 		// ====================== 数据监听与副作用 ======================
 		// 监听节点数据，更新节点配置
 		watch(
@@ -82,38 +84,43 @@ export default defineComponent({
 				inputValue.value = props.node.name // 更新节点名称
 				tempNodeId.value = props.node.id || uuidv4() // 更新节点id
 				validator.validateAll() // 验证器验证
-				const NodeComp =
-					nodeComponents[`../../task/${props.node.type}Node/index.tsx`] ||
-					import('@components/flowChart/components/base/errorNode')
-				renderNodeContent.value = defineAsyncComponent({
-					loader: NodeComp as Promise<Component>,
-					loadingComponent: () => <div>Loading...</div>,
-					errorComponent: () => <ErrorNode />,
-				})
+
+				// 使用注入的taskComponents而不是props传递
+				const nodeType = props.node.type
+				const nodeComponentKey = `${nodeType}Node`
+				// 如果taskComponents中有对应的组件就使用，否则使用ErrorNode
+				if (taskComponents && taskComponents[nodeComponentKey]) {
+					renderNodeContent.value = markRaw(taskComponents[nodeComponentKey])
+				} else {
+					renderNodeContent.value = markRaw(
+						defineAsyncComponent({
+							loader: () => import('@components/FlowChart/components/base/errorNode'),
+							loadingComponent: () => <div>Loading...</div>,
+							errorComponent: () => <ErrorNode />,
+						}),
+					)
+				}
 			},
 			{ immediate: true },
 		)
 
-		// ====================== 渲染节点内容 ======================
-
-		// // 渲染节点内容
-		// const renderNodeContent = defineAsyncComponent({
-		// 	loader: () =>
-		// 		(nodeComp ? nodeComp : import('@components/flowChart/components/base/errorNode')) as Promise<Component>,
-		// 	loadingComponent: () => <div>Loading...</div>,
-		// 	errorComponent: () => <ErrorNode />,
-		// })
-
 		// ====================== 节点操作方法 ======================
-		// 显示错误提示
+		/**
+		 * @description 显示错误提示
+		 * @param {boolean} flag - 是否显示
+		 */
 		const showErrorTips = (flag: boolean) => {
 			errorState.value.showTips = flag
 		}
 
-		// 删除节点
+		/**
+		 * @description 删除选中节点
+		 * @param {MouseEvent} ev - 事件对象
+		 * @param {string} id - 节点id
+		 * @param {BaseNodeData} node - 节点数据
+		 */
 		const removeFindNode = (ev: MouseEvent, id: string, node: BaseNodeData) => {
 			const validator = validate(id)
-			console.log(validator)
 			if (validator.valid) {
 				useDialog({
 					type: 'warning',
@@ -130,9 +137,19 @@ export default defineComponent({
 			ev.preventDefault()
 		}
 
-		// 点击节点
+		/**
+		 * @description 点击节点
+		 */
 		const handleNodeClick = () => {
-			handleSelectNode(props.node.id || '', props.node.type)
+			console.log('nodeContentRef', nodeContentRef.value)
+			if (
+				nodeContentRef.value?.handleNodeClick &&
+				props.node.type !== CONDITION &&
+				props.node.type !== EXECUTE_RESULT_CONDITION
+			) {
+				selectedNodeId.value = props.node.id || ''
+				nodeContentRef.value.handleNodeClick(selectedNode)
+			}
 		}
 
 		// ====================== 事件处理函数 ======================
@@ -207,6 +224,7 @@ export default defineComponent({
 									id: props.node.id,
 									node: props.node || {},
 									class: 'text-center',
+									ref: nodeContentRef,
 								})}
 						</div>
 					) : null}

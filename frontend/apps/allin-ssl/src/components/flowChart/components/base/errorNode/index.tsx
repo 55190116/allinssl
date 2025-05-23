@@ -1,4 +1,4 @@
-import { BaseNodeData } from '@components/flowChart/types'
+import { BaseNodeData } from '@components/FlowChart/types'
 
 export default defineComponent({
 	name: 'BranchNode',

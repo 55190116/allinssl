@@ -1,4 +1,4 @@
-import { NSwitch, NTag, NButton, NSpace } from 'naive-ui'
+import { NSwitch, NTag, NButton, NSpace, NFlex, NText, NFormItem, NSelect } from 'naive-ui'
 import { useRoute, useRouter } from 'vue-router'
 import { useStore } from '@autoDeploy/useStore'
 import {
@@ -9,18 +9,24 @@ import {
 	useFormHooks,
 	useForm,
 	useModalHooks,
+	useMessage,
 } from '@baota/naive-ui/hooks'
 import { useStore as useWorkflowViewStore } from '@autoDeploy/children/workflowView/useStore'
 import { useError } from '@baota/hooks/error'
-import AddWorkflowModal from './components/workflowModal'
-import HistoryModal from './components/historyModal'
-import HistoryLogsModal from './components/historyLogsModal'
+import AddWorkflowModal from './components/WorkflowModal'
+import HistoryModal from './components/HistoryModal'
+import HistoryLogsModal from './components/HistoryLogsModal'
+import CAManageModal from './components/CAManageModal'
 import { $t } from '@/locales'
 import { router } from '@router/index'
+import { CACertificateAuthorization } from '@config/data'
+import SvgIcon from '@components/SvgIcon'
+import { isEmail } from '@baota/utils/business'
 
 import type { WorkflowItem, WorkflowListParams, WorkflowHistoryParams, WorkflowHistoryItem } from '@/types/workflow'
 import type { DataTableColumn } from 'naive-ui'
-import { TableColumn } from 'naive-ui/es/data-table/src/interface'
+import type { TableColumn } from 'naive-ui/es/data-table/src/interface'
+import type { EabItem, EabListParams } from '@/types/access'
 
 const {
 	refreshTable,
@@ -31,6 +37,11 @@ const {
 	executeExistingWorkflow,
 	setWorkflowActive,
 	setWorkflowExecType,
+	caFormData,
+	fetchEabList,
+	addNewEab,
+	deleteExistingEab,
+	resetCaForm,
 } = useStore()
 const { isEdit, workDefalutNodeData, resetWorkflowData, workflowData, detectionRefresh } = useWorkflowViewStore()
 const { handleError } = useError()
@@ -41,17 +52,17 @@ const { useFormSlot } = useFormHooks()
  * @param {string} key - 状态列的key
  * @returns {DataTableColumn<WorkflowHistoryItem>[]} 返回状态列配置数组
  */
-const statusCol = <T,>(key: string, title: string): TableColumn<T> => ({
+const statusCol = <T extends Record<string, any>>(key: string, title: string): TableColumn<T> => ({
 	title,
 	key,
 	width: 100,
 	render: (row: T) => {
 		const statusMap: Record<string, { type: string; text: string }> = {
-			success: { type: 'success', text: $t('t_8_1745227838023') },
-			fail: { type: 'error', text: $t('t_9_1745227838305') },
-			running: { type: 'warning', text: $t('t_0_1746519384035') },
+			success: { type: 'success', text: $t('t_0_1747895713179') },
+			fail: { type: 'error', text: $t('t_4_1746773348957') },
+			running: { type: 'warning', text: $t('t_1_1747895712756') },
 		}
-		const status = statusMap[row[key] as keyof Record<string, unknown>] || {
+		const status = statusMap[row[key] as string] || {
 			type: 'default',
 			text: $t('t_1_1746773348701'),
 		}
@@ -124,16 +135,10 @@ export const useController = () => {
 			width: 220,
 			render: (row: WorkflowItem) => (
 				<NSpace justify="end">
-					<NButton
-						style={{ '--n-text-color': 'var(--text-color-3)' }}
-						size="tiny"
-						strong
-						secondary
-						onClick={() => handleViewHistory(row)}
-					>
+					<NButton size="tiny" strong secondary type="primary" onClick={() => handleViewHistory(row)}>
 						{$t('t_9_1745215914666')}
 					</NButton>
-					<NButton size="tiny" strong secondary type="info" onClick={() => handleExecuteWorkflow(row)}>
+					<NButton size="tiny" strong secondary type="primary" onClick={() => handleExecuteWorkflow(row)}>
 						{$t('t_10_1745215914342')}
 					</NButton>
 					<NButton size="tiny" strong secondary type="primary" onClick={() => handleEditWorkflow(row)}>
@@ -216,7 +221,7 @@ export const useController = () => {
 			title: workflow ? `【${workflow.name}】 - ${$t('t_9_1745215914666')}` : $t('t_9_1745215914666'),
 			component: HistoryModal,
 			area: 800,
-			componentProps: { id: workflow.id },
+			componentProps: { id: workflow.id.toString() },
 		})
 	}
 
@@ -313,6 +318,17 @@ export const useController = () => {
 		}
 	}
 
+	/**
+	 * @description 打开CA授权管理弹窗
+	 */
+	const handleOpenCAManage = () => {
+		useModal({
+			title: $t('t_0_1747903670020'),
+			component: CAManageModal,
+			area: 780,
+		})
+	}
+
 	return {
 		WorkflowTable,
 		WorkflowTablePage,
@@ -324,6 +340,7 @@ export const useController = () => {
 		handleExecuteWorkflow, // 执行工作流
 		handleEditWorkflow, // 编辑工作流
 		handleDeleteWorkflow, // 删除工作流
+		handleOpenCAManage, // 打开CA授权管理弹窗
 		hasChildRoutes,
 		fetch,
 		data,
@@ -441,7 +458,6 @@ export const useHistoryController = (id: string) => {
 		component: WorkflowHistoryTable,
 		loading,
 		param,
-		data,
 		total,
 		fetch,
 	} = useTable<WorkflowHistoryItem, WorkflowHistoryParams>({
@@ -468,9 +484,285 @@ export const useHistoryController = (id: string) => {
 		WorkflowHistoryTable,
 		WorkflowHistoryTablePage,
 		loading,
+		fetch,
+	}
+}
+
+/**
+ * @description CA授权管理业务逻辑控制器
+ * @returns {Object} 返回CA授权管理控制器对象
+ */
+export const useCAManageController = () => {
+	const { handleError } = useError()
+	// 表格配置
+	const columns = [
+		{
+			title: $t('t_2_1745289353944'),
+			key: 'name',
+			ellipsis: {
+				tooltip: true,
+			},
+		},
+		{
+			title: $t('t_1_1745735764953'),
+			key: 'mail',
+			ellipsis: {
+				tooltip: true,
+			},
+		},
+		{
+			title: $t('t_9_1747903669360'),
+			key: 'ca',
+			width: 120,
+			render: (row: EabItem) => (
+				<NFlex align="center">
+					<SvgIcon icon={`cert-${row.ca}`} size="2rem" />
+					<NText>{CACertificateAuthorization[row.ca as keyof typeof CACertificateAuthorization].name}</NText>
+				</NFlex>
+			),
+		},
+		{
+			title: $t('t_7_1745215914189'),
+			key: 'create_time',
+			width: 180,
+			render: (row: EabItem) => (row.create_time ? row.create_time : '--'),
+		},
+		{
+			title: $t('t_8_1745215914610'),
+			key: 'actions',
+			width: 80,
+			align: 'right' as const,
+			fixed: 'right' as const,
+			render: (row: EabItem) => (
+				<NSpace justify="end">
+					<NButton size="tiny" strong secondary type="error" onClick={() => confirmDelete(row.id.toString())}>
+						{$t('t_12_1745215914312')}
+					</NButton>
+				</NSpace>
+			),
+		},
+	]
+
+	// 表格实例
+	const {
+		component: CATable,
+		loading,
 		param,
-		data,
 		total,
 		fetch,
+	} = useTable<EabItem, EabListParams>({
+		config: columns,
+		request: fetchEabList,
+		defaultValue: {
+			p: 1,
+			limit: 10,
+		},
+		watchValue: ['p', 'limit'],
+	})
+
+	// 分页实例
+	const { component: CATablePage } = useTablePage({
+		param,
+		total,
+		alias: {
+			page: 'p',
+			pageSize: 'limit',
+		},
+	})
+
+	/**
+	 * 确认删除CA授权
+	 * @param {string} id - CA授权ID
+	 */
+	const confirmDelete = (id: string) => {
+		useDialog({
+			title: $t('t_2_1747903672640'),
+			content: $t('t_3_1747903672833'),
+			onPositiveClick: async () => {
+				try {
+					await deleteExistingEab(id)
+					await fetch()
+				} catch (error) {
+					handleError(error)
+				}
+			},
+		})
+	}
+
+	/**
+	 * 打开添加CA授权表单
+	 */
+	const handleOpenAddForm = () => {
+		resetCaForm()
+		useModal({
+			title: $t('t_4_1747903685371'),
+			component: () => import('./components/CAManageForm').then((m) => m.default),
+			footer: true,
+			area: 500,
+			onUpdateShow: (show) => {
+				if (!show) fetch()
+			},
+		})
+	}
+
+	// 挂载时获取数据
+	onMounted(fetch)
+
+	return {
+		CATable,
+		CATablePage,
+		loading,
+		param,
+		total,
+		fetch,
+		handleOpenAddForm,
+	}
+}
+
+/**
+ * @description CA授权表单控制器
+ * @returns {Object} 返回CA授权表单控制器对象
+ */
+export const useCAFormController = () => {
+	const { handleError } = useError()
+	const message = useMessage()
+	const { confirm } = useModalHooks()
+	const { useFormInput, useFormCustom } = useFormHooks()
+
+	// 表单验证规则
+	const formRules = {
+		name: {
+			required: true,
+			message: $t('t_25_1746773349596'),
+			trigger: ['blur', 'input'],
+		},
+		mail: {
+			required: true,
+			message: $t('t_6_1747817644358'),
+			trigger: ['blur', 'input'],
+			validator: (rule: any, value: string) => {
+				if (!value) return true
+				if (!isEmail(value)) {
+					return new Error($t('t_7_1747817613773'))
+				}
+				return true
+			},
+		},
+		Kid: {
+			required: true,
+			message: $t('t_5_1747903671439'),
+			trigger: ['blur', 'input'],
+		},
+		HmacEncoded: {
+			required: true,
+			message: $t('t_6_1747903672931'),
+			trigger: ['blur', 'input'],
+		},
+		ca: {
+			required: true,
+			message: $t('t_7_1747903678624'),
+			trigger: 'change',
+		},
+	}
+
+	// 渲染标签函数
+	const renderLabel = (option: { value: string; label: string }): VNode => {
+		return (
+			<NFlex align="center" size="small">
+				<SvgIcon icon={`cert-${option.value}`} size="2rem" />
+				<NText>{option.label}</NText>
+			</NFlex>
+		)
+	}
+
+	// 渲染单选标签函数
+	const renderSingleSelectTag = ({ option }: Record<string, any>): VNode => {
+		return (
+			<NFlex class="w-full">
+				{option.label ? (
+					renderLabel(option)
+				) : (
+					<span class="text-[1.4rem] text-gray-400">{$t('t_7_1747903678624')}</span>
+				)}
+			</NFlex>
+		)
+	}
+
+	// 获取CA提供商选项
+	const caOptions = Object.values(CACertificateAuthorization).map((item) => ({
+		label: item.name,
+		value: item.type,
+	}))
+
+	// 表单配置
+	const formConfig = [
+		useFormInput($t('t_2_1745289353944'), 'name', {
+			placeholder: $t('t_8_1747903675532'),
+		}),
+		useFormInput($t('t_1_1745735764953'), 'mail', {
+			placeholder: $t('t_0_1747965909665'),
+		}),
+		useFormCustom(() => {
+			return (
+				<NFormItem label={$t('t_9_1747903669360')} path="ca">
+					<NSelect
+						class="w-full"
+						options={caOptions}
+						renderLabel={renderLabel}
+						renderTag={renderSingleSelectTag}
+						filterable
+						placeholder={$t('t_7_1747903678624')}
+						v-model:value={caFormData.value.ca}
+						v-slots={{
+							empty: () => {
+								return <span class="text-[1.4rem]">{$t('t_7_1747903678624')}</span>
+							},
+						}}
+					/>
+				</NFormItem>
+			)
+		}),
+		useFormInput($t('t_10_1747903662994'), 'Kid', {
+			placeholder: $t('t_11_1747903674802'),
+		}),
+		useFormInput($t('t_12_1747903662994'), 'HmacEncoded', {
+			type: 'textarea',
+			placeholder: $t('t_13_1747903673007'),
+			rows: 3,
+		}),
+	]
+
+	// 提交表单
+	const submitForm = async (formData: any) => {
+		try {
+			await addNewEab(formData)
+			message.success($t('t_40_1745289355715'))
+			return true
+		} catch (error) {
+			handleError(error)
+			return false
+		}
+	}
+
+	// 表单实例
+	const { component: CAForm } = useForm({
+		config: formConfig,
+		rules: formRules,
+		defaultValue: caFormData,
+		request: submitForm,
+	})
+
+	// 确认提交表单
+	confirm(async (close) => {
+		try {
+			await submitForm(caFormData.value)
+			close()
+		} catch (error) {
+			handleError(error)
+		}
+	})
+
+	return {
+		CAForm,
 	}
 }

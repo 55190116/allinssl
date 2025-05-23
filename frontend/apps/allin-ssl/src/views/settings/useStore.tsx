@@ -87,9 +87,7 @@ export const useSettingsStore = defineStore('settings-store', () => {
 			service: 'https://example.com/service_qr.png',
 			wechat: 'https://example.com/wechat_qr.png',
 		},
-		description: $t(
-			'AllinSSL \n\r开源免费的 SSL 证书自动化管理平台 \n\r一键自动化申请、续期、部署、监控所有 SSL/TLS 证书，支持跨云环境和多 CA (coding~)，告别繁琐配置和高昂费用。',
-		),
+		description: $t('t_0_1747904536291'),
 	})
 
 	// -------------------- 工具方法 --------------------

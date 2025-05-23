@@ -46,7 +46,9 @@ export interface AddAccessParams<
 		| BaiduCloudAccessConfig
 		| VolcengineAccessConfig
 		| WestcnAccessConfig
-		| BtWafSiteAccessConfig,
+		| BtWafSiteAccessConfig
+		| GoDaddyAccessConfig
+		| QiniuAccessConfig,
 > {
 	name: string
 	type: string
@@ -65,7 +67,9 @@ export interface UpdateAccessParams<
 		| BaiduCloudAccessConfig
 		| BtWafSiteAccessConfig
 		| VolcengineAccessConfig
-		| WestcnAccessConfig,
+		| WestcnAccessConfig
+		| GoDaddyAccessConfig
+		| QiniuAccessConfig,
 > extends AddAccessParams<T> {
 	id: string
 }
@@ -142,6 +146,21 @@ export interface WestcnAccessConfig {
 	password: string
 }
 
+/**
+ * GoDaddy 授权配置
+ */
+export interface GoDaddyAccessConfig {
+	api_key: string
+	api_secret: string
+}
+
+/**
+ * 七牛云授权配置
+ */
+export interface QiniuAccessConfig {
+	access_key: string
+	access_secret: string
+}
 
 /** 删除授权请求参数 */
 export interface DeleteAccessParams {
@@ -163,4 +182,97 @@ export interface AccessAllItem {
 /** 获取工作流 dns 配置响应 */
 export interface GetAccessAllListResponse extends AxiosResponseData {
 	data: AccessAllItem[]
+}
+
+/**
+ * 获取CA授权列表的请求参数
+ */
+export interface EabListParams {
+	p: number
+	limit: number
+}
+
+/**
+ * CA授权项目
+ */
+export interface EabItem {
+	id: number
+	name: string
+	Kid: string
+	HmacEncoded: string
+	ca: string
+	create_time: string
+	update_time: string
+}
+
+/**
+ * 获取CA授权列表的响应
+ */
+export interface EabListResponse extends AxiosResponseData {
+	data: EabItem[]
+}
+
+/**
+ * 添加CA授权的请求参数
+ */
+export interface EabAddParams {
+	name: string
+	Kid: string
+	HmacEncoded: string
+	ca: string
+	mail: string
+}
+
+/**
+ * 修改CA授权的请求参数
+ */
+export interface EabUpdateParams extends EabAddParams {
+	id: string
+}
+
+/**
+ * 删除CA授权的请求参数
+ */
+export interface EabDeleteParams {
+	id: string
+}
+
+/**
+ * 获取CA授权列表下拉框的请求参数
+ */
+export interface EabGetAllListParams {
+	ca: string
+}
+
+/**
+ * 获取CA授权列表下拉框的响应
+ */
+export interface EabGetAllListResponse extends AxiosResponseData {
+	data: EabItem[]
+}
+
+/**
+ * 测试授权API的请求参数
+ */
+export interface TestAccessParams {
+	id: string
+	type: string
+}
+
+/**
+ * 网站列表的请求参数
+ */
+export interface GetSitesParams {
+	search?: string
+	p?: string
+	limit?: string
+	id: string
+	type: string
+}
+
+/**
+ * 网站列表的响应
+ */
+export interface GetSitesResponse extends AxiosResponseData {
+	data: string[]
 }

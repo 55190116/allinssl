@@ -1,8 +1,12 @@
-import { useStore } from './useStore'
+import { onUnmounted } from 'vue'
+import { useRoute, useRouter } from 'vue-router'
+
+import { useStore } from '@autoDeploy/children/workflowView/useStore'
+import { $t } from '@locales/index'
+
 /**
- * useController
- * @description 组合式API使用store
- * @returns {object} store - 返回store对象
+ * @description WorkflowView 的控制器，处理路由、页面生命周期事件和初始化逻辑。
+ * @returns 返回包含初始化方法的对象。
  */
 export const useController = () => {
 	const { workflowType, detectionRefresh } = useStore()
@@ -10,10 +14,10 @@ export const useController = () => {
 	const router = useRouter()
 
 	// 监听页面刷新
-	const beforeUnload = (event: any) => {
+	const beforeUnload = (event: BeforeUnloadEvent) => {
 		event.preventDefault()
-		event.returnValue = '您确定要刷新页面吗？数据可能会丢失哦！'
-		return '您确定要刷新页面吗？数据可能会丢失哦！'
+		event.returnValue = $t('t_16_1747886308182')
+		return $t('t_16_1747886308182')
 	}
 
 	// 初始化

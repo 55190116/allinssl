@@ -24,7 +24,6 @@ const useRouterEach = (router: Router) =>
 		},
 		afterEach: (to: RouteLocationNormalized) => {
 			loadingBar.finish()
-			console.log('afterEach', to)
 		},
 	})
 

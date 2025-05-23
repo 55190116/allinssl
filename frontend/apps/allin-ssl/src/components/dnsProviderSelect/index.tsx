@@ -1,47 +1,20 @@
+import { defineComponent, PropType, VNode } from 'vue'
 import { NButton, NFormItemGi, NGrid, NSelect, NText, NSpin, NFlex } from 'naive-ui'
-import { useError } from '@baota/hooks/error'
+
+// 类型导入
+import type { DnsProviderSelectProps, DnsProviderOption, DnsProviderType, DnsProviderSelectEmits } from './types'
+
+// 绝对内部导入 - Controller
+import { useDnsProviderSelectController } from './useController'
+// 绝对内部导入 - Components
+import SvgIcon from '@components/SvgIcon'
+// 绝对内部导入 - Utilities
 import { $t } from '@locales/index'
-import { useStore } from '@layout/useStore'
-import SvgIcon from '@components/svgIcon'
-
-interface DnsProviderOption {
-	label: string
-	value: string
-	type: string
-}
-
-type DnsProviderType =
-	| 'aliyun'
-	| 'tencentcloud'
-	| 'baidu'
-	| 'huaweicloud'
-	| 'cloudflare'
-	| 'dns'
-	| 'btpanel'
-	| '1panel'
-	| 'ssh'
-	| ''
-
-interface DnsProviderSelectProps {
-	// 表单类型，用于获取不同的下拉列表
-	type: DnsProviderType
-	// 表单，用于绑定表单的值
-	path: string
-	// 表单的值
-	value: string
-	// 表单的值类型
-	valueType: 'value' | 'type'
-	// 是否为添加模式
-	isAddMode: boolean
-	// 是否禁用
-	disabled?: boolean
-	// 自定义样式
-	customClass?: string
-}
 
 /**
  * @component DnsProviderSelect
- * @description DNS提供商选择组件，支持多种DNS提供商类型，并提供刷新和跳转到授权页面的功能
+ * @description DNS提供商选择组件，支持多种DNS提供商类型，并提供刷新和跳转到授权页面的功能。
+ *              遵循 MVC/MV* 模式，将业务逻辑、状态管理与视图渲染分离。
  *
  * @example 基础使用
  * <DnsProviderSelect
@@ -52,129 +25,61 @@ interface DnsProviderSelectProps {
  *   :isAddMode="true"
  * />
  *
- * @example 仅显示选择器（无添加按钮）
- * <DnsProviderSelect
- *   type="aliyun"
- *   path="form.dnsProvider"
- *   v-model:value="formValue.dnsProvider"
- *   valueType="value"
- *   :isAddMode="false"
- * />
+ * @property {DnsProviderType} type - DNS提供商类型。
+ * @property {string} path - 表单路径，用于表单校验。
+ * @property {string} value - 当前选中的值 (通过 v-model:value 绑定)。
+ * @property {'value' | 'type'} valueType - 表单值的类型，决定 emit 'update:value' 时传递的是选项的 'value' 还是 'type'。
+ * @property {boolean} isAddMode - 是否为添加模式，显示添加和刷新按钮。
+ * @property {boolean} [disabled=false] - 是否禁用。
+ * @property {string} [customClass] - 自定义CSS类名。
  *
- * @example 禁用状态
- * <DnsProviderSelect
- *   type="dns"
- *   path="form.dnsProvider"
- *   v-model:value="formValue.dnsProvider"
- *   valueType="value"
- *   :isAddMode="true"
- *   :disabled="true"
- * />
- *
- * @property {string} type - DNS提供商类型，支持 'btpanel'|'aliyun'|'ssh'|'tencentcloud'|'1panel'|'dns'|''
- * @property {string} path - 表单路径，用于绑定表单的值
- * @property {string} value - 表单的值，通过v-model:value绑定
- * @property {string} valueType - 表单的值类型，可选值为 'value'(默认) 或 'type'
- * @property {boolean} isAddMode - 是否显示添加和刷新按钮，默认为true
- * @property {boolean} disabled - 是否禁用选择器，默认为false
- * @property {string} customClass - 自定义CSS类名
- *
- * @emits update:value - 当选择的DNS提供商变更时触发
+ * @emits update:value - (value: DnsProviderOption) 当选择的DNS提供商变更时触发，传递整个选项对象。
  */
-
-export default defineComponent({
+export default defineComponent<DnsProviderSelectProps>({
 	name: 'DnsProviderSelect',
 	props: {
-		// 表单类型，用于获取不同的下拉列表
 		type: {
 			type: String as PropType<DnsProviderType>,
-			default: '',
+			required: true,
 		},
-		// 表单，用于绑定表单的值
 		path: {
 			type: String,
-			default: '',
+			required: true,
 		},
-		// 表单的值
 		value: {
 			type: String,
-			default: '',
+			required: true,
 		},
-		// 表单的值类型
 		valueType: {
-			type: String,
+			type: String as PropType<'value' | 'type'>,
 			default: 'value',
 		},
-		// 是否为添加模式
 		isAddMode: {
 			type: Boolean,
 			default: true,
 		},
-		// 是否禁用
 		disabled: {
 			type: Boolean,
 			default: false,
 		},
-		// 自定义样式
 		customClass: {
 			type: String,
 			default: '',
 		},
 	},
-	emits: ['update:value'],
-	setup(props: DnsProviderSelectProps, { emit }) {
-		// 错误处理
-		const { handleError } = useError()
-		// 获取DNS提供商
-		const { fetchDnsProvider, resetDnsProvider, dnsProvider } = useStore()
-		// 表单的值
-		const param = ref<DnsProviderOption>({
-			label: '',
-			value: '',
-			type: '',
-		})
-		const dnsProviderRef = ref<DnsProviderOption[]>([])
-		// 加载状态
-		const isLoading = ref(false)
-		// 错误信息
-		const errorMessage = ref('')
+	emits: ['update:value'] as unknown as DnsProviderSelectEmits, // 类型断言以匹配严格的 emits 定义
 
-		console.log(props.type)
-
-		/**
-		 * @description 跳转到DNS提供商授权页面
-		 */
-		const goToAddDnsProvider = () => {
-			window.open('/auth-api-manage', '_blank')
-		}
-
-		/**
-		 * 渲染单选标签
-		 * @param option - 选项
-		 * @returns 渲染后的VNode
-		 */
-		const renderSingleSelectTag = ({ option }: Record<string, any>): VNode => {
-			return (
-				<div class="flex items-center">
-					{option.label ? (
-						renderLabel(option)
-					) : (
-						<NText class="text-[#aaa]">
-							{props.type === 'dns' ? $t('t_0_1747019621052', []) : $t('t_0_1746858920894')}
-						</NText>
-					)}
-				</div>
-			)
-		}
+	setup(props: DnsProviderSelectProps, { emit }: { emit: DnsProviderSelectEmits }) {
+		const controller = useDnsProviderSelectController(props, emit)
 
 		/**
 		 * 渲染标签
 		 * @param option - 选项
 		 * @returns 渲染后的VNode
 		 */
-		const renderLabel = (option: { type: string; label: string }): VNode => {
+		const renderLabel = (option: DnsProviderOption): VNode => {
 			return (
-				<NFlex>
+				<NFlex align="center">
 					<SvgIcon icon={`resources-${option.type}`} size="2rem" />
 					<NText>{option.label}</NText>
 				</NFlex>
@@ -182,97 +87,26 @@ export default defineComponent({
 		}
 
 		/**
-		 * @description 更新类型
+		 * 渲染单选标签
+		 * @param option - 选项 (Record<string, any> 来自 naive-ui 的类型)
+		 * @returns 渲染后的VNode
 		 */
-		const handleUpdateType = async () => {
-			const items = dnsProvider.value.find((item) => {
-				return item.value === param.value.value
-			})
-			if (items) {
-				param.value = {
-					label: items.label,
-					value: items.value,
-					type: items.type,
-				}
-			}
-			if (dnsProvider.value.length > 0 && param.value.value === '') {
-				param.value = {
-					label: dnsProvider.value[0]?.label || '',
-					value: dnsProvider.value[0]?.value || '',
-					type: dnsProvider.value[0]?.type || '',
-				}
-			}
-			emit('update:value', param.value)
+		const renderSingleSelectTag = ({ option }: { option: DnsProviderOption }): VNode => {
+			return (
+				<div class="flex items-center">
+					{option.label ? (
+						renderLabel(option)
+					) : (
+						<NText class="text-[#aaa]">
+							{props.type === 'dns' ? $t('t_0_1747019621052') : $t('t_0_1746858920894')}
+						</NText>
+					)}
+				</div>
+			)
 		}
-
-		/**
-		 * 更新表单的值
-		 * @param value - 表单的值
-		 */
-		const handleUpdateValue = (value: string) => {
-			param.value.value = value
-			handleUpdateType()
-		}
-
-		/**
-		 * @description 加载DNS提供商选项
-		 */
-		const loadDnsProviders = async (type: DnsProviderType = '') => {
-			isLoading.value = true
-			errorMessage.value = ''
-
-			try {
-				await fetchDnsProvider(type)
-			} catch (error) {
-				errorMessage.value = typeof error === 'string' ? error : $t('t_0_1746760933542')
-				handleError(error)
-			} finally {
-				isLoading.value = false
-			}
-		}
-
-		/**
-		 * @description 搜索过滤函数
-		 * @param pattern - 搜索文本
-		 * @param option - 选项
-		 */
-		const handleFilter = (pattern: string, option: any) => {
-			return option.label.toLowerCase().includes(pattern.toLowerCase())
-		}
-
-		// 监听消息通知提供商
-		watch(
-			() => dnsProvider.value,
-			(newVal) => {
-				dnsProviderRef.value =
-					newVal.map((item) => ({
-						label: item.label,
-						value: props.valueType === 'value' ? item.value : item.type,
-						type: props.valueType === 'value' ? item.type : item.value,
-					})) || []
-				handleUpdateType()
-			},
-		)
-
-		// 监听父组件的值
-		watch(
-			() => props.value,
-			() => {
-				handleUpdateValue(props.value)
-			},
-			{ immediate: true },
-		)
-
-		onMounted(() => {
-			loadDnsProviders(props.type)
-		})
-
-		onUnmounted(() => {
-			resetDnsProvider()
-		})
 
 		return () => (
-			<NSpin show={isLoading.value}>
+			<NSpin show={controller.isLoading.value}>
 				<NGrid cols={24} class={props.customClass}>
 					<NFormItemGi
 						span={props.isAddMode ? 13 : 24}
@@ -281,20 +115,23 @@ export default defineComponent({
 					>
 						<NSelect
 							class="flex-1 w-full"
-							options={dnsProviderRef.value}
+							options={controller.dnsProviderRef.value}
 							renderLabel={renderLabel}
-							renderTag={renderSingleSelectTag}
+							renderTag={({ option }: { option: any }) =>
+								renderSingleSelectTag({ option: option as DnsProviderOption })
+							}
 							filterable
-							filter={handleFilter}
+							filter={(pattern: string, option: any) => controller.handleFilter(pattern, option as DnsProviderOption)}
 							placeholder={props.type === 'dns' ? $t('t_3_1745490735059') : $t('t_0_1746858920894')}
-							v-model:value={param.value.value}
-							onUpdateValue={handleUpdateValue}
+							value={controller.param.value.value} // 使用 controller 中的 param.value.value
+							onUpdateValue={controller.handleUpdateValue}
 							disabled={props.disabled}
 							v-slots={{
 								empty: () => {
 									return (
 										<span class="text-[1.4rem]">
-											{errorMessage.value || (props.type === 'dns' ? $t('t_1_1746858922914') : $t('t_2_1746858923964'))}
+											{controller.errorMessage.value ||
+												(props.type === 'dns' ? $t('t_1_1746858922914') : $t('t_2_1746858923964'))}
 										</span>
 									)
 								},
@@ -303,10 +140,14 @@ export default defineComponent({
 					</NFormItemGi>
 					{props.isAddMode && (
 						<NFormItemGi span={11}>
-							<NButton class="mx-[8px]" onClick={goToAddDnsProvider} disabled={props.disabled}>
+							<NButton class="mx-[8px]" onClick={controller.goToAddDnsProvider} disabled={props.disabled}>
 								{props.type === 'dns' ? $t('t_1_1746004861166') : $t('t_3_1746858920060')}
 							</NButton>
-							<NButton onClick={() => loadDnsProviders(props.type)} loading={isLoading.value} disabled={props.disabled}>
+							<NButton
+								onClick={() => controller.loadDnsProviders(props.type)}
+								loading={controller.isLoading.value}
+								disabled={props.disabled}
+							>
 								{$t('t_0_1746497662220')}
 							</NButton>
 						</NFormItemGi>

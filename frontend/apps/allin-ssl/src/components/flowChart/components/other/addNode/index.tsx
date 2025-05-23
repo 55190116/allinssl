@@ -1,5 +1,5 @@
-import { useAddNodeController } from '@components/flowChart/useController'
-import SvgIcon from '@components/svgIcon'
+import { useAddNodeController } from '@components/FlowChart/useController'
+import SvgIcon from '@components/SvgIcon'
 import styles from './index.module.css'
 
 import type {
@@ -9,8 +9,8 @@ import type {
 	BaseNodeData,
 	BranchNodeData,
 	BaseRenderNodeOptions,
-} from '@components/flowChart/types'
-import nodeOptions from '@components/flowChart/lib/config'
+} from '@components/FlowChart/types'
+import nodeOptions from '@components/FlowChart/lib/config'
 
 interface NodeSelect {
 	title: NodeTitle

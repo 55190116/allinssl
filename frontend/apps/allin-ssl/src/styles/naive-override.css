@@ -21,3 +21,31 @@
 .n-tabs .n-tabs-tab:last-child {
 	border-radius: 0 0.8rem 0.8rem 0;
 }
+
+
+/* 日志颜色 */
+
+.hljs-info-text{
+	color: var(--n-success-color) !important;
+}
+.hljs-date-text{
+	color: var(--n-success-color-pressed) !important;
+}
+.hljs-error-text{
+	color: var(--n-error-color) !important;
+}
+.hljs-warning-text{
+	color: var(--n-warning-color) !important;
+}
+
+
+/* 表格数据显示 */
+.n-data-table .n-data-table-empty{
+	background-color: var(--n-merged-td-color);
+}
+
+
+.leftPanel .n-tabs-tab {
+	height: 3.2rem;
+	line-height: 3.2rem;
+}

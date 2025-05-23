@@ -10,6 +10,7 @@ import '@styles/reset.css' // 重置样式
 import '@styles/variable.css' // 全局变量
 import '@styles/transition.css' // 过渡动画
 import '@styles/icon.css' // css 图标
+import '@styles/naive-override.css' // 覆盖 Naive UI 样式
 import { directives, useDirectives } from '@lib/directive'
 
 // 引入mock
@@ -17,7 +18,6 @@ import { directives, useDirectives } from '@lib/directive'
 
 const app = createApp(App)
 app.use(router) // 路由
-console.log('app', router)
 app.use(pinia) // 使用状态管理
 app.use(i18n) // 国际化
 app.mount('#app') // 挂载到DOM

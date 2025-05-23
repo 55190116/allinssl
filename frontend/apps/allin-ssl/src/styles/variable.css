@@ -8,31 +8,35 @@
 	--n-content-padding: 1.2rem; /* 内容区内边距 */
 	--n-dialog-title-padding: 0; /* 对话框标题内边距 */
 	--n-layout-content-background-color: #f8fafc; /* 内容区背景颜色 */
+
+	/* Home View Custom Colors */
+	--color-workflow-bg: rgba(16, 185, 129, 0.08);
+	--color-workflow-icon-wrapper-bg: rgba(16, 185, 129, 0.15);
+
+	--color-cert-bg: rgba(245, 158, 11, 0.08);
+	--color-cert-icon-wrapper-bg: rgba(245, 158, 11, 0.15);
+
+	--color-monitor-bg: rgba(139, 92, 246, 0.08);
+	--color-monitor-icon-wrapper-bg: rgba(139, 92, 246, 0.15);
+	--color-monitor-text: #8B5CF6; /* 紫色，用于图标和标题 */
+
+	--color-decorative-element-bg: #f0f9ff; /* 用于替换 Tailwind bg-blue-50 */
 }
 
 :root.dark {
 	--n-layout-content-background-color: transparent; /* 内容区背景颜色 */
+
+	/* Home View Custom Colors - Dark Theme */
+	--color-workflow-bg: rgba(var(--n-success-color-rgb), 0.12); /* 使用 Naive UI 暗色主题成功色的 RGB 值，并调整透明度 */
+	--color-workflow-icon-wrapper-bg: rgba(var(--n-success-color-rgb), 0.22);
+
+	--color-cert-bg: rgba(var(--n-warning-color-rgb), 0.12); /* 使用 Naive UI 暗色主题警告色的 RGB 值，并调整透明度 */
+	--color-cert-icon-wrapper-bg: rgba(var(--n-warning-color-rgb), 0.22);
+
+	--color-monitor-bg: rgba(167, 139, 250, 0.12); /* 调整为较亮的紫色，并设置透明度 */
+	--color-monitor-icon-wrapper-bg: rgba(167, 139, 250, 0.22);
+	--color-monitor-text: #A78BFA; /* 较亮的紫色，用于暗色主题 */
+
+	--color-decorative-element-bg: rgba(30, 41, 59, 0.7); /* 暗色主题下的装饰背景色 */
 }
 
-
-/* 日志颜色 */
-
-.hljs-info-text{
-	color: var(--n-success-color) !important;
-}
-.hljs-date-text{
-	color: var(--n-success-color-pressed) !important;
-}
-.hljs-error-text{
-	color: var(--n-error-color) !important;
-}
-.hljs-warning-text{
-	color: var(--n-warning-color) !important;
-}
-
-
-/* 表格数据显示 */
-
-.n-data-table .n-data-table-empty{
-	background-color: var(--n-merged-td-color);
-}

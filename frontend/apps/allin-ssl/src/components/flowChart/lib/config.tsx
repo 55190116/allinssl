@@ -106,6 +106,9 @@ nodeOptions[APPLY] = () =>
 			config: {
 				domains: '',
 				email: '',
+				eabId: '',
+				ca: '',
+				proxy: '',
 				end_day: 30,
 				provider: '',
 				provider_id: '',

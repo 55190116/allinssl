@@ -2,7 +2,7 @@ import { addWorkflow, updateWorkflow } from '@api/workflow'
 import { useError } from '@baota/hooks/error'
 import { $t } from '@locales/index'
 
-import type { FlowNode } from '@components/flowChart/types'
+import type { FlowNode } from '@components/FlowChart/types'
 import type { AddWorkflowParams, UpdateWorkflowParams } from '@/types/workflow'
 
 export const useWorkEditViewStore = defineStore('work-edit-view-store', () => {

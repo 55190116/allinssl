@@ -1,7 +1,7 @@
 import { formatDate } from '@baota/utils/date'
 import { deepMerge } from '@baota/utils/data'
-import nodeOptions from '@components/flowChart/lib/config'
-import MockData from '@components/flowChart/mock'
+import nodeOptions from '@components/FlowChart/lib/config'
+import MockData from '@components/FlowChart/mock'
 import type {
 	NodeIcon,
 	NodeNum,
@@ -11,8 +11,9 @@ import type {
 	NodeSelect,
 	BranchNodeData,
 	ExecuteResultBranchNodeData,
-} from '@components/flowChart/types'
-import { BRANCH, CONDITION, EXECUTE_RESULT_BRANCH, EXECUTE_RESULT_CONDITION } from './lib/alias'
+} from '@components/FlowChart/types'
+import { BRANCH, CONDITION, EXECUTE_RESULT_BRANCH, EXECUTE_RESULT_CONDITION } from '@components/FlowChart/lib/alias'
+import { $t } from '@locales/index'
 
 /**
  * 流程图数据存储
@@ -45,6 +46,25 @@ export const useFlowStore = defineStore('flow-store', () => {
 	// 计算添加节点选项列表，排除的节点选项列表
 	const nodeSelectList = computed(() => {
 		return addNodeSelectList.value.filter((item) => !excludeNodeSelectList.value.includes(item.type))
+	})
+
+	/**
+	 * 当前选中的节点数据
+	 * @type {ComputedRef<BaseNodeData | null>}
+	 */
+	const selectedNode = computed(() => {
+		if (!selectedNodeId.value) return null
+		// 使用findNodeRecursive查找节点
+		return findNodeRecursive(flowData.value.childNode, selectedNodeId.value)
+	})
+
+	/**
+	 * 节点标题
+	 * @type {ComputedRef<string>}
+	 */
+	const nodeTitle = computed(() => {
+		if (!selectedNode.value) return $t('t_6_1744861190121')
+		return selectedNode.value.name
 	})
 
 	/**
@@ -535,6 +555,8 @@ export const useFlowStore = defineStore('flow-store', () => {
 		// 数据
 		flowData, // 流程图数据
 		flowZoom, // 流程图缩放比例
+		selectedNode, // 当前选中的节点
+		nodeTitle, // 当前选中的节点标题
 		selectedNodeId, // 当前选中的节点ID
 		isRefreshNode, // 是否刷新节点
 		advancedOptions, // 高级选项

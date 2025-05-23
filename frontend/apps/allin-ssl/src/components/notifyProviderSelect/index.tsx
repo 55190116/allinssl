@@ -1,176 +1,168 @@
-import { defineComponent, VNode } from 'vue'
-import { NButton, NFlex, NFormItemGi, NGrid, NSelect, NText } from 'naive-ui'
+// External Libraries
+import { defineComponent, computed } from 'vue'
+import { NButton, NDivider, NFlex, NFormItemGi, NGi, NGrid, NSelect, NText } from 'naive-ui'
+
+// Type Imports
+import type { VNode, PropType } from 'vue'
+import type { SelectOption } from 'naive-ui'
+import type { NotifyProviderOption, NotifyProviderSelectProps } from './types'
+
+// Absolute Internal Imports - Components
+import SvgIcon from '@components/SvgIcon'
+// Absolute Internal Imports - Utilities / Others
 import { $t } from '@locales/index'
-import { useStore } from '@layout/useStore'
-import SvgIcon from '@components/svgIcon'
 
-interface NotifyProviderOption {
-	label: string
-	value: string
-	type: string
-}
+// Relative Internal Imports - Controller
+import { useNotifyProviderSelectController } from './useController'
 
-interface NotifyProviderSelectProps {
-	path: string
-	value: string
-	valueType: 'value' | 'type'
-	isAddMode: boolean
-}
-
+/**
+ * @description 通知提供商选择组件。允许用户从列表中选择一个通知渠道。
+ * @example
+ * <NotifyProviderSelect
+ *   path="form.channel"
+ *   v-model:value="selectedChannelValue"
+ *   valueType="value"
+ *   :isAddMode="true"
+ *   @update:value="(option) => handleChannelChange(option)"
+ * />
+ */
 export default defineComponent({
 	name: 'NotifyProviderSelect',
 	props: {
-		// 表单，用于绑定表单的值
+		/**
+		 * 表单项的路径，用于表单校验或上下文。
+		 * @default ''
+		 */
 		path: {
-			type: String,
+			type: String as PropType<NotifyProviderSelectProps['path']>,
 			default: '',
 		},
-		// 表单的值
+		/**
+		 * 当前选中的值 (对应 NotifyProviderOption['value']，即 NSelect 的 modelValue)。
+		 * @default ''
+		 */
 		value: {
-			type: String,
+			type: String as PropType<NotifyProviderSelectProps['value']>,
 			default: '',
 		},
-		// 表单的值类型
+		/**
+		 * 决定 `props.value` 和 `NotifyProviderOption.value` 字段是基于原始提供商的 `value` 还是 `type`。
+		 * - 'value': 使用原始提供商的 `value` 字段作为 `NotifyProviderOption.value`。
+		 * - 'type': 使用原始提供商的 `type` 字段作为 `NotifyProviderOption.value`。
+		 * @default 'value'
+		 */
 		valueType: {
-			type: String,
+			type: String as PropType<NotifyProviderSelectProps['valueType']>,
 			default: 'value',
+			validator: (val: string) => ['value', 'type'].includes(val),
 		},
-
-		// 是否为添加模式
+		/**
+		 * 是否为添加模式，显示额外的"新增渠道"和"刷新"按钮。
+		 * @default false
+		 */
 		isAddMode: {
-			type: Boolean,
+			type: Boolean as PropType<NotifyProviderSelectProps['isAddMode']>,
 			default: false,
 		},
 	},
-	emits: ['update:value'],
+	/**
+	 * @event update:value - 当选中的通知提供商更新时触发。
+	 * @param {NotifyProviderOption} option - 选中的通知提供商的完整对象 (`{ label: string, value: string, type: string }`)。
+	 */
+	emits: {
+		'update:value': (payload: NotifyProviderOption) => {
+			return (
+				typeof payload === 'object' && payload !== null && 'label' in payload && 'value' in payload && 'type' in payload
+			)
+		},
+	},
 	setup(props: NotifyProviderSelectProps, { emit }) {
-		// 获取消息通知提供商
-		const { fetchNotifyProvider, notifyProvider } = useStore()
-		// 表单的值
-		const param = ref<NotifyProviderOption>({
-			label: '',
-			value: '',
-			type: '',
-		})
-		const notifyProviderRef = ref<NotifyProviderOption[]>([])
+		const { selectOptions, goToAddNotifyProvider, handleSelectUpdate, fetchNotifyProviderData } =
+			useNotifyProviderSelectController(props, emit)
 
 		/**
-		 * 打开通知渠道配置页面
+		 * @description 渲染 NSelect 中已选项的标签 (Tag)。
+		 * @param {object} params - Naive UI 传递的选项包装对象。
+		 * @param {SelectOption} params.option - 当前选项的数据。
+		 * @returns {VNode} 渲染后的 VNode。
 		 */
-		const goToAddNotifyProvider = () => {
-			window.open('/settings?tab=notification', '_blank')
-		}
-
-		/**
-		 * 渲染单选标签
-		 * @param option - 选项
-		 * @returns 渲染后的VNode
-		 */
-		const renderSingleSelectTag = ({ option }: Record<string, any>): VNode => {
+		const renderSingleSelectTag = ({ option }: { option: SelectOption }): VNode => {
+			// 将 SelectOption 转换为 NotifyProviderOption
+			const notifyOption = option as NotifyProviderOption & SelectOption
 			return (
 				<div class="flex items-center">
-					{option.label ? (
-						<NFlex>
-							<SvgIcon icon={`notify-${props.valueType === 'value' ? option.type : option.value}`} size="2rem" />
-							<NText>{option.label}</NText>
+					{notifyOption.label ? (
+						<NFlex align="center" size="small">
+							<SvgIcon icon={`notify-${notifyOption.type || ''}`} size="1.6rem" />
+							<NText>{notifyOption.label}</NText>
 						</NFlex>
 					) : (
-						<NText>{$t('t_0_1745887835267')}</NText>
+						<NText depth="3">{$t('t_0_1745887835267')}</NText>
 					)}
 				</div>
 			)
 		}
 
 		/**
-		 * 渲染标签
-		 * @param option - 选项
-		 * @returns 渲染后的VNode
+		 * @description 渲染 NSelect 下拉列表中的选项标签。
+		 * @param {SelectOption} option - 当前选项的数据。
+		 * @returns {VNode} 渲染后的 VNode。
 		 */
-		const renderLabel = (option: NotifyProviderOption): VNode => {
+		const renderLabel = (option: SelectOption): VNode => {
+			// 将 SelectOption 转换为 NotifyProviderOption
+			const notifyOption = option as NotifyProviderOption & SelectOption
 			return (
-				<NFlex>
-					<SvgIcon icon={`notify-${props.valueType === 'value' ? option.type : option.value}`} size="2rem" />
-					<NText>{option.label}</NText>
+				<NFlex align="center" size="small">
+					<SvgIcon icon={`notify-${notifyOption.type || ''}`} size="1.6rem" />
+					<NText>{notifyOption.label}</NText>
 				</NFlex>
 			)
 		}
 
-		/**
-		 * @description 更新类型
-		 * @param option - 选项
-		 * @param value - 值
-		 */
-		const handleUpdateType = (value: string) => {
-			if (!value) return
-			const row = notifyProviderRef.value.find((item) => {
-				return item.value === value
-			})
-			param.value = {
-				label: row?.label || '',
-				value: row?.value || '',
-				type: row?.type || '',
-			}
-		}
-
-		/**
-		 * 更新表单的值
-		 * @param value - 表单的值
-		 */
-		const handleUpdateValue = (value: string) => {
-			handleUpdateType(value)
-			emit('update:value', param.value)
-		}
-
-		// 监听父组件的值
-		watch(
-			() => props.value,
-			(newVal) => {
-				fetchNotifyProvider()
-				handleUpdateType(newVal)
-			},
-			{ immediate: true },
-		)
-
-		// 监听消息通知提供商
-		watch(
-			() => notifyProvider.value,
-			(newVal) => {
-				notifyProviderRef.value =
-					newVal.map((item) => ({
-						label: item.label,
-						value: props.valueType === 'value' ? item.value : item.type,
-						type: props.valueType === 'value' ? item.type : item.value,
-					})) || []
-				handleUpdateType(props.value)
-			},
-		)
+		// 转换选项格式以兼容 NSelect
+		const naiveSelectOptions = computed(() => {
+			return selectOptions.value.map((option): SelectOption & NotifyProviderOption => ({
+				...option,
+				// 确保兼容 NSelect 的 SelectOption 接口
+			}))
+		})
 
 		return () => (
 			<NGrid cols={24}>
-				<NFormItemGi span={props.isAddMode ? 13 : 24} label={$t('t_1_1745887832941')} path={props.path}>
+				<NFormItemGi span={props.isAddMode ? 13 : 24} label={$t('t_1_1745887832941') /* 通知渠道 */} path={props.path}>
 					<NSelect
-						class="flex-1 w-full "
-						options={notifyProviderRef.value}
+						class="flex-1 w-full"
+						options={naiveSelectOptions.value}
 						renderLabel={renderLabel}
 						renderTag={renderSingleSelectTag}
 						filterable
+						clearable
 						placeholder={$t('t_0_1745887835267')}
-						v-model:value={param.value.value}
-						onUpdateValue={handleUpdateValue}
+						value={props.value} // 直接使用 props.value
+						onUpdateValue={handleSelectUpdate}
 						v-slots={{
-							empty: () => {
-								return <span class="text-[1.4rem]">{$t('t_0_1745887835267')}</span>
-							},
+							empty: () => (
+								<div class="text-center py-4">
+									<NText depth="3" class="text-[1.4rem]">
+										{selectOptions.value.length === 0 ? $t('t_0_1745887835267') : '暂无匹配的通知渠道'}
+									</NText>
+								</div>
+							),
 						}}
 					/>
 				</NFormItemGi>
 				{props.isAddMode && (
-					<NFormItemGi span={11}>
-						<NButton class="mx-[8px]" onClick={goToAddNotifyProvider}>
-							{$t('t_2_1745887834248')}
-						</NButton>
-						<NButton onClick={fetchNotifyProvider}>{$t('t_0_1746497662220')}</NButton>
-					</NFormItemGi>
+					<NGi span={11}>
+						<div class="flex items-center h-full">
+							<NDivider vertical />
+							<NButton class="mx-[8px]" onClick={goToAddNotifyProvider} ghost>
+								{$t('t_2_1745887834248')}
+							</NButton>
+							<NButton onClick={fetchNotifyProviderData} ghost>
+								{$t('t_0_1746497662220')}
+							</NButton>
+						</div>
+					</NGi>
 				)}
 			</NGrid>
 		)

@@ -1,5 +1,5 @@
 import { getWorkflowHistoryDetail } from '@/api/workflow'
-import LogViewer from '@components/logViewer'
+import LogViewer from '@components/LogDisplay'
 
 export default defineComponent({
 	name: 'HistoryLogsModal',

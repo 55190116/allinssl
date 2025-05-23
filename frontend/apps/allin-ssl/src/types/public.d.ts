@@ -74,5 +74,3 @@ export interface GetOverviewsResponse extends AxiosResponseData {
 export interface loginCodeResponse {
 	data: string
 }
-
-

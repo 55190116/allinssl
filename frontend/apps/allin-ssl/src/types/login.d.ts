@@ -21,9 +21,8 @@ export interface UserInfo {
  * 登录参数接口
  */
 export interface LoginParams {
-	/** 用户名 */
+	code?: string
 	username: string
-	/** 密码 */
 	password: string
 }
 

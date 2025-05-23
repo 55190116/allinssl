@@ -1,14 +1,13 @@
-import { NInput, NButton } from 'naive-ui'
+import { NInput, NButton, NSpace } from 'naive-ui'
 import { $t } from '@/locales'
 import { useThemeCssVar } from '@baota/naive-ui/theme'
 import { RouterView } from '@baota/router'
-import { PlusOutlined } from '@vicons/antd'
 import { Search } from '@vicons/carbon'
 import { useController } from './useController'
 import { useRouter } from 'vue-router'
 
-import BaseComponent from '@components/baseComponent'
-import EmptyState from '@components/emptyState/index'
+import BaseComponent from '@components/BaseLayout'
+import EmptyState from '@components/TableEmptyState'
 
 /**
  * 工作流页面组件
@@ -21,6 +20,7 @@ export default defineComponent({
 			WorkflowTablePage,
 			isDetectionAddWorkflow,
 			handleAddWorkflow,
+			handleOpenCAManage,
 			hasChildRoutes,
 			param,
 			fetch,
@@ -52,10 +52,14 @@ export default defineComponent({
 						<BaseComponent
 							v-slots={{
 								headerLeft: () => (
-									<NButton type="primary" size="large" class="px-5" onClick={handleAddWorkflow}>
-										<PlusOutlined class="text-[var(--text-color-3)] w-[1.6rem]" />
-										<span class="px-2">{$t('t_0_1747047213730')}</span>
-									</NButton>
+									<NSpace>
+										<NButton type="primary" size="large" class="px-5" onClick={handleAddWorkflow}>
+											{$t('t_0_1747047213730')}
+										</NButton>
+										<NButton type="default" size="large" class="px-5" onClick={handleOpenCAManage}>
+											<span class="px-2">{$t('t_0_1747903670020')}</span>
+										</NButton>
+									</NSpace>
 								),
 								headerRight: () => (
 									<NInput
