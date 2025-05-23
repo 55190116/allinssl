@@ -1,13 +1,12 @@
-import { ref, watch, onMounted, onUnmounted } from 'vue';
-import type { DnsProviderSelectProps, DnsProviderOption, DnsProviderType, DnsProviderSelectEmits } from './types';
+import { ref, watch, onMounted, onUnmounted } from 'vue'
+import type { DnsProviderSelectProps, DnsProviderOption, DnsProviderType, DnsProviderSelectEmits } from './types'
 
 // 绝对内部导入 - Stores
-import { useStore } from '@layout/useStore';
+import { useStore } from '@layout/useStore'
 // 绝对内部导入 - Hooks
-import { useError } from '@baota/hooks/error';
+import { useError } from '@baota/hooks/error'
 // 绝对内部导入 - Utilities
-import { $t } from '@locales/index';
-
+import { $t } from '@locales/index'
 
 /**
  * @function useDnsProviderSelectController
@@ -16,29 +15,26 @@ import { $t } from '@locales/index';
  * @param emit - 组件的 emit 函数
  * @returns {DnsProviderControllerExposes} 控制器暴露给视图的数据和方法
  */
-export function useDnsProviderSelectController(
-	props: DnsProviderSelectProps,
-	emit: DnsProviderSelectEmits,
-) {
-	const { handleError } = useError();
-	const { fetchDnsProvider, resetDnsProvider, dnsProvider } = useStore();
+export function useDnsProviderSelectController(props: DnsProviderSelectProps, emit: DnsProviderSelectEmits) {
+	const { handleError } = useError()
+	const { fetchDnsProvider, resetDnsProvider, dnsProvider } = useStore()
 
 	const param = ref<DnsProviderOption>({
 		label: '',
 		value: '',
 		type: '',
-	});
-	const dnsProviderRef = ref<DnsProviderOption[]>([]);
-	const isLoading = ref(false);
-	const errorMessage = ref('');
+	})
+	const dnsProviderRef = ref<DnsProviderOption[]>([])
+	const isLoading = ref(false)
+	const errorMessage = ref('')
 
 	/**
 	 * @function goToAddDnsProvider
 	 * @description 跳转到DNS提供商授权页面
 	 */
 	const goToAddDnsProvider = () => {
-		window.open('/auth-api-manage', '_blank');
-	};
+		window.open('/auth-api-manage', '_blank')
+	}
 
 	/**
 	 * @function handleUpdateType
@@ -47,26 +43,32 @@ export function useDnsProviderSelectController(
 	const handleUpdateType = () => {
 		const selectedProvider = dnsProvider.value.find((item) => {
 			// 根据 props.valueType 决定是比较 item.value 还是 item.type
-			const valueToCompare = props.valueType === 'value' ? item.value : item.type;
-			return valueToCompare === param.value.value;
-		});
+			const valueToCompare = props.valueType === 'value' ? item.value : item.type
+			return valueToCompare === param.value.value
+		})
 
 		if (selectedProvider) {
 			param.value = {
 				label: selectedProvider.label,
 				value: props.valueType === 'value' ? selectedProvider.value : selectedProvider.type,
 				type: props.valueType === 'value' ? selectedProvider.type : selectedProvider.value,
-			};
-		} else if (dnsProvider.value.length > 0 && param.value.value === '') {
-			// 如果 param.value 为空（例如初始状态或清空后），且 dnsProvider 列表不为空，则默认选中第一个
-			param.value = {
-				label: dnsProvider.value[0]?.label || '',
-				value: props.valueType === 'value' ? dnsProvider.value[0]?.value || '' : dnsProvider.value[0]?.type || '',
-				type: props.valueType === 'value' ? dnsProvider.value[0]?.type || '' : dnsProvider.value[0]?.value || '',
-			};
+			}
+			emit('update:value', { ...param.value })
+		} else {
+			// 如果找不到匹配的选项，只有在 param.value.value 为空时才设置默认值
+			// 这样可以避免覆盖用户设置的初始值
+			if (param.value.value === '' && dnsProvider.value.length > 0) {
+				param.value = {
+					label: dnsProvider.value[0]?.label || '',
+					value: props.valueType === 'value' ? dnsProvider.value[0]?.value || '' : dnsProvider.value[0]?.type || '',
+					type: props.valueType === 'value' ? dnsProvider.value[0]?.type || '' : dnsProvider.value[0]?.value || '',
+				}
+				emit('update:value', { ...param.value })
+			}
+			// 如果 param.value.value 不为空但找不到匹配项，保持当前值不变
+			// 这种情况可能是数据还未加载完成或者选项暂时不可用
 		}
-		emit('update:value', { ...param.value });
-	};
+	}
 
 	/**
 	 * @function handleUpdateValue
@@ -74,9 +76,9 @@ export function useDnsProviderSelectController(
 	 * @param value - 新的选中值
 	 */
 	const handleUpdateValue = (value: string) => {
-		param.value.value = value;
-		handleUpdateType();
-	};
+		param.value.value = value
+		handleUpdateType()
+	}
 
 	/**
 	 * @function loadDnsProviders
@@ -84,24 +86,26 @@ export function useDnsProviderSelectController(
 	 * @param type - DNS提供商类型，默认为 props.type
 	 */
 	const loadDnsProviders = async (type: DnsProviderType = props.type) => {
-		isLoading.value = true;
-		errorMessage.value = '';
+		isLoading.value = true
+		errorMessage.value = ''
 		try {
-			await fetchDnsProvider(type);
-			// 数据加载后，如果 props.value 有值，尝试根据 props.value 初始化 param
-			// 否则 handleUpdateType 会尝试选择第一个或保持空
+			await fetchDnsProvider(type)
+			// 数据加载后，优先使用 props.value 设置初始值
 			if (props.value) {
-				handleUpdateValue(props.value);
+				// 直接设置 param.value.value，然后调用 handleUpdateType 来更新完整信息
+				param.value.value = props.value
+				handleUpdateType()
 			} else {
-				handleUpdateType(); // 确保在 dnsProvider 更新后，param 也得到相应更新
+				// 只有在 props.value 为空时才考虑设置默认值
+				handleUpdateType()
 			}
 		} catch (error) {
-			errorMessage.value = typeof error === 'string' ? error : $t('t_0_1746760933542'); // '获取DNS提供商列表失败'
-			handleError(error);
+			errorMessage.value = typeof error === 'string' ? error : $t('t_0_1746760933542') // '获取DNS提供商列表失败'
+			handleError(error)
 		} finally {
-			isLoading.value = false;
+			isLoading.value = false
 		}
-	};
+	}
 
 	/**
 	 * @function handleFilter
@@ -111,8 +115,8 @@ export function useDnsProviderSelectController(
 	 * @returns {boolean} 是否匹配
 	 */
 	const handleFilter = (pattern: string, option: DnsProviderOption): boolean => {
-		return option.label.toLowerCase().includes(pattern.toLowerCase());
-	};
+		return option.label.toLowerCase().includes(pattern.toLowerCase())
+	}
 
 	watch(
 		() => dnsProvider.value,
@@ -122,23 +126,30 @@ export function useDnsProviderSelectController(
 					label: item.label,
 					value: props.valueType === 'value' ? item.value : item.type,
 					type: props.valueType === 'value' ? item.type : item.value, // 确保 type 也被正确映射
-				})) || [];
+				})) || []
+
 			// 当 dnsProvider 列表更新后，重新评估 param 的值
-			// 如果当前 param.value 对应的项仍然存在，则更新 param 的 label 和 type
-			// 如果不存在（例如，列表刷新后原来的项没了），则尝试根据 props.value (如果存在) 或列表第一项来设定
-			const currentParamExists = dnsProviderRef.value.some(opt => opt.value === param.value.value);
+			const currentParamExists = dnsProviderRef.value.some((opt) => opt.value === param.value.value)
+
 			if (currentParamExists) {
-				handleUpdateType();
-			} else if (props.value && dnsProviderRef.value.some(opt => opt.value === props.value)) {
-				handleUpdateValue(props.value);
-			} else {
-				// 如果 props.value 也不在新的列表里，或者 props.value 为空，则默认选择第一个或清空
-				param.value.value = dnsProviderRef.value?.[0]?.value || '';
-				handleUpdateType();
+				// 如果当前值在新列表中存在，更新完整信息
+				handleUpdateType()
+			} else if (props.value && dnsProviderRef.value.some((opt) => opt.value === props.value)) {
+				// 如果 props.value 在新列表中存在，使用 props.value
+				param.value.value = props.value
+				handleUpdateType()
+			} else if (param.value.value === '') {
+				// 只有在当前值为空时才设置默认值
+				if (dnsProviderRef.value.length > 0) {
+					param.value.value = dnsProviderRef.value[0]?.value || ''
+					handleUpdateType()
+				}
 			}
+			// 如果当前值不为空但在新列表中不存在，保持当前值不变
+			// 这样可以避免在数据加载过程中意外覆盖用户设置的值
 		},
 		{ deep: true }, // 监听 dnsProvider 数组内部变化
-	);
+	)
 
 	watch(
 		() => props.value,
@@ -146,26 +157,26 @@ export function useDnsProviderSelectController(
 			// 仅当外部 props.value 与内部 param.value.value 不一致时才更新
 			// 避免因子组件 emit('update:value') 导致父组件 props.value 更新，从而再次触发此 watch 造成的循环
 			if (newValue !== param.value.value) {
-				handleUpdateValue(newValue);
+				handleUpdateValue(newValue)
 			}
 		},
 		{ immediate: true },
-	);
+	)
 
 	watch(
 		() => props.type,
 		(newType) => {
-			loadDnsProviders(newType);
-		}
-	);
+			loadDnsProviders(newType)
+		},
+	)
 
 	onMounted(() => {
-		loadDnsProviders(props.type);
-	});
+		loadDnsProviders(props.type)
+	})
 
 	onUnmounted(() => {
-		resetDnsProvider();
-	});
+		resetDnsProvider()
+	})
 
 	return {
 		param,
@@ -176,5 +187,5 @@ export function useDnsProviderSelectController(
 		handleUpdateValue,
 		loadDnsProviders,
 		handleFilter,
-	};
+	}
 }

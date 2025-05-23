@@ -125,7 +125,7 @@ export default defineComponent({
 									param.value.siteName = []
 								}
 								param.value.provider_id = val.value
-							},
+							}, 
 						}
 						return (<DnsProviderSelect {...dnsProviderProps} />) as VNode
 					}),

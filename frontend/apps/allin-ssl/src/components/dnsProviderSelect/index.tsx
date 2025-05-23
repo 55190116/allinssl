@@ -115,12 +115,12 @@ export default defineComponent<DnsProviderSelectProps>({
 					>
 						<NSelect
 							class="flex-1 w-full"
+							filterable
 							options={controller.dnsProviderRef.value}
 							renderLabel={renderLabel}
 							renderTag={({ option }: { option: any }) =>
 								renderSingleSelectTag({ option: option as DnsProviderOption })
 							}
-							filterable
 							filter={(pattern: string, option: any) => controller.handleFilter(pattern, option as DnsProviderOption)}
 							placeholder={props.type === 'dns' ? $t('t_3_1745490735059') : $t('t_0_1746858920894')}
 							value={controller.param.value.value} // 使用 controller 中的 param.value.value
