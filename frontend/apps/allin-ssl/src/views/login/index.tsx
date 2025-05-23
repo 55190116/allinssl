@@ -1,32 +1,24 @@
 // External Libraries
-import { NInput, NButton, NCheckbox, NForm, NFormItem, NIcon, NImage } from 'naive-ui';
-import { UserOutlined, LockOutlined, CodeOutlined } from '@vicons/antd';
+import { NInput, NButton, NCheckbox, NForm, NFormItem, NIcon, NImage } from 'naive-ui'
+import { UserOutlined, LockOutlined, CodeOutlined } from '@vicons/antd'
 
 // Absolute Internal Imports
-import { useTheme, useThemeCssVar } from '@baota/naive-ui/theme';
-import { $t } from '@locales/index';
+import { useTheme, useThemeCssVar } from '@baota/naive-ui/theme'
+import { $t } from '@locales/index'
 
 // Relative Internal Imports
-import { useController } from './useController';
+import { useController } from './useController'
 
 // Side-effect Imports
-import styles from './index.module.css';
-
-// import LocalesTips from '@baota/naive-ui/components/localesTips'; // 多语言切换提示组件 (注释掉)
-// import ThemeTips from '@baota/naive-ui/components/themeTips'; // 主题切换提示组件 (注释掉)
+import styles from './index.module.css'
 
 export default defineComponent({
-	name: 'LoginView', // 组件命名规范
+	name: 'LoginView',
 	setup() {
-		// 获取登录控制器
 		const { loading, error, rememberMe, handleSubmit, handleKeyup, loginData, handleGetCode, codeImg, mustCode } =
-			useController();
-
-		// 获取主题暗色模式
-		const { isDark } = useTheme();
-
-		// 获取主题变量
-		const cssVar = useThemeCssVar(['textColor2', 'actionColor', 'errorColor', 'primaryColor', 'primaryColorSuppl']);
+			useController()
+		const { isDark } = useTheme()
+		const cssVar = useThemeCssVar(['textColor2', 'actionColor', 'errorColor', 'primaryColor', 'primaryColorSuppl'])
 
 		return () => (
 			<div style={cssVar.value}>
@@ -34,10 +26,6 @@ export default defineComponent({
 					class={styles.container}
 					style={`background-image:${isDark.value ? 'url(/static/images/login-bg-dark.svg)' : 'url(/static/images/login-bg.svg)'};`}
 				>
-					{/* 国际化和主题切换组件暂时注释，如果需要请取消注释并确保其功能 */}
-						{/* <LocalesTips /> */}
-						{/* <ThemeTips /> */}
-					{/* </div> */}
 					<div class={styles.loginBox}>
 						<div class={styles.leftSection}>
 							<h2 class={styles.leftTitle}>
@@ -54,7 +42,11 @@ export default defineComponent({
 								<NForm onSubmit={handleSubmit} class={styles.formWrapper}>
 									<div class={styles.formContent}>
 										<div class={styles.formInputs}>
-											<NFormItem show-label={false} path="username" rule={{ required: true, message: $t('t_3_1744164839524'), trigger: ['input', 'blur'] }}>
+											<NFormItem
+												show-label={false}
+												path="username"
+												rule={{ required: true, message: $t('t_3_1744164839524'), trigger: ['input', 'blur'] }}
+											>
 												<NInput
 													v-model:value={loginData.value.username}
 													onKeyup={handleKeyup}
@@ -68,7 +60,11 @@ export default defineComponent({
 													}}
 												</NInput>
 											</NFormItem>
-											<NFormItem show-label={false} path="password" rule={{ required: true, message: $t('t_4_1744164840458'), trigger: ['input', 'blur'] }}>
+											<NFormItem
+												show-label={false}
+												path="password"
+												rule={{ required: true, message: $t('t_4_1744164840458'), trigger: ['input', 'blur'] }}
+											>
 												<NInput
 													onKeyup={handleKeyup}
 													disabled={loading.value}
@@ -85,7 +81,11 @@ export default defineComponent({
 												</NInput>
 											</NFormItem>
 											{mustCode.value ? (
-												<NFormItem show-label={false} path="code" rule={{ required: true, message: $t('t_25_1745289355721'), trigger: ['input', 'blur'] }}>
+												<NFormItem
+													show-label={false}
+													path="code"
+													rule={{ required: true, message: $t('t_25_1745289355721'), trigger: ['input', 'blur'] }}
+												>
 													<NInput
 														onKeyup={handleKeyup}
 														disabled={loading.value}
@@ -100,10 +100,14 @@ export default defineComponent({
 															suffix: () => (
 																<span
 																	onClick={handleGetCode}
-																	title={$t('t_0_1745936396853')} // 点击刷新验证码
-																	class="w-[10rem] h-[4rem] mr-[-1.5rem] flex items-center justify-center relative z-[999] cursor-pointer bg-slate-400 rounded-r-[6px]" // 确保图片居中和样式
+																	title={$t('t_0_1745936396853')}
+																	class={`w-[10rem] h-[4rem] mr-[-1.5rem] flex items-center justify-center relative z-[999] cursor-pointer bg-slate-400 rounded-r-[6px] ${styles.codeImageContainer}`}
 																>
-																	<NImage src={codeImg.value} preview-disabled class="max-w-full max-h-full object-contain" /> {/* 确保图片在容器内显示 */}
+																	<NImage
+																		src={codeImg.value}
+																		preview-disabled
+																		class="max-w-full max-h-full object-contain"
+																	/>
 																</span>
 															),
 														}}
@@ -114,20 +118,25 @@ export default defineComponent({
 
 										<div class={styles.formActions}>
 											<div class={styles.rememberSection}>
-												<NCheckbox v-model:checked={rememberMe.value} > {/* 使用 v-model:checked */}
-													{$t('t_5_1744164840468')}
-												</NCheckbox>
+												<NCheckbox v-model:checked={rememberMe.value}>{$t('t_5_1744164840468')}</NCheckbox>
 												<a
 													class={styles.forgotPassword}
-													href="https://www.bt.cn/bbs/thread-144776-1-1.html" // 考虑将此URL配置化
+													href="https://www.bt.cn/bbs/thread-144776-1-1.html"
 													target="_blank"
-													rel="noopener noreferrer" // 安全性考虑
+													rel="noopener noreferrer"
 												>
 													{$t('t_6_1744164838900')}
 												</a>
 											</div>
 											{error.value && <div class={styles.error}>{error.value}</div>}
-											<NButton type="primary" size="large" block loading={loading.value} attrType="submit" onClick={handleSubmit}> {/* 添加 attrType="submit" */}
+											<NButton
+												type="primary"
+												size="large"
+												block
+												loading={loading.value}
+												attrType="submit"
+												onClick={handleSubmit}
+											>
 												{loading.value ? $t('t_7_1744164838625') : $t('t_8_1744164839833')}
 											</NButton>
 										</div>
@@ -138,6 +147,6 @@ export default defineComponent({
 					</div>
 				</div>
 			</div>
-		);
+		)
 	},
 })

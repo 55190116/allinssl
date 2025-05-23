@@ -276,19 +276,84 @@
 /* 响应式布局适配 */
 @media (max-width: 768px) {
 	.loginBox {
-		@apply flex-col p-7;
+		@apply flex-col p-4 w-[95vw] min-h-[auto];
 	}
 
 	.leftSection {
-		@apply p-7 text-center;
+		@apply p-4 text-center mb-4;
+	}
+
+	.leftTitle {
+		@apply text-[2.4rem] mb-4;
+	}
+
+	.leftImageWrapper {
+		@apply hidden;
 	}
 
 	.leftDesc {
-		@apply mx-auto;
+		@apply mx-auto text-[1.4rem];
 	}
 
 	.rightSection {
-		@apply w-full mx-auto;
+		@apply w-full mx-auto mr-0 p-8 min-h-[auto];
+	}
+
+	.title {
+		@apply text-[2.8rem] mb-8;
+	}
+
+	.formContainer {
+		@apply gap-4;
+	}
+}
+
+/* 更小屏幕适配 */
+@media (max-width: 480px) {
+	.container {
+		@apply p-4;
+	}
+
+	.loginBox {
+		@apply w-full p-2 min-h-[auto];
+	}
+
+	.leftSection {
+		@apply p-2 mb-2;
+	}
+
+	.leftTitle {
+		@apply text-[2rem] mb-2 flex-col;
+	}
+
+	.logo {
+		@apply w-[4rem] h-[4rem] mr-0 mb-2;
+	}
+
+	.rightSection {
+		@apply p-6;
+	}
+
+	.title {
+		@apply text-[2.4rem] mb-6;
+	}
+
+	.formInputs :global(.n-form-item) {
+		@apply mb-4;
+	}
+
+	.rememberSection {
+		@apply flex-col items-start gap-2 mb-4;
+	}
+
+	/* 验证码输入框移动端优化 */
+	.formInputs :global(.n-input) {
+		@apply text-[1.6rem];
+	}
+
+	/* 验证码图片容器移动端优化 */
+	.codeImageContainer {
+		@apply w-[8rem] h-[3.5rem] mr-[-1rem] text-[1.4rem];
 	}
 }
 
@@ -309,4 +374,13 @@
 /* 图标样式 */
 .icon {
 	color: var(--n-primary-color-suppl);
+}
+
+/* 验证码图片容器样式 */
+.codeImageContainer {
+	transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.codeImageContainer:hover {
+	@apply bg-slate-500;
 }

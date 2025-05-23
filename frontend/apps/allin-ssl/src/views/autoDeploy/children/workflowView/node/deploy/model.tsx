@@ -123,21 +123,21 @@ export default defineComponent({
 							// 使用自定义属性来传递事件处理程序
 							'onUpdate:value': (val: { value: number; type: string }) => {
 								param.value.provider_id = val.value
+								param.value.siteName = []
 							},
 						}
-
-						// 使用类型断言创建VNode
 						return (<DnsProviderSelect {...dnsProviderProps} />) as VNode
 					}),
 				)
 			} else {
-				config.push(formConfig.select($t('t_0_1746754500246'), 'provider', localProvider.value, { disabled: true }))
+				config.push(formConfig.select($t('t_0_1746754500246'), 'provider', localProvider.value))
 			}
 
 			// 证书来源选择
 			config.push(
 				formConfig.select($t('t_1_1745748290291'), 'inputs.fromNodeId', certOptions.value, {
 					onUpdateValue: (val: string, option: { label: string; value: string }) => {
+						console.log('val', val)
 						param.value.inputs.fromNodeId = val
 						param.value.inputs.name = option?.label
 					},
@@ -161,8 +161,6 @@ export default defineComponent({
 							clearable: true,
 							loading: siteOptionsLoading.value,
 							onSearch: handleSiteSearch,
-							// renderLabel: (option: any) => option.label,
-							// renderTag: ({ option }: { option: any }) => option.label,
 						}),
 					)
 					break
@@ -275,7 +273,6 @@ export default defineComponent({
 			() => {
 				if (param.value.provider === 'btpanel-site') {
 					handleSiteSearch('')
-					param.value.siteName = []
 				}
 			},
 		)
@@ -309,10 +306,6 @@ export default defineComponent({
 
 		// 初始化
 		onMounted(() => {
-			// 隐藏底部按钮
-			modalOptions.value.footer = false
-			// 设置弹窗宽度和高度
-			modalOptions.value.area = [850, 600]
 			// 如果已经选择了部署类型，则跳转到下一步
 			if (param.value.provider) {
 				if (props.node.inputs) param.value.inputs = props.node.inputs[0]
