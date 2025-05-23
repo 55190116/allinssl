@@ -46,6 +46,7 @@ docker run -itd \
   -e ALLINSSL_USER=allinssl \
   -e ALLINSSL_PWD=allinssldocker \
   -e ALLINSSL_URL=allinssl \
+  -e TZ=Asia/Shanghai \
   allinssl/allinssl:latest
 ```
 
