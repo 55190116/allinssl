@@ -233,6 +233,8 @@ INSERT INTO settings (key, value, create_time, update_time, active, type) VALUES
 
 	// 雷池
 	InsertIfNotExists(db, "access_type", map[string]any{"name": "safeline", "type": "host"}, []string{"name", "type"}, []any{"safeline", "host"})
+	// 七牛
+	InsertIfNotExists(db, "access_type", map[string]any{"name": "qiniu", "type": "host"}, []string{"name", "type"}, []any{"qiniu", "host"})
 	// 西部数码
 	InsertIfNotExists(db, "access_type", map[string]any{"name": "westcn", "type": "dns"}, []string{"name", "type"}, []any{"westcn", "dns"})
 	// 火山引擎
