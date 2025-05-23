@@ -1,18 +1,15 @@
 {
   "folders": [
-    {
-      "path": "."
-    },
-    {
-      "path": ".sync-git/allinssl-gitlab"
-    },
-    {
-      "path": ".sync-git/allinssl-github"
-    },
-    {
-      "path": ".sync-git/origin-cloud-control"
-    }
-  ],
+		{
+			"path": "."
+		},
+		{
+			"path": ".sync-git/allinssl-gitlab"
+		},
+		{
+			"path": ".sync-git/allinssl-github"
+		}
+	],
   "settings": {
     "i18n-ally.enabledParsers": ["json", "yaml", "js"],
     "i18n-ally.keystyle": "flat",

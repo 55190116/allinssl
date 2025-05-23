@@ -319,12 +319,35 @@ export const useController = () => {
 	}
 
 	/**
+	 * @description 检测是否需要打开CA授权管理弹窗
+	 */
+	const isDetectionOpenCAManage = () => {
+		const { type } = route.query
+		if (type?.includes('caManage')) {
+			handleOpenCAManage()
+			router.push({ query: {} })
+		}
+	}
+
+	/**
+	 * @description 检测是否需要打开添加CA授权弹窗
+	 */
+	const isDetectionOpenAddCAForm = () => {
+		const { type } = route.query
+		if (type?.includes('addCAForm')) {
+			handleOpenCAManage({ type: 'addCAForm' })
+			router.push({ query: {} })
+		}
+	}
+
+	/**
 	 * @description 打开CA授权管理弹窗
 	 */
-	const handleOpenCAManage = () => {
+	const handleOpenCAManage = ({ type }: { type: string } = { type: '' }) => {
 		useModal({
 			title: $t('t_0_1747903670020'),
 			component: CAManageModal,
+			componentProps: { type },
 			area: 780,
 		})
 	}
@@ -332,7 +355,9 @@ export const useController = () => {
 	return {
 		WorkflowTable,
 		WorkflowTablePage,
-		isDetectionAddWorkflow,
+		isDetectionAddWorkflow, // 检测是否需要添加工作流
+		isDetectionOpenCAManage, // 检测是否需要打开CA授权管理弹窗
+		isDetectionOpenAddCAForm, // 检测是否需要打开添加CA授权弹窗
 		handleViewHistory, // 查看工作流执行历史
 		handleAddWorkflow, // 打开添加工作流弹窗
 		handleChangeActive, // 切换工作流状态
@@ -492,7 +517,7 @@ export const useHistoryController = (id: string) => {
  * @description CA授权管理业务逻辑控制器
  * @returns {Object} 返回CA授权管理控制器对象
  */
-export const useCAManageController = () => {
+export const useCAManageController = (props: { type: string }) => {
 	const { handleError } = useError()
 	// 表格配置
 	const columns = [
@@ -596,9 +621,9 @@ export const useCAManageController = () => {
 		resetCaForm()
 		useModal({
 			title: $t('t_4_1747903685371'),
+			area: 500,
 			component: () => import('./components/CAManageForm').then((m) => m.default),
 			footer: true,
-			area: 500,
 			onUpdateShow: (show) => {
 				if (!show) fetch()
 			},
@@ -606,7 +631,10 @@ export const useCAManageController = () => {
 	}
 
 	// 挂载时获取数据
-	onMounted(fetch)
+	onMounted(() => {
+		fetch()
+		if (props.type === 'addCAForm') handleOpenAddForm()
+	})
 
 	return {
 		CATable,

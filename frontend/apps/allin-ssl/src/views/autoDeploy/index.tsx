@@ -19,6 +19,8 @@ export default defineComponent({
 			WorkflowTable,
 			WorkflowTablePage,
 			isDetectionAddWorkflow,
+			isDetectionOpenCAManage,
+			isDetectionOpenAddCAForm,
 			handleAddWorkflow,
 			handleOpenCAManage,
 			hasChildRoutes,
@@ -40,6 +42,8 @@ export default defineComponent({
 		// 挂载时获取数据
 		onMounted(() => {
 			isDetectionAddWorkflow()
+			isDetectionOpenCAManage()
+			isDetectionOpenAddCAForm()
 			fetch()
 		})
 

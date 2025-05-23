@@ -32,8 +32,8 @@ export function useCAProviderSelectController(props: CAProviderSelectProps, emit
 	 * @function goToAddCAProvider
 	 * @description 跳转到CA授权管理页面
 	 */
-	const goToAddCAProvider = () => {
-		window.open('http://localhost:5173/auto-deploy', '_blank')
+	const goToAddCAProvider = (type: string) => {
+		window.open(`/auto-deploy?type=${type}`, '_blank')
 	}
 
 	/**

@@ -11,16 +11,15 @@ import BaseComponent from '@components/BaseLayout'
  */
 export default defineComponent({
 	name: 'CAManageModal',
-	setup() {
-		const { CATable, CATablePage, handleOpenAddForm, total } = useCAManageController()
-
-		/**
-		 * 处理空状态添加按钮点击事件
-		 */
-		const handleEmptyAddClick = () => {
-			handleOpenAddForm()
-		}
-
+	props: {
+		type: {
+			type: String,
+			default: '',
+		},
+	},
+	setup(props) {
+		const { CATable, CATablePage, handleOpenAddForm, total } = useCAManageController(props)
+		
 		return () => (
 			<BaseComponent
 				v-slots={{
@@ -35,7 +34,7 @@ export default defineComponent({
 							<CATable
 								size="medium"
 								v-slots={{
-									empty: () => <EmptyState addButtonText={$t('t_4_1747903685371')} onAddClick={handleEmptyAddClick} />,
+									empty: () => <EmptyState addButtonText={$t('t_4_1747903685371')} onAddClick={handleOpenAddForm} />,
 								}}
 							/>
 						</div>

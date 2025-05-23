@@ -2,7 +2,7 @@ import { defineComponent, PropType } from 'vue'
 import { NTag } from 'naive-ui'
 
 // 类型导入
-import type { AuthApiTypeIconProps } from './types.d'
+import type { AuthApiTypeIconProps } from './types'
 
 // 绝对路径内部导入 - 组件
 import SvgIcon from '@components/SvgIcon' // 请确保此路径 @components/SvgIcon 是正确的

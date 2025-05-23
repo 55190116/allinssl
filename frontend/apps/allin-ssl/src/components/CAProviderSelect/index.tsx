@@ -1,4 +1,4 @@
-import { defineComponent, PropType, VNode } from 'vue'
+import { defineComponent, VNode } from 'vue'
 import { NButton, NFormItemGi, NGrid, NSelect, NText, NSpin, NFlex } from 'naive-ui'
 
 // 类型导入
@@ -126,7 +126,7 @@ export default defineComponent<CAProviderSelectProps>({
 									return (
 										<div
 											class="flex items-center cursor-pointer hover:text-[#333] hover:bg-[#eee]"
-											onClick={goToAddCAProvider}
+											onClick={() => goToAddCAProvider('addCAForm')}
 										>
 											{$t('t_0_1747990626044')}
 										</div>
@@ -139,7 +139,7 @@ export default defineComponent<CAProviderSelectProps>({
 						/>
 					</NFormItemGi>
 					<NFormItemGi span={11}>
-						<NButton class="mx-[8px]" onClick={goToAddCAProvider} disabled={props.disabled}>
+						<NButton class="mx-[8px]" onClick={()=>goToAddCAProvider('caManage')} disabled={props.disabled}>
 							{$t('t_0_1747903670020')}
 						</NButton>
 						<NButton
