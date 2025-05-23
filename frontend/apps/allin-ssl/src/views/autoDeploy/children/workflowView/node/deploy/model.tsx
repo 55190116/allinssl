@@ -120,10 +120,11 @@ export default defineComponent({
 							value: param.value.provider_id,
 							valueType: 'value' as const,
 							isAddMode: true,
-							// 使用自定义属性来传递事件处理程序
-							'onUpdate:value': (val: { value: number; type: string }) => {
+							'onUpdate:value': (val: { value: number | string; type: string }) => {
+								if (val.value !== '' && param.value.provider_id !== '' && param.value.provider_id !== val.value) {
+									param.value.siteName = []
+								}
 								param.value.provider_id = val.value
-								param.value.siteName = []
 							},
 						}
 						return (<DnsProviderSelect {...dnsProviderProps} />) as VNode
@@ -137,7 +138,6 @@ export default defineComponent({
 			config.push(
 				formConfig.select($t('t_1_1745748290291'), 'inputs.fromNodeId', certOptions.value, {
 					onUpdateValue: (val: string, option: { label: string; value: string }) => {
-						console.log('val', val)
 						param.value.inputs.fromNodeId = val
 						param.value.inputs.name = option?.label
 					},
@@ -192,7 +192,6 @@ export default defineComponent({
 
 			// 添加跳过选项
 			config.push(formConfig.skipOption(param))
-
 			return config
 		})
 
@@ -215,6 +214,7 @@ export default defineComponent({
 					label: siteName,
 					value: siteName,
 				}))
+				// param.value.siteName = []
 			} catch (error) {
 				handleError(error)
 				siteOptions.value = []
@@ -309,12 +309,11 @@ export default defineComponent({
 			// 如果已经选择了部署类型，则跳转到下一步
 			if (param.value.provider) {
 				if (props.node.inputs) param.value.inputs = props.node.inputs[0]
-
 				// 处理siteName字段的读取转换：将字符串拆分为数组（针对已有数据）
 				if (param.value.provider === 'btpanel-site' && param.value.siteName) {
+					handleSiteSearch('')
 					param.value.siteName = param.value.siteName.split(',').filter(Boolean)
 				}
-
 				nextStep()
 			}
 		})
