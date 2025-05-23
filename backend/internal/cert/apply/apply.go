@@ -17,6 +17,7 @@ import (
 	"github.com/go-acme/lego/v4/providers/dns/alidns"
 	"github.com/go-acme/lego/v4/providers/dns/baiducloud"
 	"github.com/go-acme/lego/v4/providers/dns/cloudflare"
+	"github.com/go-acme/lego/v4/providers/dns/godaddy"
 	"github.com/go-acme/lego/v4/providers/dns/huaweicloud"
 	"github.com/go-acme/lego/v4/providers/dns/tencentcloud"
 	"github.com/go-acme/lego/v4/providers/dns/volcengine"
@@ -92,7 +93,12 @@ func GetDNSProvider(providerName string, creds map[string]string) (challenge.Pro
 		config.AccessKey = creds["access_key"]
 		config.SecretKey = creds["secret_key"]
 		return volcengine.NewDNSProviderConfig(config)
-	
+	case "godaddy":
+		config := godaddy.NewDefaultConfig()
+		config.APIKey = creds["api_key"]
+		config.APISecret = creds["api_secret"]
+		return godaddy.NewDNSProviderConfig(config)
+
 	default:
 		return nil, fmt.Errorf("不支持的 DNS Provider: %s", providerName)
 	}
@@ -123,7 +129,7 @@ func GetAcmeClient(db *public.Sqlite, email, algorithm, proxy, eabId string, log
 		}
 		ca = eabData["ca"].(string)
 	}
-	
+
 	user, err := LoadUserFromDB(db, email, ca)
 	if err != nil {
 		logger.Debug("acme账号不存在，注册新账号")
@@ -172,7 +178,7 @@ func GetAcmeClient(db *public.Sqlite, email, algorithm, proxy, eabId string, log
 			return nil, err
 		}
 		user.Registration = reg
-		
+
 		err = SaveUserToDB(db, user, ca)
 		if err != nil {
 			return nil, err
@@ -250,7 +256,7 @@ func Apply(cfg map[string]any, logger *public.Logger) (map[string]any, error) {
 		return nil, err
 	}
 	defer db.Close()
-	
+
 	email, ok := cfg["email"].(string)
 	if !ok {
 		return nil, fmt.Errorf("参数错误：email")
@@ -296,7 +302,7 @@ func Apply(cfg map[string]any, logger *public.Logger) (map[string]any, error) {
 	default:
 		eabId = ""
 	}
-	
+
 	var providerID string
 	switch v := cfg["provider_id"].(type) {
 	case float64:
@@ -322,7 +328,7 @@ func Apply(cfg map[string]any, logger *public.Logger) (map[string]any, error) {
 			return nil, fmt.Errorf("参数错误：name_server")
 		}
 	}
-	
+
 	var skipCheck bool
 	if cfg["skip_check"] == nil {
 		// 默认跳过预检查
@@ -357,12 +363,12 @@ func Apply(cfg map[string]any, logger *public.Logger) (map[string]any, error) {
 			return nil, fmt.Errorf("参数错误：skip_check")
 		}
 	}
-	
+
 	domainArr := strings.Split(domains, ",")
 	for i := range domainArr {
 		domainArr[i] = strings.TrimSpace(domainArr[i])
 	}
-	
+
 	// 获取上次申请的证书
 	runId, ok := cfg["_runId"].(string)
 	if !ok {
@@ -395,13 +401,13 @@ func Apply(cfg map[string]any, logger *public.Logger) (map[string]any, error) {
 	if err != nil {
 		return nil, err
 	}
-	
+
 	// DNS 验证
 	provider, err := GetDNSProvider(providerStr, providerConfig)
 	if err != nil {
 		return nil, fmt.Errorf("创建 DNS provider 失败: %v", err)
 	}
-	
+
 	if skipCheck {
 		// 跳过预检查
 		err = client.Challenge.SetDNS01Provider(provider,
@@ -418,7 +424,7 @@ func Apply(cfg map[string]any, logger *public.Logger) (map[string]any, error) {
 	if err != nil {
 		return nil, err
 	}
-	
+
 	// fmt.Println(strings.Split(domains, ","))
 	request := certificate.ObtainRequest{
 		Domains: domainArr,
@@ -428,18 +434,18 @@ func Apply(cfg map[string]any, logger *public.Logger) (map[string]any, error) {
 	if err != nil {
 		return nil, err
 	}
-	
+
 	certStr := string(certObj.Certificate)
 	keyStr := string(certObj.PrivateKey)
 	issuerCertStr := string(certObj.IssuerCertificate)
-	
+
 	// 保存证书和私钥
 	data := map[string]any{
 		"cert":       certStr,
 		"key":        keyStr,
 		"issuerCert": issuerCertStr,
 	}
-	
+
 	_, err = cert.SaveCert("workflow", keyStr, certStr, issuerCertStr, runId)
 	if err != nil {
 		return nil, err
