@@ -18,6 +18,7 @@ type SSHConfig struct {
 	PrivateKey string `json:"key"` // 可选
 	Host       string
 	Port       any
+	Mode       string `json:"mode"`
 }
 
 type RemoteFile struct {
@@ -27,7 +28,7 @@ type RemoteFile struct {
 
 func buildAuthMethods(password, privateKey string) ([]ssh.AuthMethod, error) {
 	var methods []ssh.AuthMethod
-	
+
 	if privateKey != "" {
 		signer, err := ssh.ParsePrivateKey([]byte(privateKey))
 		if err != nil {
@@ -35,15 +36,15 @@ func buildAuthMethods(password, privateKey string) ([]ssh.AuthMethod, error) {
 		}
 		methods = append(methods, ssh.PublicKeys(signer))
 	}
-	
+
 	if password != "" {
 		methods = append(methods, ssh.Password(password))
 	}
-	
+
 	if len(methods) == 0 {
 		return nil, fmt.Errorf("no authentication methods provided")
 	}
-	
+
 	return methods, nil
 }
 
@@ -59,58 +60,65 @@ func writeMultipleFilesViaSSH(config SSHConfig, files []RemoteFile, preCmd, post
 	default:
 		port = "22"
 	}
+	IPtype := public.CheckIPType(config.Host)
+	if IPtype == "IPv6" {
+		config.Host = "[" + config.Host + "]"
+	}
 	addr := fmt.Sprintf("%s:%s", config.Host, port)
-	
+	if config.Mode == "" || config.Mode == "password" {
+		config.PrivateKey = ""
+	}
+
 	authMethods, err := buildAuthMethods(config.Password, config.PrivateKey)
 	if err != nil {
 		return err
 	}
-	
+
 	sshConfig := &ssh.ClientConfig{
 		User:            config.User,
 		Auth:            authMethods,
 		HostKeyCallback: ssh.InsecureIgnoreHostKey(),
 	}
-	
+
 	client, err := ssh.Dial("tcp", addr, sshConfig)
 	if err != nil {
 		return fmt.Errorf("failed to dial: %v", err)
 	}
 	defer client.Close()
-	
+
 	session, err := client.NewSession()
 	if err != nil {
 		return fmt.Errorf("会话创建失败: %v", err)
 	}
 	defer session.Close()
-	
+
 	var script bytes.Buffer
-	
+
 	if preCmd != "" {
 		script.WriteString(preCmd + " && ")
 	}
-	
+
 	for i, file := range files {
 		if i > 0 {
 			script.WriteString(" && ")
 		}
-		
+
 		dirCmd := fmt.Sprintf("mkdir -p $(dirname %q)", file.Path)
 		writeCmd := fmt.Sprintf("printf %%s '%s' > %s", file.Content, file.Path)
-		
+
 		script.WriteString(dirCmd + " && " + writeCmd)
 	}
-	
+
 	if postCmd != "" {
 		script.WriteString(" && " + postCmd)
 	}
-	
+
 	cmd := script.String()
-	
+
 	if err := session.Run(cmd); err != nil {
 		return fmt.Errorf("运行出错: %v", err)
 	}
-	
+
 	return nil
 }
 
@@ -208,7 +216,7 @@ func DeployLocalhost(cfg map[string]any) error {
 			return fmt.Errorf("前置命令执行失败: %v, %s", err, errout)
 		}
 	}
-	
+
 	dir := filepath.Dir(certPath)
 	if err := os.MkdirAll(dir, os.ModePerm); err != nil {
 		panic("创建证书保存目录失败: " + err.Error())
@@ -225,7 +233,7 @@ func DeployLocalhost(cfg map[string]any) error {
 	if err != nil {
 		return fmt.Errorf("写入私钥失败: %v", err)
 	}
-	
+
 	afterCmd, ok := cfg["afterCmd"].(string)
 	if ok {
 		_, errout, err := public.ExecCommand(afterCmd)
@@ -241,19 +249,19 @@ func SSHAPITest(providerID string) error {
 	if err != nil {
 		return err
 	}
-	
+
 	providerConfigStr, ok := providerData["config"].(string)
 	if !ok {
 		return fmt.Errorf("api配置错误")
 	}
-	
+
 	// 解析 JSON 配置
 	var providerConfig SSHConfig
 	err = json.Unmarshal([]byte(providerConfigStr), &providerConfig)
 	if err != nil {
 		return err
 	}
-	
+
 	var port string
 	switch v := providerConfig.Port.(type) {
 	case float64:
@@ -266,30 +274,30 @@ func SSHAPITest(providerID string) error {
 		port = "22"
 	}
 	addr := fmt.Sprintf("%s:%s", providerConfig.Host, port)
-	
+
 	authMethods, err := buildAuthMethods(providerConfig.Password, providerConfig.PrivateKey)
 	if err != nil {
 		return err
 	}
-	
+
 	sshConfig := &ssh.ClientConfig{
 		User:            providerConfig.User,
 		Auth:            authMethods,
 		HostKeyCallback: ssh.InsecureIgnoreHostKey(),
 	}
-	
+
 	client, err := ssh.Dial("tcp", addr, sshConfig)
 	if err != nil {
 		return fmt.Errorf("SSH连接失败: %v", err)
 	}
 	defer client.Close()
-	
+
 	// 尝试创建会话来验证连接
 	session, err := client.NewSession()
 	if err != nil {
 		return fmt.Errorf("SSH会话创建失败: %v", err)
 	}
 	defer session.Close()
-	
+
 	return nil
 }

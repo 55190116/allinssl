@@ -220,3 +220,14 @@ func ExecCommand(command string) (string, string, error) {
 
 	return stdout.String(), stderr.String(), err
 }
+
+func CheckIPType(address string) string {
+	ip := net.ParseIP(address)
+	if ip == nil {
+		return "Invalid IP"
+	}
+	if ip.To4() != nil {
+		return "IPv4"
+	}
+	return "IPv6"
+}
