@@ -356,7 +356,7 @@ func GetSiteList(c *gin.Context) {
 
 	var siteList []any
 	switch form.Type {
-	case "btpanel":
+	case "btpanel-site":
 		siteList, err = deploy.BtPanelSiteList(form.ID)
 	default:
 		public.FailMsg(c, "不支持的提供商")
