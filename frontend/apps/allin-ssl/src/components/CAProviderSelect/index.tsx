@@ -109,7 +109,7 @@ export default defineComponent<CAProviderSelectProps>({
 		return () => (
 			<NSpin show={isLoading.value}>
 				<NGrid cols={24} class={props.customClass}>
-					<NFormItemGi span={13} label={$t('t_1_1747990228492')} path={props.path}>
+					<NFormItemGi span={13} label={$t('证书颁发机构/授权（可选）')} path={props.path}>
 						<NSelect
 							class="flex-1 w-full"
 							options={caProviderRef.value}
@@ -128,7 +128,7 @@ export default defineComponent<CAProviderSelectProps>({
 											class="flex items-center cursor-pointer hover:text-[#333] hover:bg-[#eee]"
 											onClick={() => goToAddCAProvider('addCAForm')}
 										>
-											{$t('t_0_1747990626044')}
+											{$t('添加Zerossl、Google，CA证书授权')}
 										</div>
 									)
 								},
@@ -139,15 +139,10 @@ export default defineComponent<CAProviderSelectProps>({
 						/>
 					</NFormItemGi>
 					<NFormItemGi span={11}>
-						<NButton class="mx-[8px]" onClick={()=>goToAddCAProvider('caManage')} disabled={props.disabled}>
+						<NButton class="mx-[8px]" onClick={() => goToAddCAProvider('caManage')} disabled={props.disabled}>
 							{$t('t_0_1747903670020')}
 						</NButton>
-						<NButton
-							class="mx-[8px]"
-							onClick={() => loadCAProviders()}
-							loading={isLoading.value}
-							disabled={props.disabled}
-						>
+						<NButton onClick={() => loadCAProviders()} loading={isLoading.value} disabled={props.disabled}>
 							{$t('t_0_1746497662220')}
 						</NButton>
 					</NFormItemGi>

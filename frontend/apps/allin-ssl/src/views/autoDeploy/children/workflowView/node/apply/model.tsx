@@ -53,11 +53,6 @@ export default defineComponent({
 						param.value.domains = val.replace(/，/g, ',').replace(/;/g, ',') // 中文逗号分隔
 					},
 				}),
-				useFormInput($t('t_1_1745735764953'), 'email', {
-					placeholder: $t('t_2_1745735773668'),
-					allowInput: noSideSpace,
-					readonly: param.value.ca !== 'letsencrypt',
-				}),
 				{
 					type: 'custom' as const,
 					render: () => {
@@ -82,6 +77,31 @@ export default defineComponent({
 					type: 'custom' as const,
 					render: () => {
 						return (
+							<CAProviderSelect
+								path="eabId"
+								value={param.value.eabId}
+								email={param.value.email}
+								ca={param.value.ca}
+								{...{
+									'onUpdate:value': (val: { value: string; ca: string; email: string }) => {
+										param.value.eabId = val.value
+										param.value.ca = val.ca
+										if (val.value) param.value.email = val.email
+									},
+								}}
+							/>
+						)
+					},
+				},
+				useFormInput($t('邮件'), 'email', {
+					placeholder: $t('请输入邮箱信息，用于接收证书验证邮件'),
+					allowInput: noSideSpace,
+				}),
+
+				{
+					type: 'custom' as const,
+					render: () => {
+						return (
 							<NFormItem label={$t('t_4_1747990227956')} path="end_day">
 								<div class="flex items-center">
 									<span class="text-[1.4rem] mr-[1.2rem]">{$t('t_5_1747990228592')}</span>
@@ -95,27 +115,6 @@ export default defineComponent({
 				useFormMore(advancedOptions),
 				...(advancedOptions.value
 					? [
-							{
-								type: 'custom' as const,
-								render: () => {
-									return (
-										<CAProviderSelect
-											path="eabId"
-											value={param.value.eabId}
-											email={param.value.email}
-											ca={param.value.ca}
-											{...{
-												'onUpdate:value': (val: { value: string; ca: string; email: string }) => {
-													param.value.eabId = val.value
-													param.value.ca = val.ca
-													if (val.value) param.value.email = val.email
-												},
-											}}
-										/>
-									)
-								},
-							},
-
 							useFormSelect(
 								$t('t_0_1747647014927'),
 								'algorithm',
@@ -165,11 +164,9 @@ export default defineComponent({
 				useFormHelp([
 					{
 						content: $t('t_0_1747040228657'),
-						isHtml: false,
 					},
 					{
 						content: $t('t_1_1747040226143'),
-						isHtml: false,
 					},
 				]),
 			]
