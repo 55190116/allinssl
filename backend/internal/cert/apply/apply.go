@@ -17,8 +17,12 @@ import (
 	"github.com/go-acme/lego/v4/providers/dns/alidns"
 	"github.com/go-acme/lego/v4/providers/dns/baiducloud"
 	"github.com/go-acme/lego/v4/providers/dns/cloudflare"
+	"github.com/go-acme/lego/v4/providers/dns/cloudns"
 	"github.com/go-acme/lego/v4/providers/dns/godaddy"
 	"github.com/go-acme/lego/v4/providers/dns/huaweicloud"
+	"github.com/go-acme/lego/v4/providers/dns/namecheap"
+	"github.com/go-acme/lego/v4/providers/dns/ns1"
+	"github.com/go-acme/lego/v4/providers/dns/route53"
 	"github.com/go-acme/lego/v4/providers/dns/tencentcloud"
 	"github.com/go-acme/lego/v4/providers/dns/volcengine"
 	"github.com/go-acme/lego/v4/providers/dns/westcn"
@@ -43,6 +47,9 @@ var CADirURLMap = map[string]string{
 	"Let's Encrypt": "https://acme-v02.api.letsencrypt.org/directory",
 	"zerossl":       "https://acme.zerossl.com/v2/DV90",
 	"google":        "https://dv.acme-v02.api.pki.goog/directory",
+	"sslcom":        "https://acme.ssl.com/sslcom-dv-rsa",
+	"sslcom-rsa":    "https://acme.ssl.com/sslcom-dv-rsa",
+	"sslcom-ecc":    "https://acme.ssl.com/sslcom-dv-ecc",
 }
 
 func GetSqlite() (*public.Sqlite, error) {
@@ -98,6 +105,25 @@ func GetDNSProvider(providerName string, creds map[string]string) (challenge.Pro
 		config.APIKey = creds["api_key"]
 		config.APISecret = creds["api_secret"]
 		return godaddy.NewDNSProviderConfig(config)
+	case "namecheap":
+		config := namecheap.NewDefaultConfig()
+		config.APIUser = creds["api_user"]
+		config.APIKey = creds["api_key"]
+		return namecheap.NewDNSProviderConfig(config)
+	case "ns1":
+		config := ns1.NewDefaultConfig()
+		config.APIKey = creds["api_key"]
+		return ns1.NewDNSProviderConfig(config)
+	case "cloudns":
+		config := cloudns.NewDefaultConfig()
+		config.AuthID = creds["auth_id"]
+		config.AuthPassword = creds["auth_password"]
+		return cloudns.NewDNSProviderConfig(config)
+	case "route53":
+		config := route53.NewDefaultConfig()
+		config.AccessKeyID = creds["access_key_id"]
+		config.SecretAccessKey = creds["secret_access_key"]
+		return route53.NewDNSProviderConfig(config)
 
 	default:
 		return nil, fmt.Errorf("不支持的 DNS Provider: %s", providerName)
@@ -128,6 +154,14 @@ func GetAcmeClient(db *public.Sqlite, email, algorithm, proxy, eabId string, log
 			return nil, fmt.Errorf("HmacEncoded不能为空")
 		}
 		ca = eabData["ca"].(string)
+		if ca == "sslcom" {
+			switch algorithm[0] {
+			case 'R', 'r':
+				ca = "sslcom-rsa"
+			case 'E', 'e':
+				ca = "sslcom-ecc"
+			}
+		}
 	}
 
 	user, err := LoadUserFromDB(db, email, ca)
