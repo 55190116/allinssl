@@ -124,6 +124,8 @@ func NotifyTest(id string) error {
 	switch providerData["type"] {
 	case "mail":
 		err = NotifyMail(params)
+	case "webhook":
+		err = NotifyWebHook(params)
 	}
 	return err
 }
@@ -141,6 +143,8 @@ func Notify(params map[string]any) error {
 		return NotifyMail(params)
 	// case "btpanel-site":
 	// 	return NotifyBt(params)
+	case "webhook":
+		return NotifyWebHook(params)
 	default:
 		return fmt.Errorf("不支持的通知类型")
 	}
