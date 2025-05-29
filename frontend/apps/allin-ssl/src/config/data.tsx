@@ -18,7 +18,7 @@ export interface ApiProjectType {
 
 // $t('t_0_1747886301644')
 export const MessagePushConfig = {
-	email: { name: $t('t_68_1745289354676'), type: 'mail' },
+	mail: { name: $t('t_68_1745289354676'), type: 'mail' },
 	wecom: { name: $t('t_33_1746773350932'), type: 'wecom' },
 	dingtalk: { name: $t('t_32_1746773348993'), type: 'dingtalk' },
 	feishu: { name: $t('t_34_1746773350153'), type: 'feishu' },
@@ -29,6 +29,7 @@ export const MessagePushConfig = {
 export const CACertificateAuthorization = {
 	zerossl: { name: 'ZeroSSL', type: 'zerossl' },
 	google: { name: 'Google', type: 'google' },
+	sslcom: { name: 'SSL.COM', type: 'sslcom' },
 }
 
 // 授权API管理
@@ -91,7 +92,7 @@ export const ApiProjectConfig: Record<string, ApiProjectType> = {
 		type: ['host', 'dns'],
 		hostRelated: {
 			cdn: { name: $t('t_14_1745735766121') },
-			oss: { name: $t('t_15_1745735768976') },
+			cos: { name: $t('t_15_1745735768976') },
 			waf: { name: $t('t_9_1744958840634') },
 			teo: { name: $t('t_5_1747886301427') },
 		},
@@ -114,7 +115,10 @@ export const ApiProjectConfig: Record<string, ApiProjectType> = {
 	huaweicloud: {
 		name: $t('t_9_1747886301128'),
 		icon: 'huaweicloud',
-		type: ['dns'],
+		type: ['dns', 'host'],
+		hostRelated: {
+			cdn: { name: $t('t_9_1747886301128') + 'CDN' },
+		},
 		sort: 10,
 	},
 	baidu: {
@@ -149,6 +153,36 @@ export const ApiProjectConfig: Record<string, ApiProjectType> = {
 		icon: 'godaddy',
 		type: ['dns'],
 		sort: 15,
+	},
+	namecheap: {
+		name: 'Namecheap',
+		icon: 'namecheap',
+		type: ['dns'],
+		sort: 16,
+	},
+	ns1: {
+		name: 'NS1',
+		icon: 'ns1',
+		type: ['dns'],
+		sort: 17,
+	},
+	cloudns: {
+		name: 'ClouDNS',
+		icon: 'cloudns',
+		type: ['dns'],
+		sort: 18,
+	},
+	aws: {
+		name: 'AWS',
+		icon: 'aws',
+		type: ['dns'],
+		sort: 19,
+	},
+	azure: {
+		name: 'Azure',
+		icon: 'azure',
+		type: ['dns'],
+		sort: 20,
 	},
 }
 

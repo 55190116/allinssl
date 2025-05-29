@@ -19,7 +19,6 @@ export default defineComponent({
 	},
 	setup(props) {
 		const { CATable, CATablePage, handleOpenAddForm, total } = useCAManageController(props)
-		
 		return () => (
 			<BaseComponent
 				v-slots={{

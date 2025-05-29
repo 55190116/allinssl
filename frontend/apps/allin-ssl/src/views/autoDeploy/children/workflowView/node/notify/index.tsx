@@ -20,6 +20,7 @@ export default defineComponent({
 		// 使用通用节点验证
 		const renderContent = (valid: boolean, config: NotifyNodeConfig) => {
 			if (config.provider) {
+				console.log(config.provider)
 				return <TypeIcon icon={config.provider} type={valid ? 'success' : 'warning'} />
 			}
 			return $t('t_9_1745735765287')

@@ -19,6 +19,9 @@ import type {
 	DeleteReportParams,
 	ReportMail,
 	TestReportParams,
+	ReportFeishu,
+	ReportWebhook,
+	ReportDingtalk,
 } from '@/types/setting'
 
 const { handleError } = useError()
@@ -75,6 +78,33 @@ export const useSettingsStore = defineStore('settings-store', () => {
 		smtpPort: '465', //SMTP端口
 		smtpTLS: false, // TLS协议，加密
 		password: '',
+	})
+
+	// 飞书通知渠道表单
+	const feishuChannelForm = ref<ReportFeishu>({
+		name: '',
+		enabled: '1',
+		webhook: '', // 飞书webhook地址
+		secret: '', // 飞书webhook加密密钥（可选）
+	})
+
+	// Webhook通知渠道表单
+	const webhookChannelForm = ref<ReportWebhook>({
+		name: '',
+		enabled: '1',
+		url: '', // WebHook回调地址
+		data: '', // WebHook推送通知回调数据（可选）
+		method: 'post', // 请求方式
+		headers: '', // WebHook请求头（可选）
+		ignore_ssl: false, // 忽略SSL/TLS证书错误
+	})
+
+	// 钉钉通知渠道表单
+	const dingtalkChannelForm = ref<ReportDingtalk>({
+		name: '',
+		enabled: '1',
+		webhook: '', // 钉钉webhook地址
+		secret: '', // 钉钉webhook加密密钥（可选）
 	})
 
 	// 关于页面数据
@@ -217,6 +247,9 @@ export const useSettingsStore = defineStore('settings-store', () => {
 		notifyChannels,
 		channelTypes,
 		emailChannelForm,
+		feishuChannelForm,
+		webhookChannelForm,
+		dingtalkChannelForm,
 		aboutInfo,
 
 		// 方法

@@ -31,7 +31,18 @@ import { isEmail, isIp, isPort, isUrl } from '@baota/utils/business'
 import { $t } from '@locales/index'
 import { useStore } from './useStore'
 import { ApiProjectConfig } from '@config/data'
-import type { AccessItem, AccessListParams, AddAccessParams, SshAccessConfig, UpdateAccessParams } from '@/types/access'
+import type {
+	AccessItem,
+	AccessListParams,
+	AddAccessParams,
+	SshAccessConfig,
+	UpdateAccessParams,
+	NamecheapAccessConfig,
+	NS1AccessConfig,
+	CloudnsAccessConfig,
+	AwsAccessConfig,
+	AzureAccessConfig,
+} from '@/types/access'
 import type { VNode, Ref } from 'vue'
 import { testAccess } from '@/api/access'
 
@@ -363,6 +374,8 @@ export const useApiFormController = (props: ApiFormControllerProps): ApiFormCont
 							btpanel: $t('t_1_1747042969705'),
 							btwaf: $t('t_1_1747300384579'),
 							godaddy: $t('t_0_1747984137443'),
+							ns1: '请输入API Key',
+							namecheap: '请输入API Key',
 						}
 						return callback(new Error(mapTips[param.value.type as keyof typeof mapTips]))
 					}
@@ -392,6 +405,41 @@ export const useApiFormController = (props: ApiFormControllerProps): ApiFormCont
 			access_key_secret: {
 				required: true,
 				message: $t('t_5_1745317315285'),
+				trigger: 'input',
+			},
+			secret_access_key: {
+				required: true,
+				message: '请输入Secret Access Key',
+				trigger: 'input',
+			},
+			api_user: {
+				required: true,
+				message: '请输入API User',
+				trigger: 'input',
+			},
+			auth_id: {
+				required: true,
+				message: '请输入Auth ID',
+				trigger: 'input',
+			},
+			auth_password: {
+				required: true,
+				message: '请输入Auth Password',
+				trigger: 'input',
+			},
+			tenant_id: {
+				required: true,
+				message: '请输入Tenant ID',
+				trigger: 'input',
+			},
+			client_id: {
+				required: true,
+				message: '请输入Client ID',
+				trigger: 'input',
+			},
+			client_secret: {
+				required: true,
+				message: '请输入Client Secret',
 				trigger: 'input',
 			},
 			secret_id: {
@@ -586,6 +634,35 @@ export const useApiFormController = (props: ApiFormControllerProps): ApiFormCont
 					useFormInput('AccessSecret', 'config.access_secret', { allowInput: noSideSpace }),
 				)
 				break
+			case 'namecheap':
+				items.push(
+					useFormInput('API User', 'config.api_user', { allowInput: noSideSpace }),
+					useFormInput('API Key', 'config.api_key', { allowInput: noSideSpace }),
+				)
+				break
+			case 'ns1':
+				items.push(useFormInput('API Key', 'config.api_key', { allowInput: noSideSpace }))
+				break
+			case 'cloudns':
+				items.push(
+					useFormInput('Auth ID', 'config.auth_id', { allowInput: noSideSpace }),
+					useFormInput('Auth Password', 'config.auth_password', { allowInput: noSideSpace }),
+				)
+				break
+			case 'aws':
+				items.push(
+					useFormInput('Access Key ID', 'config.access_key_id', { allowInput: noSideSpace }),
+					useFormInput('Secret Access Key', 'config.secret_access_key', { allowInput: noSideSpace }),
+				)
+				break
+			case 'azure':
+				items.push(
+					useFormInput('Tenant ID', 'config.tenant_id', { allowInput: noSideSpace }),
+					useFormInput('Client ID', 'config.client_id', { allowInput: noSideSpace }),
+					useFormInput('Client Secret', 'config.client_secret', { allowInput: noSideSpace }),
+					useFormInput('Environment', 'config.environment', { allowInput: noSideSpace, placeholder: 'public' }),
+				)
+				break
 			default:
 				break
 		}
@@ -604,7 +681,7 @@ export const useApiFormController = (props: ApiFormControllerProps): ApiFormCont
 						user: 'root',
 						mode: 'password',
 						password: '',
-					}
+					} as SshAccessConfig
 					break
 				case '1panel':
 				case 'btpanel':
@@ -651,6 +728,37 @@ export const useApiFormController = (props: ApiFormControllerProps): ApiFormCont
 						access_key: '',
 						access_secret: '',
 					}
+					break
+				case 'namecheap':
+					param.value.config = {
+						api_user: '',
+						api_key: '',
+					} as NamecheapAccessConfig
+					break
+				case 'ns1':
+					param.value.config = {
+						api_key: '',
+					} as NS1AccessConfig
+					break
+				case 'cloudns':
+					param.value.config = {
+						auth_id: '',
+						auth_password: '',
+					} as CloudnsAccessConfig
+					break
+				case 'aws':
+					param.value.config = {
+						access_key_id: '',
+						secret_access_key: '',
+					} as AwsAccessConfig
+					break
+				case 'azure':
+					param.value.config = {
+						tenant_id: '',
+						client_id: '',
+						client_secret: '',
+						environment: '',
+					} as AzureAccessConfig
 					break
 			}
 		},

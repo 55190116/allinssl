@@ -1,6 +1,6 @@
 import { NCard, NButton, NList, NListItem, NTag, NSpace, NGrid, NGridItem, NSwitch } from 'naive-ui'
-import { useController } from '../useController'
-import { useStore } from '../useStore'
+import { useController } from '@settings/useController'
+import { useStore } from '@settings/useStore'
 import SvgIcon from '@components/SvgIcon'
 import { $t } from '@locales/index'
 
@@ -11,8 +11,16 @@ export default defineComponent({
 	name: 'NotificationSettings',
 	setup() {
 		const { notifyChannels, channelTypes } = useStore()
-		const { openAddEmailChannelModal, editChannelConfig, testChannelConfig, confirmDeleteChannel, handleEnableChange } =
-			useController()
+		const {
+			openAddEmailChannelModal,
+			openAddFeishuChannelModal,
+			openAddWebhookChannelModal,
+			openAddDingtalkChannelModal,
+			editChannelConfig,
+			testChannelConfig,
+			confirmDeleteChannel,
+			handleEnableChange,
+		} = useController()
 
 		// 获取已配置的渠道数量
 		const getConfiguredCount = (type: string) => {
@@ -26,10 +34,33 @@ export default defineComponent({
 
 		// 根据渠道类型和配置状态获取操作按钮
 		const getChannelActionButton = (type: string) => {
-			// 目前只有邮件通知是可配置的
+			// 根据类型返回对应的按钮
 			if (type === 'mail') {
 				return (
 					<NButton strong secondary type="primary" onClick={() => openAddEmailChannelModal(getConfiguredCount(type))}>
+						{$t('t_1_1746676859550')}
+					</NButton>
+				)
+			} else if (type === 'feishu') {
+				return (
+					<NButton strong secondary type="primary" onClick={() => openAddFeishuChannelModal(getConfiguredCount(type))}>
+						{$t('t_1_1746676859550')}
+					</NButton>
+				)
+			} else if (type === 'webhook') {
+				return (
+					<NButton strong secondary type="primary" onClick={() => openAddWebhookChannelModal(getConfiguredCount(type))}>
+						{$t('t_1_1746676859550')}
+					</NButton>
+				)
+			} else if (type === 'dingtalk') {
+				return (
+					<NButton
+						strong
+						secondary
+						type="primary"
+						onClick={() => openAddDingtalkChannelModal(getConfiguredCount(type))}
+					>
 						{$t('t_1_1746676859550')}
 					</NButton>
 				)
@@ -51,18 +82,6 @@ export default defineComponent({
 				color: '#2080f0',
 			},
 			{
-				type: 'dingtalk',
-				name: $t('t_5_1746676856974'),
-				description: $t('t_6_1746676860886'),
-				color: '#1677ff',
-			},
-			{
-				type: 'wecom',
-				name: $t('t_7_1746676857191'),
-				description: $t('t_8_1746676860457'),
-				color: '#07c160',
-			},
-			{
 				type: 'feishu',
 				name: $t('t_9_1746676857164'),
 				description: $t('t_10_1746676862329'),
@@ -73,6 +92,18 @@ export default defineComponent({
 				name: $t('t_11_1746676859158'),
 				description: $t('t_12_1746676860503'),
 				color: '#531dab',
+			},
+			{
+				type: 'dingtalk',
+				name: $t('t_5_1746676856974'),
+				description: $t('t_6_1746676860886'),
+				color: '#1677ff',
+			},
+			{
+				type: 'wecom',
+				name: $t('t_7_1746676857191'),
+				description: $t('t_8_1746676860457'),
+				color: '#07c160',
 			},
 		]
 		return () => (

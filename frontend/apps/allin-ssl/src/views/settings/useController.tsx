@@ -1,13 +1,16 @@
-import { FormInst, FormItemRule, FormRules } from 'naive-ui'
+import { FormRules } from 'naive-ui'
 import md5 from 'crypto-js/md5'
 import { useFormHooks, useModal, useDialog, useForm, useMessage, useLoadingMask } from '@baota/naive-ui/hooks'
-import { clearCookie, clearLocal, clearSession } from '@baota/utils/browser'
+import { clearCookie, clearSession } from '@baota/utils/browser'
 import { useError } from '@baota/hooks/error'
 import { $t } from '@locales/index'
 import { useStore } from './useStore'
 
-import EmailChannelForm from './components/EmailChannelForm'
-import type { ReportMail, AddReportParams, SaveSettingParams, ReportType } from '@/types/setting'
+import EmailChannelModel from './components/channel/EmailChannelModel'
+import FeishuChannelModel from './components/channel/FeishuChannelModel'
+import WebhookChannelModel from './components/channel/WebhookChannelModel'
+import DingtalkChannelModel from './components/channel/DingtalkChannelModel'
+import type { ReportMail, SaveSettingParams, ReportType } from '@/types/setting'
 
 const {
 	// 标签页
@@ -22,16 +25,13 @@ const {
 	// 通知设置
 	fetchNotifyChannels,
 	notifyChannels,
-	// 邮箱通知渠道表单
-	emailChannelForm,
-	addReportChannel,
 	updateReportChannel,
 	testReportChannel,
 	deleteReportChannel,
 } = useStore()
 const message = useMessage()
 const { handleError } = useError()
-const { useFormInput, useFormInputNumber, useFormSwitch, useFormTextarea, useFormSlot } = useFormHooks()
+const { useFormInput, useFormInputNumber, useFormSwitch, useFormTextarea } = useFormHooks()
 
 /**
  * 设置页面业务逻辑控制器
@@ -116,7 +116,64 @@ export const useController = () => {
 		useModal({
 			title: $t('t_18_1745457490931'),
 			area: 650,
-			component: EmailChannelForm,
+			component: EmailChannelModel,
+			footer: true,
+		})
+	}
+
+	/**
+	 * 打开添加飞书通知渠道弹窗
+	 * @function openAddFeishuChannelModal
+	 * @description 打开添加飞书通知渠道的模态框，并在关闭后刷新通知渠道列表
+	 * @returns {void} 无返回值
+	 */
+	const openAddFeishuChannelModal = (limit: number = 1) => {
+		if (limit >= 1) {
+			message.warning($t('t_16_1746773356568'))
+			return
+		}
+		useModal({
+			title: $t('t_9_1746676857164'),
+			area: 650,
+			component: FeishuChannelModel,
+			footer: true,
+		})
+	}
+
+	/**
+	 * 打开添加Webhook通知渠道弹窗
+	 * @function openAddWebhookChannelModal
+	 * @description 打开添加Webhook通知渠道的模态框，并在关闭后刷新通知渠道列表
+	 * @returns {void} 无返回值
+	 */
+	const openAddWebhookChannelModal = (limit: number = 1) => {
+		if (limit >= 1) {
+			message.warning($t('t_16_1746773356568'))
+			return
+		}
+		useModal({
+			title: $t('t_11_1746676859158'),
+			area: 650,
+			component: WebhookChannelModel,
+			footer: true,
+		})
+	}
+
+	/**
+	 * 打开添加钉钉通知渠道弹窗
+	 * @function openAddDingtalkChannelModal
+	 * @description 打开添加钉钉通知渠道的模态框，并在关闭后刷新通知渠道列表
+	 * @returns {void} 无返回值
+	 */
+	const openAddDingtalkChannelModal = (limit: number = 1) => {
+		if (limit >= 1) {
+			message.warning($t('t_16_1746773356568'))
+			return
+		}
+		useModal({
+			title: '添加钉钉通知',
+			area: 650,
+			component: DingtalkChannelModel,
 			footer: true,
 		})
 	}
@@ -160,13 +217,46 @@ export const useController = () => {
 	 * @param {ReportType<ReportMail>} item - 要查看的通知渠道对象
 	 * @returns {void} 无返回值
 	 */
-	const editChannelConfig = (item: ReportType<ReportMail>) => {
+	const editChannelConfig = (item: ReportType<any>) => {
 		console.log(item)
 		if (item.type === 'mail') {
 			useModal({
 				title: $t('t_0_1745895057404'),
 				area: 650,
-				component: EmailChannelForm,
+				component: EmailChannelModel,
+				componentProps: {
+					data: item,
+				},
+				footer: true,
+				onClose: () => fetchNotifyChannels(),
+			})
+		} else if (item.type === 'feishu') {
+			useModal({
+				title: $t('t_9_1746676857164'),
+				area: 650,
+				component: FeishuChannelModel,
+				componentProps: {
+					data: item,
+				},
+				footer: true,
+				onClose: () => fetchNotifyChannels(),
+			})
+		} else if (item.type === 'webhook') {
+			useModal({
+				title: $t('t_11_1746676859158'),
+				area: 650,
+				component: WebhookChannelModel,
+				componentProps: {
+					data: item,
+				},
+				footer: true,
+				onClose: () => fetchNotifyChannels(),
+			})
+		} else if (item.type === 'dingtalk') {
+			useModal({
+				title: '编辑钉钉通知',
+				area: 650,
+				component: DingtalkChannelModel,
 				componentProps: {
 					data: item,
 				},
@@ -183,8 +273,8 @@ export const useController = () => {
 	 * @param {ReportType<ReportMail>} item - 要测试的通知渠道对象
 	 * @returns {void} 无返回值
 	 */
-	const testChannelConfig = (item: ReportType<ReportMail>) => {
-		if (item.type !== 'mail') {
+	const testChannelConfig = (item: ReportType<any>) => {
+		if (item.type !== 'mail' && item.type !== 'feishu' && item.type !== 'webhook') {
 			message.warning($t('t_19_1746773352558'))
 			return
 		}
@@ -239,6 +329,9 @@ export const useController = () => {
 		fetchAllSettings,
 		handleSaveGeneralSettings,
 		openAddEmailChannelModal,
+		openAddFeishuChannelModal,
+		openAddWebhookChannelModal,
+		openAddDingtalkChannelModal,
 		handleEnableChange,
 		editChannelConfig,
 		testChannelConfig,
@@ -326,111 +419,5 @@ export const useGeneralSettingsController = () => {
 		GeneralForm,
 		config,
 		rules,
-	}
-}
-
-/**
- * 邮箱通知渠道表单控制器
- * @function useEmailChannelFormController
- * @description 提供邮箱通知渠道表单的配置、规则和提交方法
- * @returns {object} 返回表单相关配置、规则和方法
- */
-export const useEmailChannelFormController = () => {
-	const { open: openLoad, close: closeLoad } = useLoadingMask({ text: $t('t_0_1746667592819') })
-	/**
-	 * 表单验证规则
-	 * @type {FormRules}
-	 */
-	const rules: FormRules = {
-		name: {
-			required: true,
-			trigger: ['input', 'blur'],
-			message: $t('t_25_1746773349596'),
-		},
-
-		smtpHost: {
-			required: true,
-			trigger: ['input', 'blur'],
-			message: $t('t_15_1745833940280'),
-		},
-		smtpPort: {
-			required: true,
-			trigger: 'input',
-			validator: (rule: FormItemRule, value: string) => {
-				const port = Number(value)
-				if (isNaN(port) || port < 1 || port > 65535) {
-					return new Error($t('t_26_1746773353409'))
-				} else {
-					return true
-				}
-			},
-		},
-		password: {
-			required: true,
-			trigger: ['input', 'blur'],
-			message: $t('t_27_1746773352584'),
-		},
-		sender: {
-			required: true,
-			trigger: ['input', 'blur'],
-			type: 'email',
-			message: $t('t_28_1746773354048'),
-		},
-		receiver: {
-			required: true,
-			trigger: ['input', 'blur'],
-			type: 'email',
-			message: $t('t_29_1746773351834'),
-		},
-	}
-
-	/**
-	 * 表单配置
-	 * @type {ComputedRef<FormConfig>}
-	 * @description 生成邮箱通知渠道表单的字段配置
-	 */
-	const config = computed(() => [
-		useFormInput($t('t_2_1745289353944'), 'name'),
-		useFormSlot('smtp-template'),
-		useFormSlot('username-template'),
-		useFormInput($t('t_30_1746773350013'), 'sender'),
-		useFormInput($t('t_31_1746773349857'), 'receiver'),
-	])
-
-	/**
-	 * 提交表单
-	 * @async
-	 * @function submitForm
-	 * @description 验证并提交邮箱通知渠道表单
-	 * @param {any} params - 表单参数
-	 * @param {Ref<FormInst>} formRef - 表单实例引用
-	 * @returns {Promise<boolean>} 提交成功返回true，失败返回false
-	 */
-	const submitForm = async (
-		{ config, ...other }: AddReportParams<ReportMail>,
-		formRef: Ref<FormInst | null>,
-		id?: number,
-	) => {
-		try {
-			openLoad()
-			if (id) {
-				await updateReportChannel({ id, config: JSON.stringify(config), ...other })
-			} else {
-				await addReportChannel({ config: JSON.stringify(config), ...other })
-			}
-			return true
-		} catch (error) {
-			handleError(error)
-			return false
-		} finally {
-			closeLoad()
-		}
-	}
-
-	return {
-		config,
-		rules,
-		emailChannelForm,
-		submitForm,
 	}
 }

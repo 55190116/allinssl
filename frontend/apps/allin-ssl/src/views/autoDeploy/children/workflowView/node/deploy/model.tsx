@@ -121,11 +121,17 @@ export default defineComponent({
 							valueType: 'value' as const,
 							isAddMode: true,
 							'onUpdate:value': (val: { value: number | string; type: string }) => {
-								if (val.value !== '' && param.value.provider_id !== '' && param.value.provider_id !== val.value) {
+								if (
+									val.value !== '' &&
+									param.value.provider_id !== '' &&
+									param.value.provider_id !== val.value &&
+									param.provider === 'btpanel-site'
+								) {
 									param.value.siteName = []
 								}
 								param.value.provider_id = val.value
-							}, 
+								param.value.type = val.type
+							},
 						}
 						return (<DnsProviderSelect {...dnsProviderProps} />) as VNode
 					}),
@@ -144,6 +150,7 @@ export default defineComponent({
 				}),
 			)
 
+			console.log(param.value.provider)
 			// 根据不同的部署类型添加不同的表单配置
 			switch (param.value.provider) {
 				case 'localhost':
@@ -179,6 +186,7 @@ export default defineComponent({
 				case 'baidu-cdn':
 				case 'qiniu-cdn':
 				case 'qiniu-oss':
+				case 'huaweicloud-cdn':
 					config.push(...formConfig.cdnDeploy())
 					break
 				case 'aliyun-waf':
@@ -194,6 +202,15 @@ export default defineComponent({
 			config.push(formConfig.skipOption(param))
 			return config
 		})
+
+		watch(
+			() => param.value.provider_id,
+			() => {
+				if (param.value.provider === 'btpanel-site') {
+					handleSiteSearch('')
+				}
+			},
+		)
 
 		/**
 		 * 处理网站搜索
@@ -230,9 +247,10 @@ export default defineComponent({
 			if (!param.value.provider) return message.error($t('t_0_1746858920894'))
 			if (param.value.provider === 'localhost') {
 				delete param.value.provider_id
-			} else {
-				param.value.provider_id = props.node.config.provider_id
 			}
+			// else {
+			// param.value.provider_id = props.node.config.provider_id
+			// }
 			// 加载证书来源选项
 			certOptions.value = findApplyUploadNodesUp(props.node.id).map((item) => {
 				return { label: item.name, value: item.id }
@@ -251,16 +269,6 @@ export default defineComponent({
 			next.value = false
 		}
 
-		/**
-		 * 上一步
-		 */
-		const prevStep = (): void => {
-			current.value--
-			next.value = true
-			param.value.provider_id = ''
-			param.value.provider = ''
-		}
-
 		// 表单组件
 		const { component: Form, example } = useForm<DeployNodeConfig>({
 			config: nodeFormConfig,
@@ -268,14 +276,16 @@ export default defineComponent({
 			rules: verifyRules,
 		})
 
-		watch(
-			() => param.value.provider_id,
-			() => {
-				if (param.value.provider === 'btpanel-site') {
-					handleSiteSearch('')
-				}
-			},
-		)
+		/**
+		 * 上一步
+		 */
+		const prevStep = (): void => {
+			current.value--
+			next.value = true
+			param.value = {}
+			param.value.provider_id = ''
+			param.value.provider = ''
+		}
 
 		/**
 		 * 提交
