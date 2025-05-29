@@ -5,7 +5,7 @@
 ## 技术栈
 
 - **构建工具**: Turborepo、Vite
-- **前端框架**: Vue 3、React、Svelte
+- **前端框架**: Vue 3
 - **语言**: TypeScript
 - **样式**: Tailwind CSS、CSS Modules
 - **UI 组件库**: Naive UI
@@ -59,12 +59,17 @@ pnpm install
 ### 启动开发环境
 
 ```bash
+	# 初次运行，请先执行pnpm build 编译当前的整个应用包的依赖库
+	pnpm build
+```
+
+```bash
 # 启动所有应用
 pnpm dev
 
-# 仅启动云控制应用
-pnpm devcloud
-```
+# 启动指定应用-例如allin-ssl
+pnpm dev --filter allin-ssl
+
 
 ### 构建项目
 
@@ -72,8 +77,9 @@ pnpm devcloud
 # 构建所有应用
 pnpm build
 
-# 仅构建云控制应用
-pnpm buildcloud
+# 构建指定应用-例如allin-ssl
+pnpm build --filter allin-ssl
+
 ```
 
 ### 其他命令
@@ -82,20 +88,9 @@ pnpm buildcloud
 # 代码检查
 pnpm lint
 
-# 类型检查
-pnpm check-types
-
-# 运行测试
-pnpm test
-
-# 清理项目
+# 清理项目包
 pnpm clear
 
-# 同步项目
-pnpm sync
-
-# Cursor 备份
-pnpm cursor:backup
 ```
 
 ## 开发规范
