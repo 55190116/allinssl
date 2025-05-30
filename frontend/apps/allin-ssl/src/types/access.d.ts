@@ -326,5 +326,5 @@ export interface GetSitesParams {
  * 网站列表的响应
  */
 export interface GetSitesResponse extends AxiosResponseData {
-	data: string[]
+	data: { siteName: string; id: string }[]
 }

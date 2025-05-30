@@ -57,6 +57,7 @@ export const ApiProjectConfig: Record<string, ApiProjectType> = {
 			default: { name: $t('t_10_1745735765165') },
 			site: { name: $t('t_1_1747886307276') },
 			dockersite: { name: $t('t_0_1747994891459') },
+			singlesite: { name: $t('t_1_1747886307276') + '\r\n（Win/Linux 9.4前）' },
 		},
 		type: ['host'],
 		sort: 3,
@@ -139,7 +140,11 @@ export const ApiProjectConfig: Record<string, ApiProjectType> = {
 	volcengine: {
 		name: $t('t_13_1747886301689'),
 		icon: 'volcengine',
-		type: ['dns'],
+		type: ['host', 'dns'],
+		hostRelated: {
+			cdn: { name: $t('t_13_1747886301689') + 'CDN' },
+			dcdn: { name: $t('t_13_1747886301689') + 'DCDN' },
+		},
 		sort: 13,
 	},
 	westcn: {

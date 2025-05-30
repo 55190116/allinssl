@@ -30,6 +30,11 @@ import styles from './index.module.css'
 
 type StepStatus = 'process' | 'wait' | 'finish' | 'error'
 
+// 需要异步加载网站选择器的提供商类型
+const SITE_SELECTOR_PROVIDERS = ['btpanel-site', '1panel-site']
+// 需要多选网站的提供商类型
+const MULTIPLE_SITE_PROVIDERS = ['btpanel-site']
+
 /**
  * 部署节点抽屉组件
  */
@@ -125,9 +130,9 @@ export default defineComponent({
 									val.value !== '' &&
 									param.value.provider_id !== '' &&
 									param.value.provider_id !== val.value &&
-									param.provider === 'btpanel-site'
+									SITE_SELECTOR_PROVIDERS.includes(param.value.provider)
 								) {
-									param.value.siteName = []
+									param.value.siteName = MULTIPLE_SITE_PROVIDERS.includes(param.value.provider) ? [] : ''
 								}
 								param.value.provider_id = val.value
 								param.value.type = val.type
@@ -158,26 +163,39 @@ export default defineComponent({
 					config.push(...formConfig.sshDeploy())
 					break
 				case 'btpanel-site':
+				case '1panel-site':
 					// 使用异步加载的网站选择器
 					config.push(
-						formConfig.select($t('t_0_1747296173751'), 'siteName', siteOptions.value, {
-							placeholder: $t('t_10_1747990232207'),
-							multiple: true,
-							filterable: true,
-							remote: true,
-							clearable: true,
-							loading: siteOptionsLoading.value,
-							onSearch: handleSiteSearch,
-						}),
+						formConfig.select(
+							$t('t_0_1747296173751'),
+							param.value.provider === '1panel-site' ? 'site_id' : 'siteName',
+							siteOptions.value,
+							{
+								placeholder: !MULTIPLE_SITE_PROVIDERS.includes(param.value.provider)
+									? $t('请选择网站名，仅支持单选')
+									: $t('t_10_1747990232207'),
+								multiple: MULTIPLE_SITE_PROVIDERS.includes(param.value.provider), // 多选
+								filterable: true, // 可过滤
+								remote: true, // 远程搜索
+								clearable: true, // 可清除
+								loading: siteOptionsLoading.value,
+								onSearch: handleSiteSearch,
+								onUpdateValue: (val: string, option: { label: string; value: string }) => {
+									if (param.value.provider === '1panel-site') {
+										param.value.site_id = val
+									} else {
+										param.value.siteName = val
+									}
+								},
+							},
+						),
 					)
 					break
 				case 'btwaf-site':
 				case 'btpanel-dockersite':
+				case 'btpanel-singlesite':
 				case 'safeline-site':
 					config.push(...formConfig.siteDeploy())
-					break
-				case '1panel-site':
-					config.push(...formConfig.onePanelSiteDeploy())
 					break
 				case 'tencentcloud-cdn':
 				case 'tencentcloud-waf':
@@ -188,6 +206,14 @@ export default defineComponent({
 				case 'qiniu-oss':
 				case 'huaweicloud-cdn':
 					config.push(...formConfig.cdnDeploy())
+					break
+				case 'volcengine-cdn':
+				case 'volcengine-dcdn':
+					// 火山引擎CDN和DCDN部署参数
+					config.push(
+						formConfig.input($t('t_17_1745227838561'), 'domain', { placeholder: $t('t_0_1744958839535') }),
+						formConfig.input($t('t_7_1747280808936'), 'region', { placeholder: $t('t_25_1745735766651') }),
+					)
 					break
 				case 'aliyun-waf':
 					config.push(...formConfig.wafDeploy())
@@ -205,11 +231,7 @@ export default defineComponent({
 
 		watch(
 			() => param.value.provider_id,
-			() => {
-				if (param.value.provider === 'btpanel-site') {
-					handleSiteSearch('')
-				}
-			},
+			() => handleSiteSearch(''),
 		)
 
 		/**
@@ -217,7 +239,7 @@ export default defineComponent({
 		 * @param query 搜索关键字
 		 */
 		const handleSiteSearch = useThrottleFn(async (query: string): Promise<void> => {
-			if (param.value.provider !== 'btpanel-site') return
+			if (!SITE_SELECTOR_PROVIDERS.includes(param.value.provider)) return
 			if (!param.value.provider_id) return
 			try {
 				siteOptionsLoading.value = true
@@ -227,11 +249,12 @@ export default defineComponent({
 					search: query,
 					limit: '100',
 				}).fetch()
-				siteOptions.value = data?.map((siteName: string) => ({
-					label: siteName,
-					value: siteName,
-				}))
-				// param.value.siteName = []
+				siteOptions.value = data?.map(({ siteName, id }: { siteName: string; id: string }) => {
+					return {
+						label: siteName,
+						value: id || siteName,
+					}
+				})
 			} catch (error) {
 				handleError(error)
 				siteOptions.value = []
@@ -296,7 +319,11 @@ export default defineComponent({
 				const tempData = deepClone(param.value)
 
 				// 处理siteName字段的提交转换：将数组合并为字符串
-				if (tempData.provider === 'btpanel-site' && tempData.siteName && Array.isArray(tempData.siteName)) {
+				if (
+					MULTIPLE_SITE_PROVIDERS.includes(tempData.provider) &&
+					tempData.siteName &&
+					Array.isArray(tempData.siteName)
+				) {
 					tempData.siteName = tempData.siteName.join(',')
 				}
 
@@ -319,10 +346,14 @@ export default defineComponent({
 			// 如果已经选择了部署类型，则跳转到下一步
 			if (param.value.provider) {
 				if (props.node.inputs) param.value.inputs = props.node.inputs[0]
-				// 处理siteName字段的读取转换：将字符串拆分为数组（针对已有数据）
-				if (param.value.provider === 'btpanel-site' && param.value.siteName) {
+				if (SITE_SELECTOR_PROVIDERS.includes(param.value.provider)) {
+					if (param.value.provider === 'btpanel-site') {
+						param.value.siteName = param.value.siteName.split(',').filter(Boolean)
+					}
+					if (param.value.provider === '1panel-site') {
+						param.value.site_id = param.value.site_id.split(',').filter(Boolean)
+					}
 					handleSiteSearch('')
-					param.value.siteName = param.value.siteName.split(',').filter(Boolean)
 				}
 				nextStep()
 			}
@@ -382,7 +413,9 @@ export default defineComponent({
 												size="2rem"
 												class={`${styles.icon} ${param.value.provider === item.value ? styles.iconSelected : ''}`}
 											/>
-											<NText type={param.value.provider === item.value ? 'primary' : 'default'}>{item.label}</NText>
+											<NText type={param.value.provider === item.value ? 'primary' : 'default'} class="text-center">
+												{item.label}
+											</NText>
 										</div>
 									</div>
 								))}

@@ -35,7 +35,7 @@
 
 /* Option card styles */
 .optionCard {
-	@apply flex items-center justify-center rounded-[0.4rem] transition-all border-[1px] border-transparent h-[6.2rem];
+	@apply flex items-center justify-center rounded-[0.4rem] transition-all border-[1px] border-transparent h-[7rem];
 	border-color: var(--n-border-color);
 }
 
