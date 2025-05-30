@@ -19,7 +19,7 @@ ALLinSSL is a comprehensive SSL certificate lifecycle management tool that integ
 - **Frontend**: HTML/CSS/JavaScript
 - **Data Storage**: SQLite
 - **Certificate Management**: ACME Protocol (Let's Encrypt)
-- **Scheduled Tasks**: Built-in scheduler
+- **Scheduled Tasks**: Built-in scheduler.
 
 ## Installation Guide
 
