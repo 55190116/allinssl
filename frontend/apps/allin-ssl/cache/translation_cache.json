@@ -10639,5 +10639,22 @@
       "arDZ": "يرجى إدخال معلومات بريدك الإلكتروني لاستلام رسالة التحقق من الشهادة"
     },
     "timestamp": "2025-05-24T02:14:22.261Z"
+  },
+  "请选择网站名，仅支持单选": {
+    "text": "请选择网站名，仅支持单选",
+    "key": "t_0_1748586248783",
+    "translations": {
+      "zhCN": "请选择网站名，仅支持单选",
+      "zhTW": "請選擇網站名，僅支援單選",
+      "enUS": "Please select a website name, single selection only",
+      "jaJP": "ウェブサイト名を選択してください、単一選択のみ",
+      "koKR": "웹사이트 이름을 선택하세요, 단일 선택만 가능합니다",
+      "ruRU": "Пожалуйста, выберите название сайта, только одиночный выбор",
+      "ptBR": "Por favor, selecione um nome de site, apenas seleção única",
+      "frFR": "Veuillez sélectionner un nom de site, sélection unique uniquement",
+      "esAR": "Por favor seleccione un nombre de sitio, solo selección única",
+      "arDZ": "يرجى اختيار اسم الموقع، اختيار فردي فقط"
+    },
+    "timestamp": "2025-05-30T06:24:08.783Z"
   }
 }

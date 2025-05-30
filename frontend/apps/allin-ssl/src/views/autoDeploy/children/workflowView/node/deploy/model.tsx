@@ -172,7 +172,7 @@ export default defineComponent({
 							siteOptions.value,
 							{
 								placeholder: !MULTIPLE_SITE_PROVIDERS.includes(param.value.provider)
-									? $t('请选择网站名，仅支持单选')
+									? $t('t_0_1748586248783')
 									: $t('t_10_1747990232207'),
 								multiple: MULTIPLE_SITE_PROVIDERS.includes(param.value.provider), // 多选
 								filterable: true, // 可过滤
@@ -180,13 +180,13 @@ export default defineComponent({
 								clearable: true, // 可清除
 								loading: siteOptionsLoading.value,
 								onSearch: handleSiteSearch,
-								onUpdateValue: (val: string, option: { label: string; value: string }) => {
-									if (param.value.provider === '1panel-site') {
-										param.value.site_id = val
-									} else {
-										param.value.siteName = val
-									}
-								},
+								// onUpdateValue: (val: string, option: { label: string; value: string }) => {
+								// 	if (param.value.provider === '1panel-site') {
+								// 		param.value.site_id = val
+								// 	} else {
+								// 		param.value.siteName = val
+								// 	}
+								// },
 							},
 						),
 					)
@@ -349,9 +349,6 @@ export default defineComponent({
 				if (SITE_SELECTOR_PROVIDERS.includes(param.value.provider)) {
 					if (param.value.provider === 'btpanel-site') {
 						param.value.siteName = param.value.siteName.split(',').filter(Boolean)
-					}
-					if (param.value.provider === '1panel-site') {
-						param.value.site_id = param.value.site_id.split(',').filter(Boolean)
 					}
 					handleSiteSearch('')
 				}
