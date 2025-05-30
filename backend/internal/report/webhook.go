@@ -34,6 +34,10 @@ func NewWebHookReporter(config *ReportConfig, logger *public.Logger) *WebHookRep
 		client.SetTLSClientConfig(&tls.Config{InsecureSkipVerify: true})
 	}
 	
+	if config.Data == "" {
+		config.Data = "{}" // 默认数据为空JSON对象
+	}
+	
 	return &WebHookReporter{
 		config:     config,
 		logger:     logger,
