@@ -63,7 +63,7 @@ func GetSqlite() (*public.Sqlite, error) {
 	return s, nil
 }
 
-func GetDNSProvider(providerName string, creds map[string]string) (challenge.Provider, error) {
+func GetDNSProvider(providerName string, creds map[string]string, httpClient *http.Client) (challenge.Provider, error) {
 	switch providerName {
 	case "tencentcloud":
 		config := tencentcloud.NewDefaultConfig()
@@ -106,6 +106,9 @@ func GetDNSProvider(providerName string, creds map[string]string) (challenge.Pro
 		config := godaddy.NewDefaultConfig()
 		config.APIKey = creds["api_key"]
 		config.APISecret = creds["api_secret"]
+		if httpClient != nil {
+			config.HTTPClient = httpClient
+		}
 		return godaddy.NewDNSProviderConfig(config)
 	case "namecheap":
 		config := namecheap.NewDefaultConfig()
@@ -148,7 +151,7 @@ func GetDNSProvider(providerName string, creds map[string]string) (challenge.Pro
 	}
 }
 
-func GetAcmeClient(db *public.Sqlite, email, algorithm, proxy, eabId string, logger *public.Logger) (*lego.Client, error) {
+func GetAcmeClient(db *public.Sqlite, email, algorithm, eabId string, httpClient *http.Client, logger *public.Logger) (*lego.Client, error) {
 	var (
 		ca      string
 		eabData map[string]any
@@ -194,18 +197,7 @@ func GetAcmeClient(db *public.Sqlite, email, algorithm, proxy, eabId string, log
 	config := lego.NewConfig(user)
 	config.Certificate.KeyType = AlgorithmMap[algorithm]
 	config.CADirURL = CADirURLMap[ca]
-	if proxy != "" {
-		// 构建代理 HTTP 客户端
-		proxyURL, err := url.Parse(proxy) // 替换为你的代理地址
-		if err != nil {
-			return nil, fmt.Errorf("无效的代理地址: %v", err)
-		}
-		httpClient := &http.Client{
-			Transport: &http.Transport{
-				Proxy: http.ProxyURL(proxyURL),
-			},
-			Timeout: 30 * time.Second,
-		}
+	if httpClient != nil {
 		config.HTTPClient = httpClient
 	}
 	client, err := lego.NewClient(config)
@@ -341,9 +333,20 @@ func Apply(cfg map[string]any, logger *public.Logger) (map[string]any, error) {
 	if !ok {
 		algorithm = "RSA2048"
 	}
+	var httpClient *http.Client
 	proxy, ok := cfg["proxy"].(string)
-	if !ok {
-		proxy = ""
+	if ok {
+		// 构建代理 HTTP 客户端
+		proxyURL, err := url.Parse(proxy) // 替换为你的代理地址
+		if err != nil {
+			return nil, fmt.Errorf("无效的代理地址: %v", err)
+		}
+		httpClient = &http.Client{
+			Transport: &http.Transport{
+				Proxy: http.ProxyURL(proxyURL),
+			},
+			Timeout: 30 * time.Second,
+		}
 	}
 	var eabId string
 	switch v := cfg["eabId"].(type) {
@@ -434,7 +437,7 @@ func Apply(cfg map[string]any, logger *public.Logger) (map[string]any, error) {
 	}
 	logger.Debug("正在申请证书，域名: " + domains)
 	// 创建 ACME 客户端
-	client, err := GetAcmeClient(db, email, algorithm, proxy, eabId, logger)
+	client, err := GetAcmeClient(db, email, algorithm, eabId, httpClient, logger)
 	if err != nil {
 		return nil, err
 	}
@@ -455,7 +458,7 @@ func Apply(cfg map[string]any, logger *public.Logger) (map[string]any, error) {
 	}
 
 	// DNS 验证
-	provider, err := GetDNSProvider(providerStr, providerConfig)
+	provider, err := GetDNSProvider(providerStr, providerConfig, httpClient)
 	if err != nil {
 		return nil, fmt.Errorf("创建 DNS provider 失败: %v", err)
 	}
