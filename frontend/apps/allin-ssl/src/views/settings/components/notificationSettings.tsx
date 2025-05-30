@@ -143,7 +143,7 @@ export default defineComponent({
 									<div class=" items-center justify-between p-2 grid grid-cols-12">
 										<div class="flex items-center col-span-6">
 											<SvgIcon icon={`notify-${item.type}`} size="3rem" />
-											<div class="font-medium mb-1 mx-[1rem]">{item.name}</div>
+											<div class="font-medium mx-[1rem]">{item.name}</div>
 											<div class="flex items-center ">
 												<NTag type="info" size="small">
 													{(channelTypes.value as Record<string, string>)[item.type] || item.id}

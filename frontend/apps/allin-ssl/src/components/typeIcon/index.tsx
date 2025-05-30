@@ -50,9 +50,13 @@ export default defineComponent({
 		const { iconPath, typeName } = useAuthApiTypeIconController(props)
 
 		return () => (
-			<NTag type={props.type} size="small">
+			<NTag
+				type={props.type}
+				size="small"
+				class="w-auto text-ellipsis overflow-hidden whitespace-normal p-[.6rem] h-auto"
+			>
 				<SvgIcon icon={iconPath.value} size="1.2rem" class="mr-[0.4rem]" />
-				{props.text && <span class="text-[12px]">{typeName.value}</span>}
+				<span>{props.text && <span class="text-[12px]">{typeName.value}</span>}</span>
 			</NTag>
 		)
 	},

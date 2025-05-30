@@ -1,4 +1,5 @@
 {
+  "t_0_1748591669194": "Envoyer un message test à, configuration actuelle {type} notification, continuer ?",
   "t_0_1744098811152": "Avertissement : Vous avez entré dans une zone inconnue, la page que vous visitez n'existe pas, veuillez cliquer sur le bouton pour revenir à la page d'accueil.",
   "t_1_1744098801860": "Retour à l'accueil",
   "t_2_1744098804908": "Avis de sécurité : Si vous pensez que c'est une erreur, veuillez contacter l'administrateur immédiatement",
@@ -625,5 +626,12 @@
   "t_0_1748052857931": "Autorité de Certification/Autorisation (Optionnel)",
   "t_1_1748052860539": "Ajouter Zerossl, Google, autorisation de certificat CA",
   "t_2_1748052862259": "Veuillez entrer les informations de votre e-mail pour recevoir l'e-mail de vérification du certificat",
-  "t_0_1748586248783": "Veuillez sélectionner un nom de site, sélection unique uniquement"
+  "t_0_1748586248783": "Veuillez sélectionner un nom de site, sélection unique uniquement",
+  "t_0_1748589752275": "Veuillez entrer le nom du site, ne prend en charge que le déploiement d'un seul site",
+  "t_0_1748591495320": "Vous ne pouvez configurer qu'un seul canal de notification Feishu au maximum",
+  "t_1_1748591498948": "Un seul canal de notification Webhook peut être configuré au maximum",
+  "t_2_1748591495339": "Un seul canal de notification DingTalk peut être configuré au maximum",
+  "t_3_1748591484673": "Webhook",
+  "t_4_1748591492587": "Test de la notification {type}",
+  "t_5_1748591491370": "Test{type}"
 }

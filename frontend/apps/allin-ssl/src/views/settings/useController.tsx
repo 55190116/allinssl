@@ -129,7 +129,7 @@ export const useController = () => {
 	 */
 	const openAddFeishuChannelModal = (limit: number = 1) => {
 		if (limit >= 1) {
-			message.warning($t('t_16_1746773356568'))
+			message.warning($t('t_0_1748591495320'))
 			return
 		}
 		useModal({
@@ -148,7 +148,7 @@ export const useController = () => {
 	 */
 	const openAddWebhookChannelModal = (limit: number = 1) => {
 		if (limit >= 1) {
-			message.warning($t('t_16_1746773356568'))
+			message.warning($t('t_1_1748591498948'))
 			return
 		}
 		useModal({
@@ -167,7 +167,7 @@ export const useController = () => {
 	 */
 	const openAddDingtalkChannelModal = (limit: number = 1) => {
 		if (limit >= 1) {
-			message.warning($t('t_16_1746773356568'))
+			message.warning($t('t_2_1748591495339'))
 			return
 		}
 		useModal({
@@ -274,15 +274,20 @@ export const useController = () => {
 	 * @returns {void} 无返回值
 	 */
 	const testChannelConfig = (item: ReportType<any>) => {
-		if (item.type !== 'mail' && item.type !== 'feishu' && item.type !== 'webhook') {
+		if (item.type !== 'mail' && item.type !== 'feishu' && item.type !== 'webhook' && item.type !== 'dingtalk') {
 			message.warning($t('t_19_1746773352558'))
 			return
 		}
-		const { open, close } = useLoadingMask({ text: $t('t_20_1746773356060') })
-
+		const typeMap = {
+			mail: $t('t_1_1745735764953'),
+			feishu: $t('t_34_1746773350153'),
+			webhook: $t('t_3_1748591484673'),
+			dingtalk: $t('t_32_1746773348993'),
+		}
+		const { open, close } = useLoadingMask({ text: $t('t_4_1748591492587', { type: typeMap[item.type] }) })
 		useDialog({
-			title: $t('t_21_1746773350759'),
-			content: $t('t_22_1746773360711'),
+			title: $t('t_5_1748591491370', { type: typeMap[item.type] }),
+			content: $t('t_0_1748591669194', { type: typeMap[item.type] }),
 			onPositiveClick: async () => {
 				try {
 					open()

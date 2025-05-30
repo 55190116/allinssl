@@ -10656,5 +10656,141 @@
       "arDZ": "يرجى اختيار اسم الموقع، اختيار فردي فقط"
     },
     "timestamp": "2025-05-30T06:24:08.783Z"
+  },
+  "请输入网站名，只支持单个网站部署": {
+    "text": "请输入网站名，只支持单个网站部署",
+    "key": "t_0_1748589752275",
+    "translations": {
+      "zhCN": "请输入网站名，只支持单个网站部署",
+      "zhTW": "請輸入網站名，只支持單個網站部署",
+      "enUS": "Please enter the website name, only supports single website deployment",
+      "jaJP": "ウェブサイト名を入力してください、単一サイトの展開のみサポートしています",
+      "koKR": "웹사이트 이름을 입력하세요. 단일 웹사이트 배포만 지원합니다",
+      "ruRU": "Введите название веб-сайта, поддерживается только развертывание одного сайта",
+      "ptBR": "Por favor, insira o nome do site, suporta apenas implantação de site único",
+      "frFR": "Veuillez entrer le nom du site, ne prend en charge que le déploiement d'un seul site",
+      "esAR": "Por favor ingrese el nombre del sitio web, solo admite la implementación de un solo sitio web",
+      "arDZ": "الرجاء إدخال اسم الموقع، يدعم فقط نشر موقع واحد"
+    },
+    "timestamp": "2025-05-30T07:22:32.275Z"
+  },
+  "最多只能配置一个飞书通知渠道": {
+    "text": "最多只能配置一个飞书通知渠道",
+    "key": "t_0_1748591495320",
+    "translations": {
+      "zhCN": "最多只能配置一个飞书通知渠道",
+      "zhTW": "最多只能配置一個飛書通知渠道",
+      "enUS": "You can configure only one Feishu notification channel at most",
+      "jaJP": "最大で1つのFeishu通知チャネルのみを設定できます",
+      "koKR": "최대 하나의 Feishu 알림 채널만 구성할 수 있습니다",
+      "ruRU": "Можно настроить только один канал уведомлений Feishu",
+      "ptBR": "Você pode configurar apenas um canal de notificação Feishu no máximo",
+      "frFR": "Vous ne pouvez configurer qu'un seul canal de notification Feishu au maximum",
+      "esAR": "Solo puedes configurar un canal de notificación Feishu como máximo",
+      "arDZ": "يمكنك تكوين قناة إشعار Feishu واحدة فقط على الأكثر"
+    },
+    "timestamp": "2025-05-30T07:51:39.373Z"
+  },
+  "最多只能配置一个Webhook通知渠道": {
+    "text": "最多只能配置一个Webhook通知渠道",
+    "key": "t_1_1748591498948",
+    "translations": {
+      "zhCN": "最多只能配置一个Webhook通知渠道",
+      "zhTW": "最多只能配置一個Webhook通知渠道",
+      "enUS": "At most one Webhook notification channel can be configured",
+      "jaJP": "最大で1つのWebhook通知チャネルしか設定できません",
+      "koKR": "최대 하나의 Webhook 알림 채널만 구성할 수 있습니다",
+      "ruRU": "Можно настроить не более одного канала уведомлений Webhook",
+      "ptBR": "No máximo, um canal de notificação Webhook pode ser configurado",
+      "frFR": "Un seul canal de notification Webhook peut être configuré au maximum",
+      "esAR": "Solo se puede configurar un canal de notificación Webhook como máximo",
+      "arDZ": "يمكن تكوين قناة إشعار Webhook واحدة على الأكثر"
+    },
+    "timestamp": "2025-05-30T07:51:39.374Z"
+  },
+  "最多只能配置一个钉钉通知渠道": {
+    "text": "最多只能配置一个钉钉通知渠道",
+    "key": "t_2_1748591495339",
+    "translations": {
+      "zhCN": "最多只能配置一个钉钉通知渠道",
+      "zhTW": "最多只能配置一個釘釘通知渠道",
+      "enUS": "Only one DingTalk notification channel can be configured at most",
+      "jaJP": "最大で1つのDingTalk通知チャネルしか設定できません",
+      "koKR": "최대 하나의 DingTalk 알림 채널만 구성할 수 있습니다",
+      "ruRU": "Можно настроить не более одного канала уведомлений DingTalk",
+      "ptBR": "No máximo, apenas um canal de notificação DingTalk pode ser configurado",
+      "frFR": "Un seul canal de notification DingTalk peut être configuré au maximum",
+      "esAR": "Solo se puede configurar un canal de notificación DingTalk como máximo",
+      "arDZ": "يمكن تكوين قناة إشعار DingTalk واحدة فقط كحد أقصى"
+    },
+    "timestamp": "2025-05-30T07:51:39.374Z"
+  },
+  "Webhook": {
+    "text": "Webhook",
+    "key": "t_3_1748591484673",
+    "translations": {
+      "zhCN": "Webhook",
+      "zhTW": "Webhook",
+      "enUS": "Webhook",
+      "jaJP": "Webhook",
+      "koKR": "Webhook",
+      "ruRU": "Webhook",
+      "ptBR": "Webhook",
+      "frFR": "Webhook",
+      "esAR": "Webhook",
+      "arDZ": "Webhook"
+    },
+    "timestamp": "2025-05-30T07:51:39.374Z"
+  },
+  "正在测试{type}通知": {
+    "text": "正在测试{type}通知",
+    "key": "t_4_1748591492587",
+    "translations": {
+      "zhCN": "正在测试{type}通知",
+      "zhTW": "正在測試{type}通知",
+      "enUS": "Testing {type} notification",
+      "jaJP": "{type}通知をテスト中",
+      "koKR": "{type} 알림 테스트 중",
+      "ruRU": "Тестирование уведомления {type}",
+      "ptBR": "Testando notificação {type}",
+      "frFR": "Test de la notification {type}",
+      "esAR": "Probando notificación {type}",
+      "arDZ": "جارٍ اختبار إشعار {type}"
+    },
+    "timestamp": "2025-05-30T07:51:39.374Z"
+  },
+  "测试{type}": {
+    "text": "测试{type}",
+    "key": "t_5_1748591491370",
+    "translations": {
+      "zhCN": "测试{type}",
+      "zhTW": "測試{type}",
+      "enUS": "Test{type}",
+      "jaJP": "テスト{type}",
+      "koKR": "테스트{type}",
+      "ruRU": "Тест{type}",
+      "ptBR": "Teste{type}",
+      "frFR": "Test{type}",
+      "esAR": "Prueba{type}",
+      "arDZ": "اختبار{type}"
+    },
+    "timestamp": "2025-05-30T07:51:39.374Z"
+  },
+  "发送测试信息到，当前配置{type}通知，是否继续？": {
+    "text": "发送测试信息到，当前配置{type}通知，是否继续？",
+    "key": "t_0_1748591669194",
+    "translations": {
+      "zhCN": "发送测试信息到，当前配置{type}通知，是否继续？",
+      "zhTW": "發送測試信息到，當前配置{type}通知，是否繼續？",
+      "enUS": "Send test message to, current configuration {type} notification, continue?",
+      "jaJP": "テストメッセージを送信します、現在の設定 {type} 通知、続行しますか？",
+      "koKR": "테스트 메시지를 보냅니다, 현재 구성 {type} 알림, 계속하시겠습니까?",
+      "ruRU": "Отправить тестовое сообщение, текущая конфигурация {type} уведомления, продолжить?",
+      "ptBR": "Enviar mensagem de teste para, configuração atual {type} notificação, continuar?",
+      "frFR": "Envoyer un message test à, configuration actuelle {type} notification, continuer ?",
+      "esAR": "Enviar mensaje de prueba a, configuración actual {type} notificación, ¿continuar?",
+      "arDZ": "إرسال رسالة اختبار إلى، التكوين الحالي {type} إشعار، هل تتابع؟"
+    },
+    "timestamp": "2025-05-30T07:54:29.194Z"
   }
 }
