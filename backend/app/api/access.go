@@ -5,7 +5,6 @@ import (
 	"ALLinSSL/backend/internal/access"
 	"ALLinSSL/backend/internal/cert/deploy"
 	"ALLinSSL/backend/public"
-	"fmt"
 	"github.com/gin-gonic/gin"
 	"strings"
 )
@@ -366,7 +365,7 @@ func GetSiteList(c *gin.Context) {
 	}
 
 	if err != nil {
-		public.FailMsg(c, fmt.Sprintf("获取网站列表失败%v", err))
+		public.SuccessData(c, siteList, len(siteList))
 		return
 	}
 
