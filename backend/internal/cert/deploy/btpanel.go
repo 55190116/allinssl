@@ -252,11 +252,48 @@ func BtPanelSiteList(providerID string) ([]response.AccessSiteList, error) {
 	if !ok {
 		return nil, fmt.Errorf("获取网站列表失败: 数据格式错误")
 	}
-	
+
 	for _, site := range sites {
 		result = append(result, response.AccessSiteList{Id: "", SiteName: site.(string), Domain: []string{}})
 	}
-	
+
 	//fmt.Printf("siteList:%#v\n", result)
 	return result, nil
+}
+func DeployBtSingleSite(cfg map[string]any) error {
+	cert, ok := cfg["certificate"].(map[string]any)
+	if !ok {
+		return fmt.Errorf("证书不存在")
+	}
+	// 设置证书
+	keyPem, ok := cert["key"].(string)
+	if !ok {
+		return fmt.Errorf("证书错误：key")
+	}
+	certPem, ok := cert["cert"].(string)
+	if !ok {
+		return fmt.Errorf("证书错误：cert")
+	}
+	var providerID string
+	switch v := cfg["provider_id"].(type) {
+	case float64:
+		providerID = strconv.Itoa(int(v))
+	case string:
+		providerID = v
+	default:
+		return fmt.Errorf("参数错误：provider_id")
+	}
+	siteName, ok := cfg["siteName"].(string)
+	if !ok {
+		return fmt.Errorf("参数错误：siteName")
+	}
+	data := url.Values{}
+	data.Set("key", keyPem)
+	data.Set("csr", certPem)
+	data.Set("siteName", siteName)
+	_, err := RequestBt(&data, "POST", providerID, "/site?action=SetSSL")
+	if err != nil {
+		return fmt.Errorf("证书部署失败: %v", err)
+	}
+	return nil
 }
