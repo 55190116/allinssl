@@ -335,7 +335,7 @@ func Apply(cfg map[string]any, logger *public.Logger) (map[string]any, error) {
 	}
 	var httpClient *http.Client
 	proxy, ok := cfg["proxy"].(string)
-	if ok {
+	if ok && proxy != "" {
 		// 构建代理 HTTP 客户端
 		proxyURL, err := url.Parse(proxy) // 替换为你的代理地址
 		if err != nil {
