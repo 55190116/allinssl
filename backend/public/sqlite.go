@@ -58,6 +58,11 @@ func NewSqlite(DbFile string, PreFix string) (*Sqlite, error) {
 	if err != nil {
 		return nil, err
 	}
+	_, err = s.Conn.Exec("PRAGMA busy_timeout = 5000;")
+	if err != nil {
+		s.Close()
+		return nil, fmt.Errorf("设置PRAGMA busy_timeout失败: %w", err)
+	}
 
 	return &s, nil
 }
@@ -79,6 +84,7 @@ func (s *Sqlite) Connect() error {
 	if err == nil {
 		s.Conn = conn
 		s.closed = false
+
 	}
 	return err
 }

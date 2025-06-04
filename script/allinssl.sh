@@ -36,7 +36,7 @@ if [ $# -eq 0 ]; then
   echo "13: 重启后台自动调度"
   echo "14: 关闭https"
   echo "15: 获取面板地址"
-  echo "16: 更新ALLinSSL到最新版本（文件覆盖安装）"
+  echo "16: 修复/更新ALLinSSL到最新版本（文件覆盖安装）"
   echo "17: 卸载ALLinSSL"
   echo "========================================"
   read -p "请输入操作编号 (1-17): " user_input
@@ -50,16 +50,21 @@ if [ $# -eq 0 ]; then
 fi
 
 function update_allinssl() {
+  CN_CHECK=$(curl -sS --connect-timeout 10 -m 10 https://api.bt.cn/api/isCN)
+    if [ "${CN_CHECK}" == "True" ];then
+      node_host="https://download.allinssl.com"
+    else
+        node_host="https://node1.allinssl.com"
+    fi
     ARCH=$(uname -m)
     if [[ "$ARCH" == "x86_64" ]]; then
-        local url="https://download.allinssl.com/bin/allinssl-Linux-x86_64.tar.gz"
+        local url="${node_host}/bin/allinssl-Linux-x86_64.tar.gz"
     elif [[ "$ARCH" == "aarch64" ]]; then
-        local url="https://download.allinssl.com/bin/allinssl-Linux-aarch64.tar.gz"
+        local url="${node_host}/bin/allinssl-Linux-aarch64.tar.gz"
     else
         echo "不支持$ARCH"
         exit 1
     fi
-#    local url="https://download.allinssl.com/bin/allinssl.tar.gz"
     local target_dir="${WORK_DIR}"
     local temp_file=$(mktemp)
     local original_filename temp_file
@@ -132,7 +137,6 @@ function update_allinssl() {
 
     # 执行安装流程
     if create_directory && download_file && extract_file; then
-#        copy_config
         set_cloudc
         cleanup
         echo -e "${GREEN}${CHECK} Successfully installed to $target_dir${NC}"
@@ -202,10 +206,9 @@ if [ "$1" == "16" ]; then
     echo "已取消更新操作。"
     exit 0
   fi
-
-  # 可在此插入更新逻辑（如下载新版、替换二进制等）
-  update_allinssl
   echo "✅ 已确认，执行更新操作..."
+  update_allinssl
+  echo "ALLinSSL 更新完成！"
   exit 0
 elif [ "$1" == "17" ]; then
   echo "⚠️ 正在准备执行 ALLinSSL 卸载操作..."

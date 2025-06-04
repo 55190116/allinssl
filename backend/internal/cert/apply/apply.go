@@ -31,6 +31,7 @@ import (
 	"github.com/go-acme/lego/v4/registration"
 	"net/http"
 	"net/url"
+	"os"
 	"strconv"
 	"strings"
 	"time"
@@ -387,11 +388,7 @@ func Apply(cfg map[string]any, logger *public.Logger) (map[string]any, error) {
 	var skipCheck bool
 	if cfg["skip_check"] == nil {
 		// 默认跳过预检查
-		skipCheck = true
-		// cf 默认不跳过预检查
-		if providerStr == "cloudflare" {
-			skipCheck = false
-		}
+		skipCheck = false
 	} else {
 		switch v := cfg["skip_check"].(type) {
 		case int:
@@ -418,6 +415,36 @@ func Apply(cfg map[string]any, logger *public.Logger) (map[string]any, error) {
 			return nil, fmt.Errorf("参数错误：skip_check")
 		}
 	}
+	var closeCname bool
+	if cfg["close_cname"] == nil {
+		// 默认开启CNAME跟随
+		closeCname = false
+	} else {
+		switch v := cfg["close_cname"].(type) {
+		case int:
+			if v > 0 {
+				closeCname = true
+			} else {
+				closeCname = false
+			}
+		case float64:
+			if v > 0 {
+				closeCname = true
+			} else {
+				closeCname = false
+			}
+		case string:
+			if v == "true" || v == "1" {
+				closeCname = true
+			} else {
+				closeCname = false
+			}
+		case bool:
+			closeCname = v
+		default:
+			return nil, fmt.Errorf("参数错误：close_cname")
+		}
+	}
 
 	domainArr := strings.Split(domains, ",")
 	for i := range domainArr {
@@ -436,6 +463,7 @@ func Apply(cfg map[string]any, logger *public.Logger) (map[string]any, error) {
 		return certData, nil
 	}
 	logger.Debug("正在申请证书，域名: " + domains)
+	os.Setenv("LEGO_DISABLE_CNAME_SUPPORT", strconv.FormatBool(closeCname))
 	// 创建 ACME 客户端
 	client, err := GetAcmeClient(db, email, algorithm, eabId, httpClient, logger)
 	if err != nil {
