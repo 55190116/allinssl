@@ -53,6 +53,7 @@ var CADirURLMap = map[string]string{
 	"sslcom":        "https://acme.ssl.com/sslcom-dv-rsa",
 	"sslcom-rsa":    "https://acme.ssl.com/sslcom-dv-rsa",
 	"sslcom-ecc":    "https://acme.ssl.com/sslcom-dv-ecc",
+	"buypass":       "https://api.buypass.com/acme/directory",
 }
 
 func GetSqlite() (*public.Sqlite, error) {
@@ -152,15 +153,20 @@ func GetDNSProvider(providerName string, creds map[string]string, httpClient *ht
 	}
 }
 
-func GetAcmeClient(db *public.Sqlite, email, algorithm, eabId string, httpClient *http.Client, logger *public.Logger) (*lego.Client, error) {
+func GetAcmeClient(db *public.Sqlite, email, algorithm, eabId, ca string, httpClient *http.Client, logger *public.Logger) (*lego.Client, error) {
 	var (
-		ca      string
 		eabData map[string]any
 		err     error
 	)
 	switch eabId {
-	case "let", "":
+	case "":
+		if ca == "" {
+			ca = "Let's Encrypt"
+		}
+	case "let":
 		ca = "Let's Encrypt"
+	case "buy", "buypass":
+		ca = "buypass"
 	default:
 		eabData, err = access.GetEAB(eabId)
 		if err != nil {
@@ -189,7 +195,7 @@ func GetAcmeClient(db *public.Sqlite, email, algorithm, eabId string, httpClient
 	user, err := LoadUserFromDB(db, email, ca)
 	if err != nil {
 		logger.Debug("acme账号不存在，注册新账号")
-		privateKey, _ := ecdsa.GenerateKey(elliptic.P384(), rand.Reader)
+		privateKey, _ := ecdsa.GenerateKey(elliptic.P256(), rand.Reader)
 		user = &MyUser{
 			Email: email,
 			key:   privateKey,
@@ -358,6 +364,10 @@ func Apply(cfg map[string]any, logger *public.Logger) (map[string]any, error) {
 	default:
 		eabId = ""
 	}
+	ca, ok := cfg["ca"].(string)
+	if !ok {
+		ca = ""
+	}
 
 	var providerID string
 	switch v := cfg["provider_id"].(type) {
@@ -465,7 +475,7 @@ func Apply(cfg map[string]any, logger *public.Logger) (map[string]any, error) {
 	logger.Debug("正在申请证书，域名: " + domains)
 	os.Setenv("LEGO_DISABLE_CNAME_SUPPORT", strconv.FormatBool(closeCname))
 	// 创建 ACME 客户端
-	client, err := GetAcmeClient(db, email, algorithm, eabId, httpClient, logger)
+	client, err := GetAcmeClient(db, email, algorithm, eabId, ca, httpClient, logger)
 	if err != nil {
 		return nil, err
 	}

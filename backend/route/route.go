@@ -73,6 +73,7 @@ func Register(r *gin.Engine) {
 		setting.POST("/save_setting", api.SaveSetting)
 		setting.POST("/shutdown", api.Shutdown)
 		setting.POST("/restart", api.Restart)
+		setting.POST("/get_version", api.GetVersion)
 	}
 	overview := v1.Group("/overview")
 	{

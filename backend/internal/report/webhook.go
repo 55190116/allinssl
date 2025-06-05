@@ -8,6 +8,7 @@ import (
 	"fmt"
 	"github.com/go-resty/resty/v2"
 	"net/http"
+	"regexp"
 	"strings"
 	"time"
 )
@@ -29,15 +30,15 @@ type WebHookReporter struct {
 func NewWebHookReporter(config *ReportConfig, logger *public.Logger) *WebHookReporter {
 	client := resty.New()
 	client.SetTimeout(30 * time.Second)
-	
+
 	if config.IgnoreSSL {
 		client.SetTLSClientConfig(&tls.Config{InsecureSkipVerify: true})
 	}
-	
+
 	if config.Data == "" {
 		config.Data = "{}" // 默认数据为空JSON对象
 	}
-	
+
 	return &WebHookReporter{
 		config:     config,
 		logger:     logger,
@@ -51,11 +52,11 @@ func (w *WebHookReporter) Send(ctx context.Context) error {
 	if method == "" {
 		method = http.MethodPost // 默认使用POST方法
 	}
-	
+
 	// 创建基础请求
 	req := w.httpClient.R().
 		SetContext(ctx)
-	
+
 	// 设置请求头
 	if w.config.Headers != "" {
 		reqHeader, err := w.ParseHeaders(w.config.Headers)
@@ -64,7 +65,7 @@ func (w *WebHookReporter) Send(ctx context.Context) error {
 		}
 		req.Header = reqHeader
 	}
-	
+
 	switch method {
 	case http.MethodPost:
 		{
@@ -111,17 +112,17 @@ func (w *WebHookReporter) Send(ctx context.Context) error {
 	default:
 		return fmt.Errorf("暂不支持的HTTP方法: %s", method)
 	}
-	
+
 	// 发送请求
 	resp, err := req.Execute(method, w.config.Url)
 	if err != nil {
 		if w.logger != nil {
 			w.logger.Error(fmt.Sprintf("Webhook请求失败%s %v", w.config.Url, err))
 		}
-		
+
 		return fmt.Errorf("webhook请求失败: %w", err)
 	}
-	
+
 	// 处理响应
 	if resp.IsError() {
 		if w.logger != nil {
@@ -129,7 +130,7 @@ func (w *WebHookReporter) Send(ctx context.Context) error {
 		}
 		return fmt.Errorf("webhook返回错误状态码: %d", resp.StatusCode())
 	}
-	
+
 	if w.logger != nil {
 		w.logger.Debug(fmt.Sprintf("Webhook请求成功 %s", w.config.Url))
 	}
@@ -139,7 +140,7 @@ func (w *WebHookReporter) Send(ctx context.Context) error {
 func (w *WebHookReporter) ParseHeaders(headerStr string) (http.Header, error) {
 	headers := make(http.Header)
 	lines := strings.Split(headerStr, "\n")
-	
+
 	for i, line := range lines {
 		line = strings.TrimSpace(line)
 		if line == "" {
@@ -157,7 +158,7 @@ func (w *WebHookReporter) ParseHeaders(headerStr string) (http.Header, error) {
 		canonicalKey := http.CanonicalHeaderKey(key)
 		headers.Add(canonicalKey, value)
 	}
-	
+
 	return headers, nil
 }
 
@@ -166,13 +167,13 @@ func NotifyWebHook(params map[string]any) error {
 		return fmt.Errorf("缺少参数")
 	}
 	providerID := params["provider_id"].(string)
-	
+
 	var logger *public.Logger
-	
+
 	if params["logger"] != nil {
 		logger = params["logger"].(*public.Logger)
 	}
-	
+
 	providerData, err := GetReport(providerID)
 	if err != nil {
 		return err
@@ -183,7 +184,11 @@ func NotifyWebHook(params map[string]any) error {
 	if err != nil {
 		return fmt.Errorf("解析配置失败: %v", err)
 	}
-	
+	config.Data, err = ReplaceJSONPlaceholders(config.Data, params)
+	if err != nil {
+		return fmt.Errorf("替换JSON占位符失败: %w", err)
+	}
+
 	reporter := NewWebHookReporter(&config, logger)
 	httpctx := context.Background()
 	err = reporter.Send(httpctx)
@@ -191,4 +196,17 @@ func NotifyWebHook(params map[string]any) error {
 		return fmt.Errorf("webhook发送失败: %w", err)
 	}
 	return nil
+}
+
+func ReplaceJSONPlaceholders(jsonStr string, vars map[string]any) (string, error) {
+	re := regexp.MustCompile(`__([a-zA-Z0-9_]+)__`)
+	result := re.ReplaceAllStringFunc(jsonStr, func(match string) string {
+		key := re.FindStringSubmatch(match)[1]
+		if val, ok := vars[key]; ok {
+			return fmt.Sprintf("%v", val) // 将 any 类型转换为字符串
+		}
+		return match // 未匹配到变量则保留原样
+	})
+
+	return result, nil
 }

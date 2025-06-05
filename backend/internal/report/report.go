@@ -130,6 +130,8 @@ func NotifyTest(id string) error {
 		err = NotifyFeishu(params)
 	case "dingtalk":
 		err = NotifyDingtalk(params)
+	case "workwx":
+		err = NotifyWorkWx(params)
 	}
 	return err
 }
@@ -153,6 +155,8 @@ func Notify(params map[string]any) error {
 		return NotifyFeishu(params)
 	case "dingtalk":
 		return NotifyDingtalk(params)
+	case "workwx":
+		return NotifyWorkWx(params)
 	default:
 		return fmt.Errorf("不支持的通知类型")
 	}

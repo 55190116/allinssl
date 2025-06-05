@@ -4,8 +4,11 @@ import (
 	"ALLinSSL/backend/public"
 	"crypto/md5"
 	"encoding/hex"
+	"encoding/json"
 	"fmt"
 	"github.com/joho/godotenv"
+	"io"
+	"net/http"
 	"os"
 	"strconv"
 	"syscall"
@@ -182,4 +185,28 @@ func Restart() {
 		}
 	}()
 	return
+}
+
+func GetVersion() (map[string]string, error) {
+	version := "v1.0.4"
+	update := "0"
+	newVersionObj, err := http.Get("https://download.allinssl.com/version.json")
+	if err != nil {
+		return nil, fmt.Errorf("failed to fetch version: %v", err)
+	}
+	defer newVersionObj.Body.Close()
+
+	var newVersionData map[string]string
+	body, _ := io.ReadAll(newVersionObj.Body)
+	err = json.Unmarshal(body, &newVersionData)
+	if err != nil {
+		return nil, fmt.Errorf("failed to parse version data: %v", err)
+	}
+	if version != newVersionData["version"] {
+		update = "1"
+	}
+	newVersionData["new_version"] = newVersionData["version"]
+	newVersionData["version"] = version
+	newVersionData["update"] = update
+	return newVersionData, nil
 }

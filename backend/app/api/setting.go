@@ -38,3 +38,12 @@ func Restart(c *gin.Context) {
 	setting.Restart()
 	public.SuccessMsg(c, "正在重启...")
 }
+
+func GetVersion(c *gin.Context) {
+	data, err := setting.GetVersion()
+	if err != nil {
+		public.FailMsg(c, err.Error())
+		return
+	}
+	public.SuccessData(c, data, 0)
+}

@@ -192,28 +192,35 @@ func UpdInfo(id, domain string, s *public.Sqlite, reportType string) error {
 func CheckWebsite(target string) (*SSLInfo, error) {
 	result := &SSLInfo{Target: target}
 
+	// 拆分 host 和 port
+	host, port, err := net.SplitHostPort(target)
+	if err != nil {
+		// 没有显式端口，默认 443
+		host = target
+		port = "443"
+	}
+
 	// 验证格式是否是 IP 或域名
-	if net.ParseIP(target) == nil {
-		if _, err := net.LookupHost(target); err != nil {
+	if net.ParseIP(host) == nil {
+		if _, err := net.LookupHost(host); err != nil {
 			return result, fmt.Errorf("无效域名或 IP：%v", err)
 		}
 	}
 
-	hostPort := net.JoinHostPort(target, "443")
-
-	// result := &SSLInfo{Target: target}
-
-	// 1. TLS 连接（先做，否则无 HTTPS 支持直接失败）
-	conn, err := tls.Dial("tcp", hostPort, &tls.Config{
+	// TLS 连接（支持所有 TLS 版本）
+	conn, err := tls.Dial("tcp", net.JoinHostPort(host, port), &tls.Config{
 		InsecureSkipVerify: true,
+		MinVersion:         tls.VersionTLS10, // 显式支持所有版本
+		MaxVersion:         tls.VersionTLS13,
 	})
 	if err != nil {
 		return result, fmt.Errorf("目标不支持 HTTPS：%v", err)
 	}
 	defer conn.Close()
 
-	// 发送 HTTPS 请求检测状态
-	resp, err := http.Get("https://" + target)
+	// HTTP 状态检测（构造 URL，保留端口）
+	url := fmt.Sprintf("https://%s", net.JoinHostPort(host, port))
+	resp, err := http.Get(url)
 	if err != nil {
 		result.HTTPStatus = 0
 		result.HTTPStatusText = "异常"
