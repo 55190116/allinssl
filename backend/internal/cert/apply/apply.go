@@ -538,19 +538,31 @@ func Apply(cfg map[string]any, logger *public.Logger) (map[string]any, error) {
 			}),
 		)
 	} else {
+		start := time.Now()
+		maxWait := 2 * time.Minute // 你想要的最大等待时间
 		err = client.Challenge.SetDNS01Provider(provider,
 			dns01.AddRecursiveNameservers(NameServers),
 			dns01.WrapPreCheck(func(domain, fqdn, value string, check dns01.PreCheckFunc) (bool, error) {
 				ok, err := check(fqdn, value)
+				elapsed := time.Since(start)
 				if err != nil {
 					log.Printf("[WARN] DNS precheck error for %s: %v", fqdn, err)
-				} else if !ok {
-					log.Printf("[INFO] TXT record for %s not yet found, but continuing anyway.", fqdn)
-				} else {
-					log.Printf("[OK] TXT record for %s is present.", fqdn)
+					if elapsed >= maxWait {
+						log.Printf("[WARN] Precheck error but forcing continue due to timeout for %s", fqdn)
+						return true, nil
+					}
+					return false, nil
 				}
-				// 👇 核心点：无论查不查到，都强制返回 true
-				return true, nil
+				if ok {
+					log.Printf("[OK] TXT record for %s is present.", fqdn)
+					return true, nil
+				}
+				if elapsed >= maxWait {
+					log.Printf("[WARN] TXT record for %s not found after %v, forcing continue.", fqdn, elapsed)
+					return true, nil
+				}
+				log.Printf("[INFO] TXT record for %s not yet found, waiting... elapsed %v", fqdn, elapsed)
+				return false, nil
 			}),
 		)
 	}
