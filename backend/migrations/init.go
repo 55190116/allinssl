@@ -175,6 +175,12 @@ func init() {
 	InsertIfNotExists(db, "access_type", map[string]any{"name": "aws", "type": "dns"}, []string{"name", "type"}, []any{"aws", "dns"})
 	InsertIfNotExists(db, "access_type", map[string]any{"name": "azure", "type": "dns"}, []string{"name", "type"}, []any{"azure", "dns"})
 
+	InsertIfNotExists(db, "access_type", map[string]any{"name": "jdcloud", "type": "dns"}, []string{"name", "type"}, []any{"jdcloud", "dns"})
+	InsertIfNotExists(db, "access_type", map[string]any{"name": "gcore", "type": "dns"}, []string{"name", "type"}, []any{"gcore", "dns"})
+	InsertIfNotExists(db, "access_type", map[string]any{"name": "bunny", "type": "dns"}, []string{"name", "type"}, []any{"bunny", "dns"})
+	InsertIfNotExists(db, "access_type", map[string]any{"name": "namedotcom", "type": "dns"}, []string{"name", "type"}, []any{"namedotcom", "dns"})
+	InsertIfNotExists(db, "access_type", map[string]any{"name": "namesilo", "type": "dns"}, []string{"name", "type"}, []any{"namesilo", "dns"})
+
 	err = sqlite_migrate.EnsureDatabaseWithTables(
 		"data/site_monitor.db",
 		"data/data.db",

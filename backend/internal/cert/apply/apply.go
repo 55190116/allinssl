@@ -3,6 +3,7 @@ package apply
 import (
 	"ALLinSSL/backend/internal/access"
 	"ALLinSSL/backend/internal/cert"
+	"ALLinSSL/backend/internal/cert/apply/lego/jdcloud"
 	"ALLinSSL/backend/public"
 	"crypto/ecdsa"
 	"crypto/elliptic"
@@ -18,11 +19,15 @@ import (
 	"github.com/go-acme/lego/v4/providers/dns/alidns"
 	"github.com/go-acme/lego/v4/providers/dns/azuredns"
 	"github.com/go-acme/lego/v4/providers/dns/baiducloud"
+	"github.com/go-acme/lego/v4/providers/dns/bunny"
 	"github.com/go-acme/lego/v4/providers/dns/cloudflare"
 	"github.com/go-acme/lego/v4/providers/dns/cloudns"
+	"github.com/go-acme/lego/v4/providers/dns/gcore"
 	"github.com/go-acme/lego/v4/providers/dns/godaddy"
 	"github.com/go-acme/lego/v4/providers/dns/huaweicloud"
 	"github.com/go-acme/lego/v4/providers/dns/namecheap"
+	"github.com/go-acme/lego/v4/providers/dns/namedotcom"
+	"github.com/go-acme/lego/v4/providers/dns/namesilo"
 	"github.com/go-acme/lego/v4/providers/dns/ns1"
 	"github.com/go-acme/lego/v4/providers/dns/route53"
 	"github.com/go-acme/lego/v4/providers/dns/tencentcloud"
@@ -147,6 +152,29 @@ func GetDNSProvider(providerName string, creds map[string]string, httpClient *ht
 			return nil, fmt.Errorf("不支持的 Azure 环境: %s", creds["environment"])
 		}
 		return azuredns.NewDNSProviderConfig(config)
+	case "namesilo":
+		config := namesilo.NewDefaultConfig()
+		config.APIKey = creds["api_key"]
+		return namesilo.NewDNSProviderConfig(config)
+	case "namedotcom":
+		config := namedotcom.NewDefaultConfig()
+		config.Username = creds["username"]
+		config.APIToken = creds["api_token"]
+		return namedotcom.NewDNSProviderConfig(config)
+	case "bunny":
+		config := bunny.NewDefaultConfig()
+		config.APIKey = creds["api_key"]
+		return bunny.NewDNSProviderConfig(config)
+	case "gcore":
+		config := gcore.NewDefaultConfig()
+		config.APIToken = creds["api_token"]
+		return gcore.NewDNSProviderConfig(config)
+	case "jdcloud":
+		config := jdcloud.NewDefaultConfig()
+		config.AccessKeyID = creds["access_key_id"]
+		config.AccessKeySecret = creds["secret_access_key"]
+		config.RegionId = "cn-north-1"
+		return jdcloud.NewDNSProviderConfig(config)
 
 	default:
 		return nil, fmt.Errorf("不支持的 DNS Provider: %s", providerName)
