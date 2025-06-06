@@ -71,22 +71,25 @@ func GetSqlite() (*public.Sqlite, error) {
 	return s, nil
 }
 
-func GetDNSProvider(providerName string, creds map[string]string, httpClient *http.Client) (challenge.Provider, error) {
+func GetDNSProvider(providerName string, creds map[string]string, httpClient *http.Client, maxWait time.Duration) (challenge.Provider, error) {
 	switch providerName {
 	case "tencentcloud":
 		config := tencentcloud.NewDefaultConfig()
 		config.SecretID = creds["secret_id"]
 		config.SecretKey = creds["secret_key"]
+		config.PropagationTimeout = maxWait
 		return tencentcloud.NewDNSProviderConfig(config)
 	case "cloudflare":
 		config := cloudflare.NewDefaultConfig()
 		config.AuthEmail = creds["email"]
 		config.AuthKey = creds["api_key"]
+		config.PropagationTimeout = maxWait
 		return cloudflare.NewDNSProviderConfig(config)
 	case "aliyun":
 		config := alidns.NewDefaultConfig()
 		config.APIKey = creds["access_key_id"]
 		config.SecretKey = creds["access_key_secret"]
+		config.PropagationTimeout = maxWait
 		return alidns.NewDNSProviderConfig(config)
 	case "huaweicloud":
 		config := huaweicloud.NewDefaultConfig()
@@ -94,21 +97,25 @@ func GetDNSProvider(providerName string, creds map[string]string, httpClient *ht
 		config.SecretAccessKey = creds["secret_key"]
 		// 不传会报错
 		config.Region = "cn-north-1"
+		config.PropagationTimeout = maxWait
 		return huaweicloud.NewDNSProviderConfig(config)
 	case "baidu":
 		config := baiducloud.NewDefaultConfig()
 		config.AccessKeyID = creds["access_key"]
 		config.SecretAccessKey = creds["secret_key"]
+		config.PropagationTimeout = maxWait
 		return baiducloud.NewDNSProviderConfig(config)
 	case "westcn":
 		config := westcn.NewDefaultConfig()
 		config.Username = creds["username"]
 		config.Password = creds["password"]
+		config.PropagationTimeout = maxWait
 		return westcn.NewDNSProviderConfig(config)
 	case "volcengine":
 		config := volcengine.NewDefaultConfig()
 		config.AccessKey = creds["access_key"]
 		config.SecretKey = creds["secret_key"]
+		config.PropagationTimeout = maxWait
 		return volcengine.NewDNSProviderConfig(config)
 	case "godaddy":
 		config := godaddy.NewDefaultConfig()
@@ -117,25 +124,30 @@ func GetDNSProvider(providerName string, creds map[string]string, httpClient *ht
 		if httpClient != nil {
 			config.HTTPClient = httpClient
 		}
+		config.PropagationTimeout = maxWait
 		return godaddy.NewDNSProviderConfig(config)
 	case "namecheap":
 		config := namecheap.NewDefaultConfig()
 		config.APIUser = creds["api_user"]
 		config.APIKey = creds["api_key"]
+		config.PropagationTimeout = maxWait
 		return namecheap.NewDNSProviderConfig(config)
 	case "ns1":
 		config := ns1.NewDefaultConfig()
 		config.APIKey = creds["api_key"]
+		config.PropagationTimeout = maxWait
 		return ns1.NewDNSProviderConfig(config)
 	case "cloudns":
 		config := cloudns.NewDefaultConfig()
 		config.AuthID = creds["auth_id"]
 		config.AuthPassword = creds["auth_password"]
+		config.PropagationTimeout = maxWait
 		return cloudns.NewDNSProviderConfig(config)
 	case "aws":
 		config := route53.NewDefaultConfig()
 		config.AccessKeyID = creds["access_key_id"]
 		config.SecretAccessKey = creds["secret_access_key"]
+		config.PropagationTimeout = maxWait
 		return route53.NewDNSProviderConfig(config)
 	case "azure":
 		config := azuredns.NewDefaultConfig()
@@ -152,29 +164,35 @@ func GetDNSProvider(providerName string, creds map[string]string, httpClient *ht
 		default:
 			return nil, fmt.Errorf("不支持的 Azure 环境: %s", creds["environment"])
 		}
+		config.PropagationTimeout = maxWait
 		return azuredns.NewDNSProviderConfig(config)
 	case "namesilo":
 		config := namesilo.NewDefaultConfig()
 		config.APIKey = creds["api_key"]
+		config.PropagationTimeout = maxWait
 		return namesilo.NewDNSProviderConfig(config)
 	case "namedotcom":
 		config := namedotcom.NewDefaultConfig()
 		config.Username = creds["username"]
 		config.APIToken = creds["api_token"]
+		config.PropagationTimeout = maxWait
 		return namedotcom.NewDNSProviderConfig(config)
 	case "bunny":
 		config := bunny.NewDefaultConfig()
 		config.APIKey = creds["api_key"]
+		config.PropagationTimeout = maxWait
 		return bunny.NewDNSProviderConfig(config)
 	case "gcore":
 		config := gcore.NewDefaultConfig()
 		config.APIToken = creds["api_token"]
+		config.PropagationTimeout = maxWait
 		return gcore.NewDNSProviderConfig(config)
 	case "jdcloud":
 		config := jdcloud.NewDefaultConfig()
 		config.AccessKeyID = creds["access_key_id"]
 		config.AccessKeySecret = creds["secret_access_key"]
 		config.RegionId = "cn-north-1"
+		config.PropagationTimeout = maxWait
 		return jdcloud.NewDNSProviderConfig(config)
 
 	default:
@@ -454,6 +472,36 @@ func Apply(cfg map[string]any, logger *public.Logger) (map[string]any, error) {
 			return nil, fmt.Errorf("参数错误：skip_check")
 		}
 	}
+	var ignoreCheck bool
+	if cfg["ignore_check"] == nil {
+		// 默认不忽略预检查
+		ignoreCheck = false
+	} else {
+		switch v := cfg["ignore_check"].(type) {
+		case int:
+			if v > 0 {
+				ignoreCheck = true
+			} else {
+				ignoreCheck = false
+			}
+		case float64:
+			if v > 0 {
+				ignoreCheck = true
+			} else {
+				ignoreCheck = false
+			}
+		case string:
+			if v == "true" || v == "1" {
+				ignoreCheck = true
+			} else {
+				ignoreCheck = false
+			}
+		case bool:
+			ignoreCheck = v
+		default:
+			return nil, fmt.Errorf("参数错误：ignore_check")
+		}
+	}
 	var closeCname bool
 	if cfg["close_cname"] == nil {
 		// 默认开启CNAME跟随
@@ -482,6 +530,28 @@ func Apply(cfg map[string]any, logger *public.Logger) (map[string]any, error) {
 			closeCname = v
 		default:
 			return nil, fmt.Errorf("参数错误：close_cname")
+		}
+	}
+	var maxWait time.Duration
+	if cfg["max_wait"] == nil {
+		// 默认最大等待时间为2分钟
+		maxWait = 2 * time.Minute
+	} else {
+		switch v := cfg["max_wait"].(type) {
+		case int:
+			maxWait = time.Duration(v) * time.Second
+		case float64:
+			maxWait = time.Duration(v) * time.Second
+		case string:
+			maxWait = 2 * time.Minute // 默认值
+			if v != "" {
+				d, err := strconv.Atoi(v)
+				if err == nil {
+					maxWait = time.Duration(d) * time.Second
+				}
+			}
+		default:
+			maxWait = 2 * time.Minute
 		}
 	}
 
@@ -525,7 +595,7 @@ func Apply(cfg map[string]any, logger *public.Logger) (map[string]any, error) {
 	}
 
 	// DNS 验证
-	provider, err := GetDNSProvider(providerStr, providerConfig, httpClient)
+	provider, err := GetDNSProvider(providerStr, providerConfig, httpClient, maxWait)
 	if err != nil {
 		return nil, fmt.Errorf("创建 DNS provider 失败: %v", err)
 	}
@@ -539,32 +609,37 @@ func Apply(cfg map[string]any, logger *public.Logger) (map[string]any, error) {
 		)
 	} else {
 		start := time.Now()
-		maxWait := 2 * time.Minute // 你想要的最大等待时间
-		err = client.Challenge.SetDNS01Provider(provider,
-			dns01.AddRecursiveNameservers(NameServers),
-			dns01.WrapPreCheck(func(domain, fqdn, value string, check dns01.PreCheckFunc) (bool, error) {
-				ok, err := check(fqdn, value)
-				elapsed := time.Since(start)
-				if err != nil {
-					log.Printf("[WARN] DNS precheck error for %s: %v", fqdn, err)
-					if elapsed >= maxWait {
-						log.Printf("[WARN] Precheck error but forcing continue due to timeout for %s", fqdn)
+		if ignoreCheck {
+			err = client.Challenge.SetDNS01Provider(provider,
+				dns01.AddRecursiveNameservers(NameServers),
+				dns01.WrapPreCheck(func(domain, fqdn, value string, check dns01.PreCheckFunc) (bool, error) {
+					ok, err := check(fqdn, value)
+					elapsed := time.Since(start)
+					if err != nil {
+						log.Printf("[WARN] DNS precheck error for %s: %v", fqdn, err)
+						if elapsed >= maxWait {
+							log.Printf("[WARN] Precheck error but forcing continue due to timeout for %s", fqdn)
+							return true, nil
+						}
+						return false, nil
+					}
+					if ok {
+						log.Printf("[OK] TXT record for %s is present.", fqdn)
 						return true, nil
 					}
+					if elapsed >= maxWait {
+						log.Printf("[WARN] TXT record for %s not found after %v, forcing continue.", fqdn, elapsed)
+						return true, nil
+					}
+					log.Printf("[INFO] TXT record for %s not yet found, waiting... elapsed %v", fqdn, elapsed)
 					return false, nil
-				}
-				if ok {
-					log.Printf("[OK] TXT record for %s is present.", fqdn)
-					return true, nil
-				}
-				if elapsed >= maxWait {
-					log.Printf("[WARN] TXT record for %s not found after %v, forcing continue.", fqdn, elapsed)
-					return true, nil
-				}
-				log.Printf("[INFO] TXT record for %s not yet found, waiting... elapsed %v", fqdn, elapsed)
-				return false, nil
-			}),
-		)
+				}),
+			)
+		} else {
+			err = client.Challenge.SetDNS01Provider(provider,
+				dns01.AddRecursiveNameservers(NameServers),
+			)
+		}
 	}
 	if err != nil {
 		return nil, err
