@@ -188,7 +188,7 @@ func GetAcmeClient(db *public.Sqlite, email, algorithm, eabId, ca string, httpCl
 	)
 	switch eabId {
 	case "":
-		if ca == "" {
+		if ca == "" || ca == "letsencrypt" {
 			ca = "Let's Encrypt"
 		}
 	case "let":
