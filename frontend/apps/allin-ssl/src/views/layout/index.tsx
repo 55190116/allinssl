@@ -246,7 +246,7 @@ export default defineComponent({
 									class="px-[.8rem] sm:px-[.5rem] py-[.4rem] cursor-pointer hover:text-primary transition-colors text-[1.4rem] font-medium"
 									onClick={handleVersionClick}
 								>
-									v1.0.4
+									{versionData.value && versionData.value.version}
 								</span>
 							</NBadge>
 						</div>

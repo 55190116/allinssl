@@ -47,7 +47,7 @@ export default defineComponent({
 						<NDescriptions bordered>
 							<NDescriptionsItem label={$t('t_5_1745833933241')}>
 								<div class="flex items-center space-x-[1.2rem]">
-									<span class="text-[2.0rem] font-medium">v1.0.4</span>
+									<span class="text-[2.0rem] font-medium">{versionData.value && versionData.value.version}</span>
 									{hasUpdate.value && versionData.value && (
 										<div class="relative">
 											<NBadge value="NEW" type="success" offset={[4, -3]}>
