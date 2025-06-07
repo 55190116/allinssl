@@ -2,7 +2,6 @@
 version: 2
 before:
   hooks:
-    - mv winres/main.syso cmd/
     - rm -rf frontend
     - mv build frontend
 release:
