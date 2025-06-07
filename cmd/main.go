@@ -44,7 +44,7 @@ func main() {
 				if err != nil {
 					fmt.Println("无法打开浏览器，请手动访问：", url)
 				} else {
-					fmt.Println("正在打开浏览器，请稍候...")
+					fmt.Println("正在打开浏览器，请稍候...", url)
 				}
 			}()
 			mainRun()

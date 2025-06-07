@@ -47,7 +47,7 @@ func GetList(search string, p, limit int64) ([]map[string]any, int, error) {
 		limits = []int64{0, limit}
 		if p > 1 {
 			limits[0] = (p - 1) * limit
-			limits[1] = p * limit
+			limits[1] = limit
 		}
 	}
 
