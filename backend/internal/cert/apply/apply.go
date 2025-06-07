@@ -349,6 +349,7 @@ func GetCert(runId string, domainArr []string, endDay int, logger *public.Logger
 }
 
 func Apply(cfg map[string]any, logger *public.Logger) (map[string]any, error) {
+	log.Logger = logger.GetLogger()
 	db, err := GetSqlite()
 	if err != nil {
 		return nil, err

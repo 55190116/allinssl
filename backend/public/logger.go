@@ -110,3 +110,6 @@ func (l *Logger) Error(msg string) {
 func (l *Logger) Debug(msg string) {
 	l.write("Debug", msg)
 }
+func (l *Logger) GetLogger() *log.Logger {
+	return l.logger
+}
