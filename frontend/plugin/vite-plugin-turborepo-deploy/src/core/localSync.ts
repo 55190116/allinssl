@@ -1,23 +1,23 @@
-import type { LocalSyncConfig } from '../types';
-import type { Logger } from "./logger";
-import fs from 'fs-extra';
-import path from 'path';
-import picomatch from 'picomatch'; // For glob matching if not using regex directly
-import os from "os";
-import { exec as execCallback } from "child_process";
+/**
+ * 本地文件同步模塊 - 跨平台實現
+ *
+ * 使用 Node.js 原生庫實現跨平台文件壓縮和解壓功能：
+ * - archiver: 跨平台壓縮庫，替代 Unix zip 命令
+ * - yauzl: 跨平台解壓庫，替代 Unix unzip 命令
+ * - fs-extra: 增強的文件系統操作
+ *
+ * 支持 Windows、Linux、macOS 等所有 Node.js 支持的平台
+ */
 
-// 使用Promise包装exec函数，不依赖util.promisify
-const exec = (command: string): Promise<{ stdout: string; stderr: string }> => {
-  return new Promise((resolve, reject) => {
-    execCallback(command, (error, stdout, stderr) => {
-      if (error) {
-        reject(error);
-        return;
-      }
-      resolve({ stdout, stderr });
-    });
-  });
-};
+import type { LocalSyncConfig } from "../types";
+import type { Logger } from "./logger";
+import fs from "fs-extra";
+import path from "path";
+import picomatch from "picomatch"; // For glob matching if not using regex directly
+import os from "os";
+import archiver from "archiver";
+import yauzl from "yauzl";
+import { isSubdirectoryOf, analyzePathRelationship } from "./utils";
 
 // 缓存已创建的临时压缩文件
 interface CompressionCache {
@@ -60,66 +60,66 @@ async function createTempDir(): Promise<string> {
 }
 
 /**
- * 生成排除选项字符串
+ * 生成排除模式數組，適配 archiver 庫的 ignore 選項
  * @param config 同步配置
  * @param sourcePath 源路径
  * @param targetPath 目标路径
  * @param tempDir 临时目录
- * @returns 排除选项字符串
+ * @returns 排除模式數組
  */
-function generateExcludeOptions(
+function generateExcludePatterns(
   config: LocalSyncConfig,
   sourcePath: string,
   targetPath: string,
   tempDir: string,
-): string {
-  let excludeOptions = "";
+): string[] {
+  const excludePatterns: string[] = [];
 
-  // 处理排除目录
+  // 處理排除目錄
   if (config.excludeDirs && config.excludeDirs.length > 0) {
-    const excludeDirsFormatted = config.excludeDirs
-      .map((dir) => {
-        // 移除通配符，获取基本目录名
-        const baseDirName = dir.replace(/^\*\*\//, "");
-        return `-x "*${baseDirName}*"`;
-      })
-      .join(" ");
-    excludeOptions += ` ${excludeDirsFormatted}`;
+    config.excludeDirs.forEach((dir) => {
+      // 移除通配符前綴，轉換為 glob 模式
+      const baseDirName = dir.replace(/^\*\*\//, "");
+      excludePatterns.push(`**/${baseDirName}/**`);
+      excludePatterns.push(`${baseDirName}/**`);
+    });
   }
 
-  // 处理排除文件
+  // 處理排除文件
   if (config.excludeFiles && config.excludeFiles.length > 0) {
-    const excludeFilesFormatted = config.excludeFiles
-      .map((file) => {
-        return `-x "*${file.replace(/^\*\*\//, "")}*"`;
-      })
-      .join(" ");
-    excludeOptions += ` ${excludeFilesFormatted}`;
+    config.excludeFiles.forEach((file) => {
+      const baseFileName = file.replace(/^\*\*\//, "");
+      excludePatterns.push(`**/${baseFileName}`);
+      excludePatterns.push(`${baseFileName}`);
+    });
   }
 
-  // 处理正则排除
+  // 處理正則排除
   if (config.exclude && config.exclude.length > 0) {
-    const excludeRegexFormatted = config.exclude
-      .map((pattern) => {
-        return `-x "*${pattern}*"`;
-      })
-      .join(" ");
-    excludeOptions += ` ${excludeRegexFormatted}`;
+    config.exclude.forEach((pattern) => {
+      // 將正則模式轉換為 glob 模式
+      excludePatterns.push(`**/*${pattern}*`);
+      excludePatterns.push(`*${pattern}*`);
+    });
   }
 
-  // 始终排除目标路径，避免递归
+  // 始終排除目標路徑，避免遞歸
   const relativeTargetPath = path.relative(sourcePath, targetPath);
-  if (relativeTargetPath) {
-    excludeOptions += ` -x "*${relativeTargetPath}*"`;
+  if (relativeTargetPath && relativeTargetPath !== ".") {
+    excludePatterns.push(`${relativeTargetPath}/**`);
+    excludePatterns.push(`**/${relativeTargetPath}/**`);
   }
 
-  // 排除所有.sync-git目录
-  excludeOptions += ` -x "*.sync-git*"`;
+  // 排除所有 .sync-git 目錄
+  excludePatterns.push("**/.sync-git/**");
+  excludePatterns.push(".sync-git/**");
 
-  // 排除临时目录
-  excludeOptions += ` -x "*${path.basename(tempDir)}*"`;
+  // 排除臨時目錄
+  const tempDirName = path.basename(tempDir);
+  excludePatterns.push(`**/${tempDirName}/**`);
+  excludePatterns.push(`${tempDirName}/**`);
 
-  return excludeOptions;
+  return excludePatterns;
 }
 
 /**
@@ -155,6 +155,100 @@ function cleanExpiredCache(): void {
       delete compressionCache[key];
     }
   }
+}
+
+/**
+ * 處理同步錯誤，提供具體的診斷信息和解決建議
+ * @param error 捕獲的錯誤
+ * @param sourcePath 源路徑
+ * @param targetPath 目標路徑
+ * @param config 同步配置
+ * @param logger 日誌記錄器
+ */
+function handleSyncError(
+  error: Error,
+  sourcePath: string,
+  targetPath: string,
+  config: LocalSyncConfig,
+  logger: Logger,
+): void {
+  logger.error(`❌ 同步失敗: ${sourcePath} -> ${targetPath}`);
+
+  // 根據錯誤類型提供具體的診斷和建議
+  const errorMessage = error.message.toLowerCase();
+
+  if (
+    errorMessage.includes("cannot copy") &&
+    errorMessage.includes("subdirectory")
+  ) {
+    logger.error(`🚨 檢測到自引用複製錯誤 - 這正是我們修復的問題！`);
+    logger.error(`   錯誤詳情: ${error.message}`);
+    logger.error(`   這表示路徑檢測邏輯可能仍有問題，請檢查:`);
+    logger.error(`     1. 源路徑: ${sourcePath}`);
+    logger.error(`     2. 目標路徑: ${targetPath}`);
+    logger.error(`     3. 路徑關係檢測是否正確工作`);
+    logger.error(`   💡 解決方案:`);
+    logger.error(`     - 確保目標路徑不是源路徑的子目錄`);
+    logger.error(`     - 或者使用相對路徑配置`);
+    logger.error(`     - 檢查 excludeDirs 配置是否包含目標目錄`);
+  } else if (
+    errorMessage.includes("enoent") ||
+    errorMessage.includes("no such file")
+  ) {
+    logger.error(`📁 文件或目錄不存在錯誤`);
+    logger.error(`   錯誤詳情: ${error.message}`);
+    logger.error(`   💡 解決方案:`);
+    logger.error(`     - 檢查源路徑是否存在: ${sourcePath}`);
+    logger.error(`     - 確保父目錄有寫入權限`);
+    logger.error(`     - 檢查路徑中是否包含特殊字符`);
+  } else if (
+    errorMessage.includes("eacces") ||
+    errorMessage.includes("permission denied")
+  ) {
+    logger.error(`🔒 權限錯誤`);
+    logger.error(`   錯誤詳情: ${error.message}`);
+    logger.error(`   💡 解決方案:`);
+    logger.error(`     - 檢查目標目錄的寫入權限`);
+    logger.error(`     - 確保沒有文件被其他程序占用`);
+    logger.error(`     - 在 Windows 上可能需要以管理員身份運行`);
+  } else if (
+    errorMessage.includes("enospc") ||
+    errorMessage.includes("no space")
+  ) {
+    logger.error(`💾 磁盤空間不足錯誤`);
+    logger.error(`   錯誤詳情: ${error.message}`);
+    logger.error(`   💡 解決方案:`);
+    logger.error(`     - 清理磁盤空間`);
+    logger.error(`     - 檢查目標磁盤的可用空間`);
+  } else if (
+    errorMessage.includes("emfile") ||
+    errorMessage.includes("too many open files")
+  ) {
+    logger.error(`📂 文件句柄過多錯誤`);
+    logger.error(`   錯誤詳情: ${error.message}`);
+    logger.error(`   💡 解決方案:`);
+    logger.error(`     - 增加系統文件句柄限制`);
+    logger.error(`     - 檢查是否有文件泄漏`);
+    logger.error(`     - 考慮使用 excludeDirs 減少處理的文件數量`);
+  } else {
+    logger.error(`❓ 未知錯誤`);
+    logger.error(`   錯誤詳情: ${error.message}`);
+    logger.error(`   💡 通用解決方案:`);
+    logger.error(`     - 檢查網絡連接（如果涉及遠程路徑）`);
+    logger.error(`     - 確保所有路徑都是有效的`);
+    logger.error(`     - 嘗試減少同步的文件數量`);
+  }
+
+  // 提供配置建議
+  logger.error(`⚙️  當前配置信息:`);
+  logger.error(`     模式: ${config.mode || "incremental"}`);
+  logger.error(`     清空目標: ${config.clearTarget || false}`);
+  logger.error(`     僅添加: ${config.addOnly || false}`);
+  logger.error(`     排除目錄數量: ${config.excludeDirs?.length || 0}`);
+  logger.error(`     排除文件數量: ${config.excludeFiles?.length || 0}`);
+
+  // 記錄完整的錯誤棧以便調試
+  logger.verbose(`完整錯誤棧: ${error.stack}`);
 }
 
 /**
@@ -198,23 +292,26 @@ async function syncViaCompression(
   try {
     if (needToCreateZip) {
       // 需要创建新的压缩文件
-      const excludeOptions = generateExcludeOptions(
+      const excludePatterns = generateExcludePatterns(
         config,
         sourcePath,
         targetPath,
         tempDir!,
       );
 
-      // 压缩源目录内容到临时文件
+      // 使用跨平台壓縮函數
       logger.info(`压缩源目录 ${sourcePath} 到临时文件 ${tempZipFile}...`);
-      const zipCmd = `cd "${sourcePath}" && zip -r "${tempZipFile}" .${excludeOptions}`;
-      logger.verbose(`执行命令: ${zipCmd}`);
-      await exec(zipCmd);
+      await createZipWithArchiver(
+        sourcePath,
+        tempZipFile,
+        excludePatterns,
+        logger,
+      );
 
       // 将新创建的压缩文件加入缓存
       compressionCache[cacheKey] = {
         zipFile: tempZipFile,
-        excludeOptions: excludeOptions,
+        excludeOptions: excludePatterns.join(","),
         expiry: Date.now() + CACHE_TTL,
       };
       logger.verbose(
@@ -229,11 +326,9 @@ async function syncViaCompression(
     }
     await fs.ensureDir(targetPath);
 
-    // 解压缩到目标目录
+    // 使用跨平台解壓函數
     logger.info(`解压临时文件到目标目录 ${targetPath}...`);
-    const unzipCmd = `unzip -o "${tempZipFile}" -d "${targetPath}"`;
-    logger.verbose(`执行命令: ${unzipCmd}`);
-    await exec(unzipCmd);
+    await extractZipWithYauzl(tempZipFile, targetPath, logger);
 
     logger.info(`成功通过压缩方案同步 ${sourcePath} 到 ${targetPath}`);
   } catch (error: any) {
@@ -262,6 +357,207 @@ async function syncViaCompression(
       }
     }
   }
+}
+
+/**
+ * 使用 archiver 庫創建跨平台壓縮文件
+ * @param sourcePath 源路徑
+ * @param targetZipFile 目標zip文件路徑
+ * @param excludePatterns 排除模式數組
+ * @param logger 日誌記錄器
+ * @returns Promise<void>
+ */
+async function createZipWithArchiver(
+  sourcePath: string,
+  targetZipFile: string,
+  excludePatterns: string[],
+  logger: Logger,
+): Promise<void> {
+  return new Promise((resolve, reject) => {
+    // 確保目標目錄存在
+    fs.ensureDirSync(path.dirname(targetZipFile));
+
+    // 創建輸出流
+    const output = fs.createWriteStream(targetZipFile);
+
+    // 創建歸檔器實例，使用最高壓縮級別
+    const archive = archiver("zip", {
+      zlib: { level: 9 },
+    });
+
+    // 監聽輸出流事件
+    output.on("close", () => {
+      logger.info(`壓縮完成，總共 ${archive.pointer()} 字節`);
+      resolve();
+    });
+
+    output.on("error", (err) => {
+      logger.error(`輸出流錯誤: ${err.message}`);
+      reject(err);
+    });
+
+    // 監聽歸檔器錯誤事件
+    archive.on("error", (err) => {
+      logger.error(`壓縮過程錯誤: ${err.message}`);
+      reject(err);
+    });
+
+    // 監聽進度事件
+    archive.on("progress", (progress) => {
+      logger.verbose(
+        `壓縮進度: 已處理 ${progress.entries.processed}/${progress.entries.total} 個條目`,
+      );
+    });
+
+    // 將歸檔器輸出管道連接到文件
+    archive.pipe(output);
+
+    try {
+      // 添加目錄及其內容，使用排除規則
+      archive.glob("**/*", {
+        cwd: sourcePath,
+        ignore: excludePatterns,
+        dot: true, // 包含隱藏文件
+      });
+
+      logger.info(`開始壓縮 ${sourcePath} 到 ${targetZipFile}...`);
+      logger.verbose(`排除模式: ${excludePatterns.join(", ")}`);
+
+      // 完成歸檔器
+      archive.finalize();
+    } catch (error: any) {
+      logger.error(`壓縮設置錯誤: ${error.message}`);
+      reject(error);
+    }
+  });
+}
+
+/**
+ * 使用 yauzl 庫創建跨平台解壓文件
+ * @param zipFile 壓縮文件路徑
+ * @param targetPath 目標解壓路徑
+ * @param logger 日誌記錄器
+ * @returns Promise<void>
+ */
+async function extractZipWithYauzl(
+  zipFile: string,
+  targetPath: string,
+  logger: Logger,
+): Promise<void> {
+  return new Promise((resolve, reject) => {
+    // 確保目標目錄存在
+    fs.ensureDirSync(targetPath);
+
+    let extractedCount = 0;
+    let totalEntries = 0;
+
+    // 打開 zip 文件
+    yauzl.open(zipFile, { lazyEntries: true }, (err, zipfile) => {
+      if (err) {
+        logger.error(`無法打開壓縮文件 ${zipFile}: ${err.message}`);
+        reject(err);
+        return;
+      }
+
+      if (!zipfile) {
+        const error = new Error("zipfile is undefined");
+        logger.error(`壓縮文件對象為空: ${zipFile}`);
+        reject(error);
+        return;
+      }
+
+      totalEntries = zipfile.entryCount;
+      logger.info(
+        `開始解壓 ${zipFile} 到 ${targetPath}，共 ${totalEntries} 個條目`,
+      );
+
+      // 監聽條目事件
+      zipfile.on("entry", (entry) => {
+        const entryPath = entry.fileName;
+        const fullPath = path.join(targetPath, entryPath);
+
+        // 路徑安全檢查，防止目錄遍歷攻擊
+        const normalizedPath = path.normalize(fullPath);
+        if (!normalizedPath.startsWith(path.normalize(targetPath))) {
+          logger.error(`檢測到不安全的路徑: ${entryPath}`);
+          zipfile.readEntry();
+          return;
+        }
+
+        // 檢查是否為目錄
+        if (entryPath.endsWith("/")) {
+          // 創建目錄
+          fs.ensureDirSync(fullPath);
+          logger.verbose(`創建目錄: ${entryPath}`);
+          extractedCount++;
+
+          // 繼續讀取下一個條目
+          zipfile.readEntry();
+        } else {
+          // 提取文件
+          zipfile.openReadStream(entry, (err, readStream) => {
+            if (err) {
+              logger.error(`無法讀取文件 ${entryPath}: ${err.message}`);
+              reject(err);
+              return;
+            }
+
+            if (!readStream) {
+              logger.error(`讀取流為空: ${entryPath}`);
+              reject(new Error(`無法創建讀取流: ${entryPath}`));
+              return;
+            }
+
+            // 確保父目錄存在
+            fs.ensureDirSync(path.dirname(fullPath));
+
+            // 創建寫入流
+            const writeStream = fs.createWriteStream(fullPath);
+
+            // 處理流錯誤
+            readStream.on("error", (err) => {
+              logger.error(`讀取流錯誤 ${entryPath}: ${err.message}`);
+              reject(err);
+            });
+
+            writeStream.on("error", (err) => {
+              logger.error(`寫入流錯誤 ${entryPath}: ${err.message}`);
+              reject(err);
+            });
+
+            // 文件寫入完成
+            writeStream.on("close", () => {
+              extractedCount++;
+              logger.verbose(
+                `提取文件: ${entryPath} (${extractedCount}/${totalEntries})`,
+              );
+
+              // 繼續讀取下一個條目
+              zipfile.readEntry();
+            });
+
+            // 將讀取流管道連接到寫入流
+            readStream.pipe(writeStream);
+          });
+        }
+      });
+
+      // 監聽結束事件
+      zipfile.on("end", () => {
+        logger.info(`解壓完成，共提取 ${extractedCount} 個條目`);
+        resolve();
+      });
+
+      // 監聽錯誤事件
+      zipfile.on("error", (err) => {
+        logger.error(`解壓過程錯誤: ${err.message}`);
+        reject(err);
+      });
+
+      // 開始讀取第一個條目
+      zipfile.readEntry();
+    });
+  });
 }
 
 export async function performLocalSync(
@@ -298,9 +594,36 @@ export async function performLocalSync(
       const targetPath = path.resolve(workspaceRoot, target);
 
       // 检查目标路径是否是源路径的子目录或相同目录
-      const isSubdirectory =
-        targetPath.startsWith(sourcePath + path.sep) ||
-        targetPath === sourcePath;
+      // 使用工具函數進行路徑比較，確保跨平台兼容性
+      const pathAnalysis = analyzePathRelationship(targetPath, sourcePath);
+      const isSubdirectory = isSubdirectoryOf(targetPath, sourcePath);
+
+      // 添加详细的路径调试日誌輸出
+      logger.verbose(`路径正规化处理:`);
+      logger.verbose(
+        `  源路径: ${sourcePath} -> ${pathAnalysis.normalizedSource}`,
+      );
+      logger.verbose(
+        `  目标路径: ${targetPath} -> ${pathAnalysis.normalizedTarget}`,
+      );
+
+      logger.verbose(`子目录检测结果: ${isSubdirectory}`);
+      if (isSubdirectory) {
+        logger.verbose(`子目录检测详情:`);
+        logger.verbose(`  startsWith 检查: ${pathAnalysis.startsWithCheck}`);
+        logger.verbose(`  相等检查: ${pathAnalysis.equalityCheck}`);
+        logger.verbose(`  路径分隔符: '${pathAnalysis.separator}'`);
+      }
+
+      // 配置驗證和用戶友好的錯誤處理
+      await validateAndWarnPathConfiguration(
+        config,
+        sourcePath,
+        targetPath,
+        isSubdirectory,
+        pathAnalysis,
+        logger,
+      );
 
       logger.info(
         `正在同步 ${sourcePath} 到 ${targetPath} (模式: ${config.mode || "incremental"})`,
@@ -441,15 +764,84 @@ export async function performLocalSync(
 
         logger.info(`成功同步 ${config.source} 到 ${target}`);
       } catch (error: any) {
-        logger.error(
-          `从 ${sourcePath} 同步到 ${targetPath} 时出错: ${error.message}`,
-          error,
-        );
+        // 增強的錯誤處理，提供具體的診斷信息
+        handleSyncError(error, sourcePath, targetPath, config, logger);
         // 软错误：继续执行其他任务
       }
     }
   }
   logger.info("本地文件同步完成");
+}
+
+/**
+ * 驗證路徑配置並提供用戶友好的警告和建議
+ * @param config 同步配置
+ * @param sourcePath 源路徑
+ * @param targetPath 目標路徑
+ * @param isSubdirectory 是否為子目錄
+ * @param pathAnalysis 路徑分析結果
+ * @param logger 日誌記錄器
+ */
+async function validateAndWarnPathConfiguration(
+  config: LocalSyncConfig,
+  sourcePath: string,
+  targetPath: string,
+  isSubdirectory: boolean,
+  pathAnalysis: ReturnType<typeof analyzePathRelationship>,
+  logger: Logger,
+): Promise<void> {
+  // 檢查相同路徑的情況
+  if (pathAnalysis.equalityCheck) {
+    logger.warn(`⚠️  源路徑和目標路徑相同: ${sourcePath}`);
+    logger.warn(`   這可能表示配置錯誤，請檢查您的 localSync 配置`);
+    logger.warn(`   建議：修改 target 路徑以避免自我複製`);
+    return;
+  }
+
+  // 檢查子目錄情況的配置建議
+  if (isSubdirectory) {
+    logger.info(`🔍 檢測到目標路徑是源路徑的子目錄，將使用壓縮方案`);
+
+    // 針對不同模式提供建議
+    if (config.mode === "mirror") {
+      logger.warn(`⚠️  鏡像模式 + 子目錄配置可能導致不必要的複雜性`);
+      logger.warn(`   建議：考慮使用 'copy' 或 'incremental' 模式`);
+    }
+
+    // 檢查是否缺少必要的排除配置
+    if (!config.excludeDirs || config.excludeDirs.length === 0) {
+      logger.warn(`⚠️  子目錄同步時建議配置 excludeDirs 以避免無限遞歸`);
+      logger.warn(
+        `   建議：添加 excludeDirs: ['.sync-git', 'node_modules', '.git']`,
+      );
+    }
+
+    // 特別警告常見的錯誤模式
+    const relativePath = path.relative(sourcePath, targetPath);
+    if (relativePath.includes(".sync-git")) {
+      logger.info(`✅ 檢測到目標在 .sync-git 目錄中，這是推薦的配置`);
+    } else {
+      logger.warn(`⚠️  目標路徑不在 .sync-git 目錄中: ${relativePath}`);
+      logger.warn(`   建議：將目標設置為 '.sync-git/your-target' 以保持組織性`);
+    }
+  }
+
+  // 檢查路徑格式問題
+  if (sourcePath.includes("\\") && targetPath.includes("/")) {
+    logger.warn(`⚠️  檢測到混合路徑分隔符，已自動正規化處理`);
+    logger.info(`   原始: 源='${sourcePath}' 目標='${targetPath}'`);
+    logger.info(
+      `   正規化: 源='${pathAnalysis.normalizedSource}' 目標='${pathAnalysis.normalizedTarget}'`,
+    );
+  }
+
+  // 檢查潛在的性能問題
+  if (config.source === "/" && !config.excludeDirs?.includes("node_modules")) {
+    logger.warn(`⚠️  從根目錄 '/' 同步時強烈建議排除 node_modules`);
+    logger.warn(
+      `   建議：添加 excludeDirs: ['node_modules', '.git', 'dist', 'build']`,
+    );
+  }
 }
 
 /**
@@ -473,4 +865,4 @@ async function getAllFiles(dir: string): Promise<string[]> {
     }
   }
   return results;
-} 
+}

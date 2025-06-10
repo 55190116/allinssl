@@ -19,7 +19,7 @@ export interface ApiProjectType {
 // $t('t_0_1747886301644')
 export const MessagePushConfig = {
 	mail: { name: $t('t_68_1745289354676'), type: 'mail' },
-	wecom: { name: $t('t_33_1746773350932'), type: 'wecom' },
+	workwx: { name: $t('t_33_1746773350932'), type: 'workwx' },
 	dingtalk: { name: $t('t_32_1746773348993'), type: 'dingtalk' },
 	feishu: { name: $t('t_34_1746773350153'), type: 'feishu' },
 	webhook: { name: 'WebHook', type: 'webhook' },

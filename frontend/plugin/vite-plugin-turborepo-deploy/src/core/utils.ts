@@ -127,4 +127,69 @@ export async function safeRemoveFile(filePath: string): Promise<void> {
     }
     throw error;
   }
+}
+
+/**
+ * 正規化多個路徑，解決跨平台兼容性問題
+ * @param paths 需要正規化的路徑數組
+ * @returns 正規化後的路徑數組
+ */
+export function normalizePaths(...paths: string[]): string[] {
+  return paths.map((p) => path.normalize(p));
+}
+
+/**
+ * 檢查目標路徑是否是源路徑的子目錄或相同目錄
+ * 使用路徑正規化處理，確保跨平台兼容性
+ * @param targetPath 目標路徑
+ * @param sourcePath 源路徑
+ * @returns 如果目標路徑是源路徑的子目錄或相同目錄則返回 true
+ */
+export function isSubdirectoryOf(
+  targetPath: string,
+  sourcePath: string,
+): boolean {
+  // 正規化路徑以確保跨平台兼容性
+  const normalizedTarget = path.normalize(targetPath);
+  const normalizedSource = path.normalize(sourcePath);
+
+  // 檢查是否為子目錄或相同目錄
+  return (
+    normalizedTarget.startsWith(normalizedSource + path.sep) ||
+    normalizedTarget === normalizedSource
+  );
+}
+
+/**
+ * 檢查路徑關係的詳細信息，便於調試
+ * @param targetPath 目標路徑
+ * @param sourcePath 源路徑
+ * @returns 包含檢查詳情的對象
+ */
+export function analyzePathRelationship(
+  targetPath: string,
+  sourcePath: string,
+): {
+  isSubdirectory: boolean;
+  normalizedTarget: string;
+  normalizedSource: string;
+  startsWithCheck: boolean;
+  equalityCheck: boolean;
+  separator: string;
+} {
+  const normalizedTarget = path.normalize(targetPath);
+  const normalizedSource = path.normalize(sourcePath);
+  const startsWithCheck = normalizedTarget.startsWith(
+    normalizedSource + path.sep,
+  );
+  const equalityCheck = normalizedTarget === normalizedSource;
+
+  return {
+    isSubdirectory: startsWithCheck || equalityCheck,
+    normalizedTarget,
+    normalizedSource,
+    startsWithCheck,
+    equalityCheck,
+    separator: path.sep,
+  };
 } 

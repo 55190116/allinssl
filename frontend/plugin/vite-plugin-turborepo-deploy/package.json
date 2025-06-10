@@ -2,7 +2,7 @@
   "name": "@baota/vite-plugin-turborepo-deploy",
   "version": "3.1.0",
   "description": "Vite plugin for automated Turborepo workspace build deployment, local file sync, and Git management.",
-  "main": "dist/index.js",
+  "main": "dist/index.cjs",
   "module": "dist/index.mjs",
   "types": "dist/index.d.ts",
   "type": "module",
@@ -15,9 +15,15 @@
   },
   "exports": {
     ".": {
-      "import": "./dist/index.es.js",
-      "require": "./dist/index.cjs.js",
-      "types": "./dist/index.d.ts"
+      "development": {
+        "import": "./src/index.ts",
+        "require": "./src/index.ts"
+      },
+      "default": {
+        "import": "./dist/index.mjs",
+        "require": "./dist/index.cjs",
+        "types": "./dist/index.d.ts"
+      }
     }
   },
   "files": [
@@ -37,17 +43,21 @@
     "node": ">=16"
   },
   "dependencies": {
+    "archiver": "^7.0.1",
     "chalk": "^5.3.0",
     "fs-extra": "^11.2.0",
     "ora": "^8.0.1",
     "picomatch": "^3.0.1",
     "simple-git": "^3.22.0",
+    "yauzl": "^3.2.0",
     "zod": "^3.22.4"
   },
   "devDependencies": {
+    "@types/archiver": "^6.0.3",
     "@types/fs-extra": "^11.0.4",
     "@types/node": "^20.11.24",
     "@types/picomatch": "^2.3.3",
+    "@types/yauzl": "^2.10.3",
     "@typescript-eslint/eslint-plugin": "^7.1.0",
     "@typescript-eslint/parser": "^7.1.0",
     "eslint": "^8.57.0",
