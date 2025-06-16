@@ -192,7 +192,13 @@ func GetVersion() (map[string]string, error) {
 	update := "0"
 	newVersionObj, err := http.Get("https://download.allinssl.com/version.json")
 	if err != nil {
-		return nil, fmt.Errorf("failed to fetch version: %v", err)
+		return map[string]string{
+			"version":     version,
+			"new_version": version,
+			"update":      update,
+			"log":         "",
+			"date":        "",
+		}, err
 	}
 	defer newVersionObj.Body.Close()
 

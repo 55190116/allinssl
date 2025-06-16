@@ -51,6 +51,10 @@ func Register(r *gin.Engine) {
 		access.POST("/del_eab", api.DelEAB)
 		access.POST("/upd_eab", api.UpdEAB)
 		access.POST("/get_all_eab", api.GetAllEAB)
+
+		// 插件先放这里
+		access.POST("/get_plugin_actions", api.GetPluginActions)
+		access.POST("/get_plugins", api.GetPlugins)
 	}
 	// acme账户
 	acmeAccount := v1.Group("/acme_account")

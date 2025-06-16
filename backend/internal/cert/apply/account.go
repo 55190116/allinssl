@@ -128,6 +128,11 @@ func AddAccount(email, ca, Kid, HmacEncoded, CADirURL string) error {
 		return fmt.Errorf("failed to get sqlite: %w", err)
 	}
 	now := time.Now().Format("2006-01-02 15:04:05")
+	if (ca == "sslcom" || ca == "google") && (Kid == "" || HmacEncoded == "") {
+		return fmt.Errorf("Kid and HmacEncoded are required for %s CA", ca)
+	} else if ca == "custom" && CADirURL == "" {
+		return fmt.Errorf("CADirURL is required for custom CA")
+	}
 	account := map[string]interface{}{
 		"email":       email,
 		"type":        ca,

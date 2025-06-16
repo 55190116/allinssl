@@ -4,6 +4,7 @@ import (
 	"ALLinSSL/backend/app/dto/response"
 	"ALLinSSL/backend/internal/access"
 	"ALLinSSL/backend/internal/cert/deploy"
+	"ALLinSSL/backend/internal/cert/deploy/plugin"
 	"ALLinSSL/backend/public"
 	"github.com/gin-gonic/gin"
 	"strings"
@@ -353,7 +354,7 @@ func GetSiteList(c *gin.Context) {
 		public.FailMsg(c, err.Error())
 		return
 	}
-	
+
 	var siteList []response.AccessSiteList
 	switch form.Type {
 	case "btpanel-site":
@@ -370,4 +371,37 @@ func GetSiteList(c *gin.Context) {
 	}
 
 	public.SuccessData(c, siteList, len(siteList))
+}
+
+func GetPluginActions(c *gin.Context) {
+	var form struct {
+		Name string `form:"name"`
+	}
+	err := c.Bind(&form)
+	if err != nil {
+		public.FailMsg(c, err.Error())
+		return
+	}
+	form.Name = strings.TrimSpace(form.Name)
+	if form.Name == "" {
+		public.FailMsg(c, "插件名称不能为空")
+		return
+	}
+	data, err := plugin.GetActions(form.Name)
+	if err != nil {
+		public.FailMsg(c, err.Error())
+		return
+	}
+	public.SuccessData(c, data, len(data))
+	return
+}
+
+func GetPlugins(c *gin.Context) {
+	data, err := plugin.GetPlugins()
+	if err != nil {
+		public.FailMsg(c, err.Error())
+		return
+	}
+	public.SuccessData(c, data, len(data))
+	return
 }

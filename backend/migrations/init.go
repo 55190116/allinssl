@@ -156,6 +156,8 @@ func init() {
 	InsertIfNotExists(db, "access_type", map[string]any{"name": "baidu", "type": "dns"}, []string{"name", "type"}, []any{"baidu", "dns"})
 
 	InsertIfNotExists(db, "access_type", map[string]any{"name": "btwaf", "type": "host"}, []string{"name", "type"}, []any{"btwaf", "host"})
+	InsertIfNotExists(db, "access_type", map[string]any{"name": "doge", "type": "host"}, []string{"name", "type"}, []any{"doge", "host"})
+	InsertIfNotExists(db, "access_type", map[string]any{"name": "plugin", "type": "host"}, []string{"name", "type"}, []any{"plugin", "host"})
 
 	// 雷池
 	InsertIfNotExists(db, "access_type", map[string]any{"name": "safeline", "type": "host"}, []string{"name", "type"}, []any{"safeline", "host"})
