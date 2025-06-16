@@ -47,12 +47,12 @@ func scanPlugins(dir string) ([]PluginMetadata, error) {
 	pluginRegistry = map[string]PluginMetadata{} // 清空旧的
 	var plugins []PluginMetadata
 	_ = filepath.WalkDir(dir, func(path string, d fs.DirEntry, err error) error {
-		if err != nil || d.IsDir() || filepath.Ext(path) != ".exe" {
+		if err != nil || d.IsDir() {
 			return nil
 		}
 		meta, err := getMetadata(path)
 		if err != nil {
-			fmt.Println("❌ 插件无效:", path, "错误:", err)
+			fmt.Println("插件无效:", path, "错误:", err)
 			return nil
 		}
 		meta.Path = path

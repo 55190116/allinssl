@@ -7,6 +7,7 @@ require (
 	github.com/alibabacloud-go/cas-20200407/v4 v4.0.0
 	github.com/alibabacloud-go/cdn-20180510/v6 v6.0.0
 	github.com/alibabacloud-go/darabonba-openapi/v2 v2.1.7
+	github.com/alibabacloud-go/esa-20240910/v2 v2.34.0
 	github.com/alibabacloud-go/market-20151101/v4 v4.1.0
 	github.com/alibabacloud-go/openapi-util v0.1.1
 	github.com/alibabacloud-go/tea v1.3.9
@@ -45,6 +46,12 @@ require (
 	github.com/alibabacloud-go/alibabacloud-gateway-spi v0.0.5 // indirect
 	github.com/alibabacloud-go/debug v1.0.1 // indirect
 	github.com/alibabacloud-go/endpoint-util v1.1.0 // indirect
+	github.com/alibabacloud-go/openplatform-20191219/v2 v2.0.1 // indirect
+	github.com/alibabacloud-go/tea-fileform v1.1.1 // indirect
+	github.com/alibabacloud-go/tea-oss-sdk v1.1.5 // indirect
+	github.com/alibabacloud-go/tea-oss-utils v1.1.0 // indirect
+	github.com/alibabacloud-go/tea-utils v1.4.5 // indirect
+	github.com/alibabacloud-go/tea-xml v1.1.3 // indirect
 	github.com/aliyun/alibaba-cloud-sdk-go v1.63.100 // indirect
 	github.com/aliyun/credentials-go v1.4.6 // indirect
 	github.com/aws/aws-sdk-go-v2 v1.36.3 // indirect
