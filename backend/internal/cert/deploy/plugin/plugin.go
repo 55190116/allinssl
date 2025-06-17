@@ -25,12 +25,13 @@ type ActionInfo struct {
 }
 
 type PluginMetadata struct {
-	Name        string       `json:"name"`
-	Description string       `json:"description"`
-	Version     string       `json:"version"`
-	Author      string       `json:"author"`
-	Actions     []ActionInfo `json:"actions"`
-	Path        string       // 插件路径
+	Name        string         `json:"name"`
+	Description string         `json:"description"`
+	Version     string         `json:"version"`
+	Author      string         `json:"author"`
+	Actions     []ActionInfo   `json:"actions"`
+	Config      map[string]any `json:"config,omitempty"` // 可选配置
+	Path        string         // 插件路径
 }
 
 type Request struct {
