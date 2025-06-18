@@ -204,7 +204,6 @@ func notify(params map[string]any) (any, error) {
 	// fmt.Println("通知:", params)
 	logger := params["logger"].(*public.Logger)
 	logger.Info("=============发送通知=============")
-	fmt.Println(params)
 
 	if fromNodeData, ok := params["fromNodeData"].(map[string]any); ok && fromNodeData != nil {
 		if v, ok := fromNodeData["skip"].(bool); ok && v {
