@@ -26,5 +26,6 @@
       "apps/naive-template/src/locales",
       "packages/vue/naive-ui/src/i18n",
     ],
+    "liveServer.settings.multiRootWorkspaceName": "tools-monorepo",
   },
 }

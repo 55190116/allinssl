@@ -1,7 +1,16 @@
 import { NSwitch, NTag, NButton, NSpace, NFlex, NText, NFormItem, NSelect } from 'naive-ui'
 import { useRoute, useRouter } from 'vue-router'
 import { useStore } from '@autoDeploy/useStore'
-import { useDialog, useTable, useModal, useFormHooks, useForm, useModalHooks, useMessage } from '@baota/naive-ui/hooks'
+import {
+	useDialog,
+	useTable,
+	useModal,
+	useFormHooks,
+	useForm,
+	useModalHooks,
+	useMessage,
+	useSearch,
+} from '@baota/naive-ui/hooks'
 import { useStore as useWorkflowViewStore } from '@autoDeploy/children/workflowView/useStore'
 import { useError } from '@baota/hooks/error'
 import AddWorkflowModal from './components/WorkflowModal'
@@ -152,13 +161,21 @@ export const useController = () => {
 	]
 
 	// 表格实例
-	const { TableComponent, PageComponent, loading, param, data, fetch } = useTable<WorkflowItem, WorkflowListParams>({
+	const { TableComponent, PageComponent, loading, param, fetch } = useTable<WorkflowItem, WorkflowListParams>({
 		config: createColumns(),
 		request: fetchWorkflowList,
 		storage: 'autoDeployPageSize',
 		defaultValue: { p: 1, limit: 10, search: '' },
 		alias: { page: 'p', pageSize: 'limit' },
 		watchValue: ['p', 'limit'],
+	})
+
+	// 搜索实例
+	const { SearchComponent } = useSearch({
+		onSearch: (value) => {
+			param.value.search = value
+			fetch()
+		},
 	})
 
 	// 节流渲染
@@ -229,7 +246,7 @@ export const useController = () => {
 			title: exec_type === 'manual' ? $t('t_2_1745457488661') : $t('t_3_1745457486983'),
 			content: exec_type === 'manual' ? $t('t_4_1745457497303') : $t('t_5_1745457494695'),
 			onPositiveClick: () => setWorkflowExecType({ id, exec_type }),
-			onNegativeClick: fetch,
+			onNegativeClick: () => fetch(),
 			onClose: fetch,
 		})
 	}
@@ -243,8 +260,8 @@ export const useController = () => {
 			title: !active ? $t('t_6_1745457487560') : $t('t_7_1745457487185'),
 			content: !active ? $t('t_8_1745457496621') : $t('t_9_1745457500045'),
 			onPositiveClick: () => setWorkflowActive({ id, active }),
-			onNegativeClick: fetch,
-			onClose: fetch,
+			onNegativeClick: () => fetch(),
+			onClose: () => fetch(),
 		})
 	}
 
@@ -335,6 +352,7 @@ export const useController = () => {
 	return {
 		TableComponent,
 		PageComponent,
+		SearchComponent,
 		isDetectionAddWorkflow, // 检测是否需要添加工作流
 		isDetectionOpenCAManage, // 检测是否需要打开CA授权管理弹窗
 		isDetectionOpenAddCAForm, // 检测是否需要打开添加CA授权弹窗
@@ -348,7 +366,6 @@ export const useController = () => {
 		handleOpenCAManage, // 打开CA授权管理弹窗
 		hasChildRoutes,
 		fetch,
-		data,
 		loading,
 		param,
 	}
@@ -504,8 +521,14 @@ export const useHistoryController = (id: string) => {
  * @returns 返回CA授权类型名称
  */
 const handleCertAuth = (type: string) => {
-	const name = type.replaceAll('.', '').replaceAll("'", '').replaceAll(' ', '').toLowerCase() // 处理类型中的特殊字符
-	return CACertificateAuthorization[name as keyof typeof CACertificateAuthorization].type
+	// console.log(type)
+	try {
+		const name = type.replaceAll('.', '').replaceAll("'", '').replaceAll(' ', '').toLowerCase() // 处理类型中的特殊字符
+		const caType = CACertificateAuthorization[name as keyof typeof CACertificateAuthorization].type
+		return { type: caType, icon: type }
+	} catch (error) {
+		return { type, icon: 'custom' }
+	}
 }
 
 /**
@@ -528,11 +551,11 @@ export const useCAManageController = (props: { type: string }) => {
 			key: 'ca',
 			width: 200,
 			render: (row: EabItem) => {
-				const name = handleCertAuth(row.ca)
+				const { type, icon } = handleCertAuth(row.ca)
 				return (
 					<NFlex align="center">
-						<SvgIcon icon={`cert-${name}`} size="2rem" />
-						<NText>{name}</NText>
+						<SvgIcon icon={`cert-${icon}`} size="2rem" />
+						<NText>{type}</NText>
 					</NFlex>
 				)
 			},
@@ -606,10 +629,14 @@ export const useCAManageController = (props: { type: string }) => {
 	 * @param {EabItem} row - CA授权数据
 	 */
 	const handleEdit = (row: EabItem) => {
+		const caTypes = Object.values(CACertificateAuthorization).map((item) => item.type)
+		const isCustomCa = !caTypes.includes(row.ca)
+
 		// 填充表单数据 - 添加编辑模式标识
 		Object.assign(caFormData.value, {
 			email: row.email,
-			ca: row.ca,
+			ca: isCustomCa ? 'custom' : row.ca,
+			caName: isCustomCa ? row.ca : '',
 			Kid: row.Kid || '',
 			HmacEncoded: row.HmacEncoded || '',
 			CADirURL: row.CADirURL || '',
@@ -666,7 +693,6 @@ export const useCAManageController = (props: { type: string }) => {
  */
 export const useCAFormController = (props?: { isEdit?: boolean; editId?: string }) => {
 	const { handleError } = useError()
-	const message = useMessage()
 	const { confirm } = useModalHooks()
 	const { useFormInput, useFormCustom } = useFormHooks()
 
@@ -710,10 +736,26 @@ export const useCAFormController = (props?: { isEdit?: boolean; editId?: string 
 
 		// 自定义类型必填 CADirURL
 		if (currentCa === 'custom') {
+			rules.caName = {
+				required: true,
+				message: '请输入CA名称',
+				trigger: ['blur', 'input'],
+			}
 			rules.CADirURL = {
 				required: true,
-				message: $t('t_4_1750129259795'),
 				trigger: ['blur', 'input'],
+				validator: (rule: any, value: string) => {
+					if (!value) {
+						return new Error('请输入CA目录URL')
+					}
+					// Basic URL validation
+					try {
+						new URL(value)
+						return true
+					} catch (e) {
+						return new Error('请输入有效的URL地址')
+					}
+				},
 			}
 		}
 
@@ -769,9 +811,6 @@ export const useCAFormController = (props?: { isEdit?: boolean; editId?: string 
 
 	// 表单配置
 	const formConfig = computed(() => [
-		useFormInput($t('t_1_1745735764953'), 'email', {
-			placeholder: $t('t_0_1747965909665'),
-		}),
 		useFormCustom(() => {
 			return (
 				<NFormItem label={$t('t_9_1747903669360')} path="ca">
@@ -792,11 +831,17 @@ export const useCAFormController = (props?: { isEdit?: boolean; editId?: string 
 				</NFormItem>
 			)
 		}),
+		useFormInput($t('t_1_1745735764953'), 'email', {
+			placeholder: $t('t_0_1747965909665'),
+		}),
 		// 条件显示CADirURL字段
 		...(shouldShowCADirURL.value
 			? [
-					useFormInput($t('t_5_1750129253961'), 'CADirURL', {
-						placeholder: $t('t_6_1750129255766'),
+					useFormInput('CA名称', 'caName', {
+						placeholder: '请输入CA提供商名称',
+					}),
+					useFormInput($t('ACME服务URL地址'), 'CADirURL', {
+						placeholder: $t('请输入ACME服务URL地址'),
 					}),
 				]
 			: []),
@@ -828,12 +873,17 @@ export const useCAFormController = (props?: { isEdit?: boolean; editId?: string 
 	// 提交表单
 	const submitForm = async (formData: any) => {
 		try {
+			const dataToSubmit = { ...formData }
+			if (dataToSubmit.ca === 'custom') {
+				dataToSubmit.ca = dataToSubmit.caName
+			}
+			delete dataToSubmit.caName // 删除临时字段
 			if (props?.isEdit && props?.editId) {
 				// 编辑模式
-				await updateExistingEab({ ...formData, id: props.editId })
+				await updateExistingEab({ ...dataToSubmit, id: props.editId })
 			} else {
 				// 新增模式
-				await addNewEab(formData)
+				await addNewEab(dataToSubmit)
 			}
 			return true
 		} catch (error) {
@@ -843,7 +893,7 @@ export const useCAFormController = (props?: { isEdit?: boolean; editId?: string 
 	}
 
 	// 表单实例
-	const { component: CAForm } = useForm({
+	const { component: CAForm, fetch } = useForm({
 		config: formConfig,
 		rules: getFormRules(),
 		defaultValue: caFormData,
@@ -853,7 +903,7 @@ export const useCAFormController = (props?: { isEdit?: boolean; editId?: string 
 	// 确认提交表单
 	confirm(async (close) => {
 		try {
-			await submitForm(caFormData.value)
+			await fetch()
 			close()
 		} catch (error) {
 			handleError(error)

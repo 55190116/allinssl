@@ -18,15 +18,14 @@ export default defineComponent({
 		const {
 			TableComponent,
 			PageComponent,
+			SearchComponent,
 			isDetectionAddWorkflow,
 			isDetectionOpenCAManage,
 			isDetectionOpenAddCAForm,
 			handleAddWorkflow,
 			handleOpenCAManage,
 			hasChildRoutes,
-			param,
 			fetch,
-			data,
 		} = useController()
 		const router = useRouter()
 		// 获取主题变量
@@ -65,26 +64,7 @@ export default defineComponent({
 										</NButton>
 									</NSpace>
 								),
-								headerRight: () => (
-									<NInput
-										v-model:value={param.value.search}
-										onKeydown={(e: KeyboardEvent) => {
-											if (e.key === 'Enter') fetch()
-										}}
-										onClear={() => useTimeoutFn(fetch, 100)}
-										placeholder={$t('t_1_1745227838776')}
-										clearable
-										size="large"
-										class="min-w-[300px]"
-										v-slots={{
-											suffix: () => (
-												<div class="flex items-center" onClick={fetch}>
-													<Search class="text-[var(--text-color-3)] w-[1.6rem] cursor-pointer font-bold" />
-												</div>
-											),
-										}}
-									></NInput>
-								),
+								headerRight: () => <SearchComponent placeholder={$t('t_1_1745227838776')} />,
 								content: () => (
 									<div class="rounded-lg ">
 										<TableComponent
@@ -99,11 +79,7 @@ export default defineComponent({
 								),
 								footerRight: () => (
 									<div class="mt-4 flex justify-end">
-										<PageComponent
-											v-slots={{
-												prefix: () => <span>{$t('t_0_1746773350551', [data.value.total])}</span>,
-											}}
-										/>
+										<PageComponent />
 									</div>
 								),
 							}}

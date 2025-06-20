@@ -11,6 +11,7 @@ import verify from './verify'
 import { NotifyNodeConfig } from '@components/FlowChart/types'
 import { deepClone } from '@baota/utils/data'
 import { noSideSpace } from '@lib/utils'
+import { NSwitch, NFormItem, NText } from 'naive-ui'
 
 export default defineComponent({
 	name: 'NotifyNodeDrawer',
@@ -25,6 +26,7 @@ export default defineComponent({
 					provider_id: '',
 					subject: '',
 					body: '',
+					skip: false,
 				},
 			}),
 		},
@@ -35,6 +37,14 @@ export default defineComponent({
 		const { confirm } = useModalHooks()
 		const { handleError } = useError()
 		const param = ref(deepClone(props.node.config))
+
+		// 创建一个用于开关的响应式值（发送通知的状态）
+		const shouldSendNotify = computed({
+			get: () => !param.value.skip,
+			set: (value: boolean) => {
+				param.value.skip = !value
+			},
+		})
 
 		// 表单渲染配置
 		const formConfig: FormConfig = [
@@ -57,6 +67,21 @@ export default defineComponent({
 						param.value.provider = item.type
 					}}
 				/>
+			)),
+			useFormCustom(() => (
+				<NFormItem label={$t('t_2_1750320237611')} path="skip">
+					<NText>当结果来源为跳过状态时</NText>
+					<NSwitch
+						v-model:value={shouldSendNotify.value}
+						checkedValue={true}
+						uncheckedValue={false}
+						class="mx-[.5rem]"
+						v-slots={{
+							checked: () => $t('t_3_1750320237991'),
+							unchecked: () => $t('t_11_1747280809178'),
+						}}
+					/>
+				</NFormItem>
 			)),
 		]
 

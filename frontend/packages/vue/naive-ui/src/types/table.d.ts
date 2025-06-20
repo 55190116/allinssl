@@ -48,7 +48,7 @@ export interface TableInstanceWithComponent<T = Record<string, unknown>, Z = Rec
 	config: Ref<DataTableColumns<T>> // 表格列配置引
 	props: Ref<DataTableProps> // 表格属性引用
 	reset: () => Promise<void> // 重置方法
-	fetch: <T>() => Promise<T> // 触发方法
+	fetch: <T>(resetPage?: boolean) => Promise<T> // 触发方法
 	example: Ref<DataTableInst> // 表格实例引用
 	handlePageChange: (currentPage: number) => void // 分页改变
 	handlePageSizeChange: (size: number) => void // 分页大小改变

@@ -246,6 +246,7 @@ export interface DeployConfig<
 		| 'aliyun-cdn'
 		| 'aliyun-oss'
 		| 'aliyun-waf'
+		| 'aliyun-esa'
 		| 'doge-cdn'
 		| 'baidu-cdn'
 		| 'qiniu-cdn'
@@ -308,6 +309,11 @@ export interface DeployStorageConfig {
 	bucket: string
 }
 
+// 部署阿里云ESA
+export interface DeployAliyunESAConfig {
+	site_id: string
+}
+
 // 部署节点配置（雷池WAF）
 export interface DeploySafelineConfig {
 	[key: string]: unknown
@@ -340,6 +346,7 @@ export type DeployNodeConfig = DeployConfig<
 	| DeployCDNConfig // 部署节点配置（腾讯云CDN/阿里云CDN）
 	| DeployWAFConfig // 部署节点配置（阿里云WAF）
 	| DeployStorageConfig // 部署节点配置（腾讯云COS/阿里云OSS）
+	| DeployAliyunESAConfig // 部署节点配置（阿里云ESA）
 	| DeploySafelineConfig // 部署节点配置（雷池WAF）
 	| DeploySafelineSiteConfig // 部署节点配置（雷池WAF站点）
 	| DeployBTPanelDockerSiteConfig // 部署节点配置（宝塔docker站点）
@@ -358,6 +365,7 @@ interface NotifyNodeConfig {
 	provider_id: string
 	subject: string
 	body: string
+	skip: boolean // 当结果来源为跳过状态时，跳过/继续发送通知，true:跳过，false:继续
 }
 
 // 定义上传节点配置类型

@@ -225,6 +225,9 @@ export default defineComponent({
 				case 'aliyun-oss':
 					config.push(...formConfig.storageDeploy())
 					break
+				case 'aliyun-esa':
+					config.push(...formConfig.aliyunEsaDeploy())
+					break
 				case 'plugin':
 					// 插件部署配置
 					config.push(

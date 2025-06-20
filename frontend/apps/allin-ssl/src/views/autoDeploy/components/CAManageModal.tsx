@@ -18,7 +18,7 @@ export default defineComponent({
 		},
 	},
 	setup(props) {
-		const { TableComponent, PageComponent, handleOpenAddForm, total } = useCAManageController(props)
+		const { TableComponent, PageComponent, handleOpenAddForm } = useCAManageController(props)
 		return () => (
 			<BaseComponent
 				v-slots={{
@@ -40,15 +40,7 @@ export default defineComponent({
 					),
 					footerRight: () => (
 						<div class="flex justify-end mt-4">
-							<PageComponent
-								v-slots={{
-									prefix: () => (
-										<span>
-											{$t('t_15_1745227839354')} {total.value} {$t('t_16_1745227838930')}
-										</span>
-									),
-								}}
-							/>
+							<PageComponent />
 						</div>
 					),
 				}}

@@ -87,6 +87,7 @@ export const ApiProjectConfig: Record<string, ApiProjectType> = {
 			cdn: { name: $t('t_16_1745735766712') },
 			oss: { name: $t('t_2_1746697487164') },
 			waf: { name: $t('t_10_1744958860078') },
+			esa: { name: '阿里云ESA' },
 		},
 		sort: 6,
 	},

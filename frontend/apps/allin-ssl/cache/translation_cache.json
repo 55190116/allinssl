@@ -11217,5 +11217,73 @@
       "arDZ": "الرجاء إدخال المعلمات بتنسيق JSON، على سبيل المثال:"
     },
     "timestamp": "2025-06-18T01:38:26.776Z"
+  },
+  "请输入多吉云AccessKey": {
+    "text": "请输入多吉云AccessKey",
+    "key": "t_0_1750320239265",
+    "translations": {
+      "zhCN": "请输入多吉云AccessKey",
+      "zhTW": "請輸入多吉雲AccessKey",
+      "enUS": "Please enter DogeCloud AccessKey",
+      "jaJP": "DogeCloudのAccessKeyを入力してください",
+      "koKR": "DogeCloud AccessKey를 입력하세요",
+      "ruRU": "Пожалуйста, введите DogeCloud AccessKey",
+      "ptBR": "Por favor, insira o AccessKey do DogeCloud",
+      "frFR": "Veuillez entrer la clé d'accès DogeCloud",
+      "esAR": "Por favor ingrese la AccessKey de DogeCloud",
+      "arDZ": "الرجاء إدخال مفتاح الوصول DogeCloud"
+    },
+    "timestamp": "2025-06-19T08:04:01.428Z"
+  },
+  "请输入多吉云SecretKey": {
+    "text": "请输入多吉云SecretKey",
+    "key": "t_1_1750320241427",
+    "translations": {
+      "zhCN": "请输入多吉云SecretKey",
+      "zhTW": "請輸入多吉雲SecretKey",
+      "enUS": "Please enter DogeCloud SecretKey",
+      "jaJP": "ドージークラウドのSecretKeyを入力してください",
+      "koKR": "도지클라우드 SecretKey를 입력하세요",
+      "ruRU": "Пожалуйста, введите SecretKey DogeCloud",
+      "ptBR": "Por favor, insira a SecretKey do DogeCloud",
+      "frFR": "Veuillez entrer la SecretKey de DogeCloud",
+      "esAR": "Por favor ingrese la SecretKey de DogeCloud",
+      "arDZ": "الرجاء إدخال مفتاح SecretKey الخاص بـ DogeCloud"
+    },
+    "timestamp": "2025-06-19T08:04:01.428Z"
+  },
+  "跳过发送通知": {
+    "text": "跳过发送通知",
+    "key": "t_2_1750320237611",
+    "translations": {
+      "zhCN": "跳过发送通知",
+      "zhTW": "跳過發送通知",
+      "enUS": "Skip sending notification",
+      "jaJP": "通知の送信をスキップ",
+      "koKR": "알림 보내기 건너뛰기",
+      "ruRU": "Пропустить отправку уведомления",
+      "ptBR": "Pular envio de notificação",
+      "frFR": "Ignorer l'envoi de notification",
+      "esAR": "Omitir el envío de notificación",
+      "arDZ": "تخطي إرسال الإشعار"
+    },
+    "timestamp": "2025-06-19T08:04:01.428Z"
+  },
+  "发送": {
+    "text": "发送",
+    "key": "t_3_1750320237991",
+    "translations": {
+      "zhCN": "发送",
+      "zhTW": "發送",
+      "enUS": "Send",
+      "jaJP": "送信",
+      "koKR": "보내기",
+      "ruRU": "Отправить",
+      "ptBR": "Enviar",
+      "frFR": "Envoyer",
+      "esAR": "Enviar",
+      "arDZ": "إرسال"
+    },
+    "timestamp": "2025-06-19T08:04:01.428Z"
   }
 }

@@ -20,6 +20,7 @@ import {
 	useModal,
 	useDialog,
 	useTable,
+	useSearch,
 	useModalHooks,
 	useFormHooks,
 	useForm,
@@ -64,11 +65,11 @@ import { JSX } from 'vue/jsx-runtime'
  */
 interface AuthApiManageControllerExposes {
 	loading: Ref<boolean>
-	fetch: () => Promise<void>
+	fetch: (resetPage?: boolean) => Promise<void>
 	TableComponent: (props: Record<string, unknown>, context: Record<string, unknown>) => VNode
 	PageComponent: (props: Record<string, unknown>, context: Record<string, unknown>) => VNode
+	SearchComponent: (props: Record<string, unknown>, context: Record<string, unknown>) => VNode
 	param: Ref<AccessListParams>
-	total: Ref<number>
 	openAddForm: () => void
 }
 
@@ -183,7 +184,7 @@ export const useController = (): AuthApiManageControllerExposes => {
 	]
 
 	// 表格实例
-	const { TableComponent, PageComponent, loading, param, total, fetch } = useTable<AccessItem, AccessListParams>({
+	const { TableComponent, PageComponent, loading, param, fetch } = useTable<AccessItem, AccessListParams>({
 		config: createColumns(),
 		request: fetchAccessList,
 		watchValue: ['p', 'limit'],
@@ -193,6 +194,14 @@ export const useController = (): AuthApiManageControllerExposes => {
 			p: 1,
 			limit: 10,
 			search: '',
+		},
+	})
+
+	// 搜索实例
+	const { SearchComponent, search } = useSearch({
+		onSearch: (value) => {
+			param.value.search = value
+			fetch()
 		},
 	})
 
@@ -255,8 +264,8 @@ export const useController = (): AuthApiManageControllerExposes => {
 		fetch,
 		TableComponent,
 		PageComponent,
+		SearchComponent,
 		param,
-		total,
 		openAddForm,
 	}
 }
@@ -403,32 +412,32 @@ export const useApiFormController = (props: ApiFormControllerProps): ApiFormCont
 				message: $t('t_0_1747617113090'),
 				trigger: 'input',
 			},
-			access_key_id: {
-				trigger: 'input',
-				validator: (rule: FormItemRule, value: string, callback: (error?: Error) => void) => {
-					if (!value) {
-						const mapTips = {
-							aliyun: $t('t_4_1745317314054'),
-							doge: '请输入多吉云AccessKeyId',
-						}
-						return callback(new Error(mapTips[param.value.type as keyof typeof mapTips] || $t('t_4_1745317314054')))
-					}
-					callback()
-				},
-			},
-			access_key_secret: {
-				trigger: 'input',
-				validator: (rule: FormItemRule, value: string, callback: (error?: Error) => void) => {
-					if (!value) {
-						const mapTips = {
-							aliyun: $t('t_5_1745317315285'),
-							doge: '请输入多吉云AccessKeySecret',
-						}
-						return callback(new Error(mapTips[param.value.type as keyof typeof mapTips] || $t('t_5_1745317315285')))
-					}
-					callback()
-				},
-			},
+			// access_key_id: {
+			// 	trigger: 'input',
+			// 	validator: (rule: FormItemRule, value: string, callback: (error?: Error) => void) => {
+			// 		if (!value) {
+			// 			const mapTips = {
+			// 				aliyun: $t('t_4_1745317314054'),
+			// 				doge: '请输入多吉云AccessKeyId',
+			// 			}
+			// 			return callback(new Error(mapTips[param.value.type as keyof typeof mapTips] || $t('t_4_1745317314054')))
+			// 		}
+			// 		callback()
+			// 	},
+			// },
+			// access_key_secret: {
+			// 	trigger: 'input',
+			// 	validator: (rule: FormItemRule, value: string, callback: (error?: Error) => void) => {
+			// 		if (!value) {
+			// 			const mapTips = {
+			// 				aliyun: $t('t_5_1745317315285'),
+			// 				doge: '请输入多吉云AccessKeySecret',
+			// 			}
+			// 			return callback(new Error(mapTips[param.value.type as keyof typeof mapTips] || $t('t_5_1745317315285')))
+			// 		}
+			// 		callback()
+			// 	},
+			// },
 			secret_access_key: {
 				required: true,
 				message: '请输入Secret Access Key',
@@ -478,6 +487,7 @@ export const useApiFormController = (props: ApiFormControllerProps): ApiFormCont
 							baidu: $t('t_3_1747271294475'),
 							volcengine: $t('t_3_1747365600828'),
 							qiniu: $t('t_3_1747984134586'),
+							doge: $t('t_0_1750320239265'),
 						}
 						return callback(new Error(mapTips[param.value.type as keyof typeof mapTips]))
 					}
@@ -493,6 +503,7 @@ export const useApiFormController = (props: ApiFormControllerProps): ApiFormCont
 							huawei: $t('t_3_1747042967608'),
 							baidu: $t('t_4_1747271294621'),
 							volcengine: $t('t_4_1747365600137'),
+							doge: $t('t_1_1750320241427'),
 						}
 						return callback(new Error(mapTips[param.value.type as keyof typeof mapTips]))
 					}
@@ -632,6 +643,7 @@ export const useApiFormController = (props: ApiFormControllerProps): ApiFormCont
 			case 'huaweicloud':
 			case 'baidu':
 			case 'volcengine':
+			case 'doge':
 				items.push(
 					useFormInput('AccessKey', 'config.access_key', { allowInput: noSideSpace }),
 					useFormInput('SecretKey', 'config.secret_key', { allowInput: noSideSpace }),
@@ -711,12 +723,6 @@ export const useApiFormController = (props: ApiFormControllerProps): ApiFormCont
 					useFormInput('Secret Access Key', 'config.secret_access_key', { allowInput: noSideSpace }),
 				)
 				break
-			case 'doge':
-				items.push(
-					useFormInput('AccessKeyId', 'config.access_key_id', { allowInput: noSideSpace }),
-					useFormInput('AccessKeySecret', 'config.access_key_secret', { allowInput: noSideSpace }),
-				)
-				break
 			case 'plugin':
 				items.push(
 					useFormCustom(() => {
@@ -743,39 +749,39 @@ export const useApiFormController = (props: ApiFormControllerProps): ApiFormCont
 							</NFormItem>
 						)
 					}),
-						useFormCustom(() => {
-							const pluginConfig = param.value.config as PluginAccessConfig
-							const getConfigValue = () => {
-								return typeof pluginConfig.config === 'string'
-									? pluginConfig.config
-									: JSON.stringify(pluginConfig.config, null, 2)
-							}
-							return (
-								<NFormItem
-									path="config.params"
-									v-slots={{
-										label: () => (
-											<div>
-												<NText>自定义参数</NText>
-												<NTooltip
-													v-slots={{
-														trigger: () => (
-															<span class="inline-flex ml-2 -mt-1 cursor-pointer text-base rounded-full w-[14px] h-[14px] justify-center items-center  text-orange-600 border border-orange-600">
-																?
-															</span>
-														),
-													}}
-												>
-													{pluginActionTips.value}
-												</NTooltip>
-											</div>
-										),
-									}}
-								>
-									<NInput type="textarea" value={getConfigValue()} placeholder={pluginActionTips.value} rows={4} />
-								</NFormItem>
-							)
-						}),
+					useFormCustom(() => {
+						const pluginConfig = param.value.config as PluginAccessConfig
+						const getConfigValue = () => {
+							return typeof pluginConfig.config === 'string'
+								? pluginConfig.config
+								: JSON.stringify(pluginConfig.config, null, 2)
+						}
+						return (
+							<NFormItem
+								path="config.params"
+								v-slots={{
+									label: () => (
+										<div>
+											<NText>自定义参数</NText>
+											<NTooltip
+												v-slots={{
+													trigger: () => (
+														<span class="inline-flex ml-2 -mt-1 cursor-pointer text-base rounded-full w-[14px] h-[14px] justify-center items-center  text-orange-600 border border-orange-600">
+															?
+														</span>
+													),
+												}}
+											>
+												{pluginActionTips.value}
+											</NTooltip>
+										</div>
+									),
+								}}
+							>
+								<NInput type="textarea" value={getConfigValue()} placeholder={pluginActionTips.value} rows={4} />
+							</NFormItem>
+						)
+					}),
 				)
 				break
 			default:
@@ -904,8 +910,8 @@ export const useApiFormController = (props: ApiFormControllerProps): ApiFormCont
 					break
 				case 'doge':
 					param.value.config = {
-						access_key_id: '',
-						access_key_secret: '',
+						access_key: '',
+						secret_key: '',
 					} as DogeAccessConfig
 					break
 				case 'plugin':

@@ -13,12 +13,10 @@ import EmptyState from '@components/TableEmptyState'
 export default defineComponent({
 	name: 'CertManage',
 	setup() {
-		const { TableComponent, PageComponent, fetch, data, param, openUploadModal, getRowClassName } = useController()
+		const { TableComponent, PageComponent, SearchComponent, openUploadModal, getRowClassName } = useController()
+
 		const cssVar = useThemeCssVar(['contentPadding', 'borderColor', 'headerHeight', 'iconColorHover'])
-		// 挂载时请求数据
-		onMounted(() => fetch())
-		const { theme, themeOverrides } = useTheme()
-		console.log(theme.value, themeOverrides.value)
+
 		return () => (
 			<div class="h-full flex flex-col" style={cssVar.value}>
 				<div class="mx-auto max-w-[1600px] w-full p-6">
@@ -29,26 +27,7 @@ export default defineComponent({
 									{$t('t_13_1745227838275')}
 								</NButton>
 							),
-							headerRight: () => (
-								<NInput
-									v-model:value={param.value.search}
-									onKeydown={(e: KeyboardEvent) => {
-										if (e.key === 'Enter') fetch()
-									}}
-									onClear={() => useThrottleFn(fetch, 100)}
-									placeholder={$t('t_14_1745227840904')}
-									clearable
-									size="large"
-									class="min-w-[300px]"
-									v-slots={{
-										suffix: () => (
-											<div class="flex items-center" onClick={fetch}>
-												<Search class="text-[var(--text-color-3)] w-[1.6rem] cursor-pointer font-bold" />
-											</div>
-										),
-									}}
-								></NInput>
-							),
+							headerRight: () => <SearchComponent placeholder={$t('t_14_1745227840904')} />,
 							content: () => (
 								<div class="rounded-lg">
 									<TableComponent
@@ -62,15 +41,7 @@ export default defineComponent({
 							),
 							footerRight: () => (
 								<div class="mt-4 flex justify-end">
-									<PageComponent
-										v-slots={{
-											prefix: () => (
-												<span>
-													{$t('t_15_1745227839354')} {data.value.total} {$t('t_16_1745227838930')}
-												</span>
-											),
-										}}
-									/>
+									<PageComponent />
 								</div>
 							),
 						}}

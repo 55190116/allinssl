@@ -268,8 +268,8 @@ export interface JdcloudAccessConfig {
  * 多吉云授权配置
  */
 export interface DogeAccessConfig {
-	access_key_id: string
-	access_key_secret: string
+	access_key: string
+	secret_key: string
 }
 
 /**
@@ -361,6 +361,8 @@ export interface AcmeAccountDeleteParams {
 
 // 保持向后兼容的类型别名
 export interface EabListParams {
+	search?: string
+	ca?: string
 	p: number
 	limit: number
 }

@@ -8,6 +8,7 @@ import {
 	useForm,
 	useLoadingMask,
 	useMessage,
+	useSearch,
 } from '@baota/naive-ui/hooks'
 import { useError } from '@baota/hooks/error'
 import { $t } from '@locales/index'
@@ -135,6 +136,14 @@ export const useController = () => {
 		storage: 'certManagePageSize',
 	})
 
+	// 搜索实例
+	const { SearchComponent } = useSearch({
+		onSearch: (value) => {
+			param.value.search = value
+			fetch()
+		},
+	})
+
 	/**
 	 * @description 打开上传证书弹窗
 	 */
@@ -189,14 +198,14 @@ export const useController = () => {
 		})
 	}
 
+	onMounted(() => fetch())
+
 	return {
 		loading,
-		fetch,
 		TableComponent,
 		PageComponent,
+		SearchComponent,
 		getRowClassName,
-		param,
-		data,
 		openUploadModal,
 		openViewModal,
 	}

@@ -1,13 +1,29 @@
-import { NFormItem, NInputNumber, NSwitch } from 'naive-ui'
+import {
+	NFormItem,
+	NInputNumber,
+	NSwitch,
+	NSelect,
+	NAutoComplete,
+	NInput,
+	NFlex,
+	NText,
+	NButton,
+	NGrid,
+	NFormItemGi,
+	NSpin,
+	NDropdown,
+} from 'naive-ui'
 import { useForm, useFormHooks, useModalHooks } from '@baota/naive-ui/hooks'
 import { useStore } from '@components/FlowChart/useStore'
 import { $t } from '@locales/index'
 import rules from './verify'
 import DnsProviderSelect from '@components/DnsProviderSelect'
-import CAProviderSelect from '@components/CAProviderSelect'
 import type { ApplyNodeConfig } from '@components/FlowChart/types'
 import { deepClone } from '@baota/utils/data'
 import { noSideSpace } from '@lib/utils'
+import { getEabList } from '@api/access'
+import SvgIcon from '@components/SvgIcon'
+import { CACertificateAuthorization } from '@config/data'
 
 export default defineComponent({
 	name: 'ApplyNodeDrawer',
@@ -45,6 +61,150 @@ export default defineComponent({
 		// 表单参数
 		const param = ref(deepClone(props.node.config))
 
+		// CA选项状态
+		const caOptions = ref<Array<{ label: string; value: string; icon: string }>>([])
+		const emailOptions = ref<string[]>([])
+		const isLoadingCA = ref(false)
+		const isLoadingEmails = ref(false)
+		const showEmailDropdown = ref(false)
+		const emailInputRef = ref<any>(null)
+
+		// 加载CA选项
+		const loadCAOptions = async () => {
+			isLoadingCA.value = true
+			try {
+				const { data } = await getEabList({ ca: '', p: 1, limit: 1000 }).fetch()
+				const uniqueCATypes = new Set<string>()
+				const caList: Array<{ label: string; value: string; icon: string }> = []
+
+				// 优先添加重要的CA类型（确保始终显示）
+				const priorityCATypes = ['letsencrypt', 'buypass', 'zerossl']
+				priorityCATypes.forEach((caType) => {
+					if (!uniqueCATypes.has(caType)) {
+						uniqueCATypes.add(caType)
+						const predefinedCA = Object.values(CACertificateAuthorization).find((ca) => ca.type === caType)
+						caList.push({
+							label: predefinedCA ? predefinedCA.name : caType.toUpperCase(),
+							value: caType,
+							icon: `cert-${caType}`,
+						})
+					}
+				})
+
+				// 添加API返回的其他CA类型（去重）
+				data?.forEach((item) => {
+					if (item.ca && !uniqueCATypes.has(item.ca)) {
+						uniqueCATypes.add(item.ca)
+
+						// 查找预定义配置中对应的CA信息
+						const predefinedCA = Object.values(CACertificateAuthorization).find((ca) => ca.type === item.ca)
+						caList.push({
+							label: predefinedCA ? predefinedCA.name : item.ca.toUpperCase(),
+							value: item.ca,
+							icon: predefinedCA ? `cert-${item.ca}` : 'cert-custom', // 如果不在预定义配置中，使用custom图标；否则使用对应的cert图标
+						})
+					}
+				})
+
+				caOptions.value = caList
+			} catch (error) {
+				console.error('加载CA选项失败:', error)
+			} finally {
+				isLoadingCA.value = false
+			}
+		}
+
+		// 加载邮件选项
+		const loadEmailOptions = async (ca: string) => {
+			if (!ca) return
+			isLoadingEmails.value = true
+			try {
+				const { data } = await getEabList({ ca, p: 1, limit: 1000 }).fetch()
+				emailOptions.value = data?.map((item) => item.email).filter(Boolean) || []
+				if (!emailOptions.value.length) {
+					param.value.email = ''
+				}
+				// 如果邮箱数组有内容且当前邮箱为空，自动填充第一个邮箱地址
+				if (emailOptions.value.length > 0 && emailOptions.value[0]) {
+					param.value.email = emailOptions.value[0]
+				}
+			} catch (error) {
+				console.error('加载邮件选项失败:', error)
+			} finally {
+				isLoadingEmails.value = false
+			}
+		}
+
+		// 处理CA选择变化
+		const handleCAChange = (value: string) => {
+			param.value.ca = value
+			loadEmailOptions(value)
+		}
+
+		// 跳转到CA管理页面
+		const goToAddCAProvider = () => {
+			window.open('/auto-deploy?type=caManage', '_blank')
+		}
+
+		// 渲染CA选择器标签
+		const renderLabel = (option: { label: string; value: string; icon: string }) => {
+			return (
+				<NFlex align="center">
+					<SvgIcon icon={option.icon} size="2rem" />
+					<NText>{option.label}</NText>
+				</NFlex>
+			)
+		}
+
+		// 渲染CA选择器单选标签
+		const renderSingleSelectTag = ({ option }: { option: any }) => {
+			return (
+				<NFlex align="center">
+					{option.label ? renderLabel(option) : <NText class="text-[#aaa]">{$t('t_0_1747990228780')}</NText>}
+				</NFlex>
+			)
+		}
+
+		// 过滤函数
+		const handleFilter = (pattern: string, option: any): boolean => {
+			return option.label.toLowerCase().includes(pattern.toLowerCase())
+		}
+
+		// 处理邮箱输入框焦点
+		const handleEmailFocus = () => {
+			if (emailOptions.value.length > 0) {
+				showEmailDropdown.value = true
+			}
+		}
+
+		// 处理邮箱输入框失焦
+		const handleEmailBlur = () => {
+			// 延迟关闭下拉，确保点击选项有时间触发
+			setTimeout(() => {
+				showEmailDropdown.value = false
+			}, 200)
+		}
+
+		// 选择邮箱地址
+		const handleSelectEmail = (email: string) => {
+			param.value.email = email
+			showEmailDropdown.value = false
+			emailInputRef.value?.blur()
+		}
+
+		// 创建邮箱下拉选项
+		const emailDropdownOptions = computed(() => {
+			return emailOptions.value.map((email) => ({
+				label: email,
+				key: email,
+			}))
+		})
+
+		// 判断是否需要输入框（letsencrypt、buypass、zerossl）
+		const shouldUseInputForEmail = computed(() => {
+			return ['letsencrypt', 'buypass', 'zerossl'].includes(param.value.ca)
+		})
+
 		// 表单渲染配置
 		const config = computed(() => {
 			// 基本选项
@@ -80,27 +240,80 @@ export default defineComponent({
 					type: 'custom' as const,
 					render: () => {
 						return (
-							<CAProviderSelect
-								path="eabId"
-								value={param.value.eabId}
-								email={param.value.email}
-								ca={param.value.ca}
-								{...{
-									'onUpdate:value': (val: { value: string; ca: string; email: string }) => {
-										param.value.eabId = val.value
-										param.value.ca = val.ca
-										// 始终更新邮件，确保 Let's Encrypt 和 Buypass 的邮件能正确显示
-										param.value.email = val.email
-									},
-								}}
-							/>
+							<NSpin show={isLoadingCA.value}>
+								<NGrid cols={24}>
+									<NFormItemGi span={13} label={$t('证书CA')} path="ca" showRequireMark={true}>
+										<NSelect
+											value={param.value.ca}
+											options={caOptions.value}
+											renderLabel={renderLabel}
+											renderTag={renderSingleSelectTag}
+											filterable
+											filter={handleFilter}
+											loading={isLoadingCA.value}
+											placeholder={$t('t_0_1747990228780')}
+											onUpdateValue={handleCAChange}
+											class="flex-1 w-full"
+											v-slots={{
+												empty: () => {
+													return <span class="text-[1.4rem]">{$t('t_2_1747990228008')}</span>
+												},
+											}}
+										/>
+									</NFormItemGi>
+									<NFormItemGi span={11}>
+										<NButton class="mx-[8px]" onClick={goToAddCAProvider}>
+											{$t('添加CA授权')}
+										</NButton>
+										<NButton onClick={loadCAOptions} loading={isLoadingCA.value}>
+											{$t('t_0_1746497662220')}
+										</NButton>
+									</NFormItemGi>
+								</NGrid>
+							</NSpin>
 						)
 					},
 				},
-				useFormInput($t('t_68_1745289354676'), 'email', {
-					placeholder: $t('t_2_1748052862259'),
-					allowInput: noSideSpace,
-				}),
+				{
+					type: 'custom' as const,
+					render: () => {
+						return (
+							<NFormItem label={$t('t_68_1745289354676')} path="email">
+								{shouldUseInputForEmail.value ? (
+									<NDropdown
+										trigger="manual"
+										show={showEmailDropdown.value}
+										options={emailDropdownOptions.value}
+										onSelect={handleSelectEmail}
+										placement="bottom-start"
+										style="width: 100%"
+									>
+										<NInput
+											ref={emailInputRef}
+											v-model:value={param.value.email}
+											placeholder={$t('t_2_1748052862259')}
+											clearable
+											loading={isLoadingEmails.value}
+											onFocus={handleEmailFocus}
+											onBlur={handleEmailBlur}
+											class="w-full"
+										/>
+									</NDropdown>
+								) : (
+									<NSelect
+										v-model:value={param.value.email}
+										options={emailOptions.value.map((email) => ({ label: email, value: email }))}
+										placeholder={$t('t_2_1748052862259')}
+										clearable
+										filterable
+										loading={isLoadingEmails.value}
+										class="w-full"
+									/>
+								)}
+							</NFormItem>
+						)
+					},
+				},
 
 				{
 					type: 'custom' as const,
@@ -232,8 +445,37 @@ export default defineComponent({
 		// 创建表单实例
 		const { component: Form, data, example } = useForm<ApplyNodeConfig>({ defaultValue: param, config, rules })
 
-		onMounted(() => {
+		// 监听CA值变化，自动加载邮箱选项
+		watch(
+			() => param.value.ca,
+			async (newCA) => {
+				if (newCA) {
+					await loadEmailOptions(newCA)
+				} else {
+					emailOptions.value = []
+					param.value.email = ''
+					showEmailDropdown.value = false
+				}
+			},
+		)
+
+		// 监听邮箱选项变化，如果当前下拉显示且没有选项了就关闭下拉
+		watch(
+			() => emailOptions.value,
+			(newOptions) => {
+				if (showEmailDropdown.value && newOptions.length === 0) {
+					showEmailDropdown.value = false
+				}
+			},
+		)
+
+		onMounted(async () => {
 			advancedOptions.value = false
+			await loadCAOptions()
+			// 如果初始化时已有CA值，加载对应的邮箱选项
+			if (param.value.ca) {
+				await loadEmailOptions(param.value.ca)
+			}
 		})
 
 		// 确认事件触发

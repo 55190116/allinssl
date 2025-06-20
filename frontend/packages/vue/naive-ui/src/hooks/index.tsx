@@ -1,5 +1,6 @@
 import useForm, { useFormHooks } from './useForm' // 表单
 import useTable, { useTableOperation } from './useTable' // 表格
+import useSearch from './useSearch' // 搜索
 import useTabs from './useTabs' // 标签页
 import useDialog from './useDialog' // 对话框
 import useMessage from './useMessage' // 消息
@@ -21,6 +22,7 @@ import useFullScreen from './useFullScreen' // 全屏
 export {
 	useForm,
 	useTable,
+	useSearch,
 	useTabs,
 	useDialog,
 	useMessage,

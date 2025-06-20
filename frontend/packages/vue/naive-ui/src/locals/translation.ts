@@ -79,6 +79,7 @@ export const translation = {
 		},
 		useTable: {
 			operation: '操作',
+			total: (total: number) => formatString('共 {} 条', total),
 		},
 	}),
 	zhTW: createTranslation({
@@ -109,6 +110,7 @@ export const translation = {
 		},
 		useTable: {
 			operation: '操作',
+			total: (total: number) => formatString('共 {} 條', total),
 		},
 	}),
 	enUS: createTranslation({
@@ -139,6 +141,7 @@ export const translation = {
 		},
 		useTable: {
 			operation: 'Operation',
+			total: (total: number) => formatString('Total {} items', total),
 		},
 	}),
 	jaJP: createTranslation({
@@ -169,6 +172,7 @@ export const translation = {
 		},
 		useTable: {
 			operation: '操作',
+			total: (total: number) => formatString('合計 {} 件', total),
 		},
 	}),
 	ruRU: createTranslation({
@@ -199,6 +203,7 @@ export const translation = {
 		},
 		useTable: {
 			operation: 'Операция',
+			total: (total: number) => formatString('Всего {} элементов', total),
 		},
 	}),
 	koKR: createTranslation({
@@ -229,6 +234,7 @@ export const translation = {
 		},
 		useTable: {
 			operation: '작업',
+			total: (total: number) => formatString('총  {} 페이지', total),
 		},
 	}),
 	ptBR: createTranslation({
@@ -259,6 +265,7 @@ export const translation = {
 		},
 		useTable: {
 			operation: 'Operação',
+			total: (total: number) => formatString('Total {} páginas', total),
 		},
 	}),
 	frFR: createTranslation({
@@ -289,6 +296,7 @@ export const translation = {
 		},
 		useTable: {
 			operation: 'Opération',
+			total: (total: number) => formatString('Total {} pages', total),
 		},
 	}),
 	esAR: createTranslation({
@@ -319,6 +327,7 @@ export const translation = {
 		},
 		useTable: {
 			operation: 'Operación',
+			total: (total: number) => formatString('Total {} páginas', total),
 		},
 	}),
 	arDZ: createTranslation({
@@ -349,6 +358,7 @@ export const translation = {
 		},
 		useTable: {
 			operation: 'العملية',
+			total: (total: number) => formatString('إجمالي {} صفحات', total),
 		},
 	}),
 }

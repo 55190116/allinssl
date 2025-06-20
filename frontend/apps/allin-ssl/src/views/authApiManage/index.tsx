@@ -15,7 +15,7 @@ import BaseComponent from '@components/BaseLayout'
 export default defineComponent({
 	name: 'AuthApiManage',
 	setup() {
-		const { TableComponent, PageComponent, param, fetch, total, openAddForm } = useController()
+		const { TableComponent, PageComponent, SearchComponent, openAddForm } = useController()
 		const cssVar = useThemeCssVar(['contentPadding', 'borderColor', 'headerHeight', 'iconColorHover'])
 
 		return () => (
@@ -28,26 +28,7 @@ export default defineComponent({
 									{$t('t_0_1745289355714')}
 								</NButton>
 							),
-							headerRight: () => (
-								<NInput
-									v-model:value={param.value.search}
-									onKeydown={(e: KeyboardEvent) => {
-										if (e.key === 'Enter') fetch()
-									}}
-									onClear={() => useTimeoutFn(() => fetch(), 100)}
-									placeholder={$t('t_0_1745289808449')}
-									clearable
-									size="large"
-									class="min-w-[300px]"
-									v-slots={{
-										suffix: () => (
-											<div class="flex items-center cursor-pointer" onClick={fetch}>
-												<Search class="text-[var(--text-color-3)] w-[1.6rem] font-bold" />
-											</div>
-										),
-									}}
-								/>
-							),
+							headerRight: () => <SearchComponent placeholder={$t('t_0_1745289808449')} />,
 							content: () => (
 								<div class="rounded-lg">
 									<TableComponent
@@ -60,15 +41,7 @@ export default defineComponent({
 							),
 							footerRight: () => (
 								<div class="mt-4 flex justify-end">
-									<PageComponent
-										v-slots={{
-											prefix: () => (
-												<span>
-													{$t('t_15_1745227839354')} {total.value} {$t('t_16_1745227838930')}
-												</span>
-											),
-										}}
-									/>
+									<PageComponent />
 								</div>
 							),
 						}}

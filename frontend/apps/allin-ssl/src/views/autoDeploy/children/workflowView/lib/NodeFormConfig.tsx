@@ -190,6 +190,13 @@ export function createNodeFormConfig() {
 		},
 
 		/**
+		 * 创建阿里云ESA相关字段
+		 */
+		aliyunEsaDeploy() {
+			return [this.input('站点ID', 'site_id', { placeholder: '请输入ESA站点ID' })]
+		},
+
+		/**
 		 * 创建跳过选项字段
 		 * @param valueRef 值引用
 		 */

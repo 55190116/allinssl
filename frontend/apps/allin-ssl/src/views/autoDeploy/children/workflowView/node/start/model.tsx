@@ -11,6 +11,7 @@ import type { FormConfig } from '@baota/naive-ui/types/form'
 import type { VNode } from 'vue'
 import { useError } from '@baota/hooks/error'
 import { deepClone } from '@baota/utils/data'
+import { isUndefined } from '@baota/utils/type'
 
 export default defineComponent({
 	name: 'StartNodeDrawer',
@@ -27,7 +28,7 @@ export default defineComponent({
 		},
 	},
 	setup(props) {
-		const { updateNodeConfig, isRefreshNode } = useStore()
+		const { updateNodeConfig, isRefreshNode, flowData } = useStore()
 		// 弹窗辅助
 		const { confirm } = useModalHooks()
 		// 错误处理
@@ -90,7 +91,17 @@ export default defineComponent({
 						return (
 							<NGrid cols={24} xGap={24}>
 								<NFormItemGi label={$t('t_2_1744879616413')} span={8} showRequireMark path="type">
-									<NSelect class="w-full" options={cycleTypeOptions} v-model:value={param.value.type} />
+									<NSelect
+										class="w-full"
+										options={cycleTypeOptions}
+										v-model:value={param.value.type}
+										onUpdateValue={(val: 'day' | 'week' | 'month') => {
+											if (val) {
+												param.value.type = val
+												updateParamValueByType(val)
+											}
+										}}
+									/>
 								</NFormItemGi>
 
 								{param.value.type !== 'day' && (
@@ -99,9 +110,7 @@ export default defineComponent({
 											<NSelect
 												value={param.value.week}
 												onUpdateValue={(val: number) => {
-													if (typeof val === 'number') {
-														param.value.week = val
-													}
+													param.value.week = val
 												}}
 												options={weekOptions}
 											/>
@@ -161,19 +170,24 @@ export default defineComponent({
 
 		// 更新参数的函数
 		const updateParamValue = (updates: StartNodeConfig) => {
+			console.log(updates)
 			let newParams = { ...updates }
-			if (newParams.exec_type === 'manual') {
-				// 小时随机 1-6
-				const randomHour = Math.floor(Math.random() * 6) + 1
-				// 分钟每5分钟随机，0-55
-				const randomMinute = Math.floor(Math.random() * 12) * 5
-				newParams = {
-					...newParams,
-					hour: randomHour,
-					minute: randomMinute,
-				}
-				param.value = newParams
+			// if (newParams.exec_type === 'manual') {
+			// 小时随机 1-6
+			const randomHour = Math.floor(Math.random() * 4) + 1
+			// 分钟每5分钟随机，0-55
+			const randomMinute = Math.floor(Math.random() * 12) * 5
+			newParams = {
+				...newParams,
+				hour: randomHour,
+				minute: randomMinute,
 			}
+			param.value = newParams
+			// }
+		}
+
+		const updateParamValueByType = (type: 'day' | 'week' | 'month') => {
+			updateParamValue(DEFAULT_AUTO_SETTINGS[type] as StartNodeConfig)
 		}
 
 		// 监听执行类型变化
@@ -207,6 +221,13 @@ export default defineComponent({
 				close()
 			} catch (error) {
 				handleError(error)
+			}
+		})
+
+		onMounted(() => {
+			if (isUndefined(flowData.value.id)) {
+				updateParamValueByType('day')
+				updateNodeConfig(props.node.id, param.value) // 更新节点配置
 			}
 		})
 

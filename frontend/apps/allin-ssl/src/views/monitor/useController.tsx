@@ -11,6 +11,7 @@ import {
 	useForm,
 	useFormHooks,
 	useLoadingMask,
+	useSearch,
 } from '@baota/naive-ui/hooks'
 import { useError } from '@baota/hooks/error'
 import { isDomain, isPort, isIp } from '@baota/utils/business'
@@ -38,9 +39,10 @@ interface MonitorControllerExposes {
 	// 表格相关
 	TableComponent: ReturnType<typeof useTable>['TableComponent']
 	PageComponent: ReturnType<typeof useTable>['PageComponent']
+	SearchComponent: ReturnType<typeof useSearch>['SearchComponent']
 	loading: Ref<boolean>
-	param: Ref<SiteMonitorListParams>
-	data: Ref<{ list: SiteMonitorItem[]; total: number }>
+	// param: Ref<SiteMonitorListParams>
+	// data: Ref<{ list: SiteMonitorItem[]; total: number }>
 	fetch: () => Promise<void>
 
 	// 表单和操作相关
@@ -145,6 +147,24 @@ export const useController = (): MonitorControllerExposes => {
 			render: (row: SiteMonitorItem) => row.end_time + '(' + row.end_day + ')',
 		},
 		{
+			title: $t('上次异常时间'),
+			key: 'except_end_time',
+			width: 150,
+			render: (row: SiteMonitorItem) => row.except_end_time || '-',
+		},
+		{
+			title: $t('上次检查时间'),
+			key: 'last_time',
+			width: 150,
+			render: (row: SiteMonitorItem) => row.last_time || '-',
+		},
+		{
+			title: $t('更新时间'),
+			key: 'update_time',
+			width: 150,
+			render: (row: SiteMonitorItem) => row.update_time || '-',
+		},
+		{
 			title: $t('t_18_1745289354598'),
 			key: 'report_type',
 			width: 150,
@@ -159,12 +179,6 @@ export const useController = (): MonitorControllerExposes => {
 			render: (row: SiteMonitorItem) => {
 				return <NSwitch value={row.active === 1} onUpdateValue={() => toggleStatus(row)} />
 			},
-		},
-		{
-			title: $t('t_19_1745289354676'),
-			key: 'update_time',
-			width: 150,
-			render: (row: SiteMonitorItem) => row.update_time || '-',
 		},
 		{
 			title: $t('t_7_1745215914189'),
@@ -196,10 +210,7 @@ export const useController = (): MonitorControllerExposes => {
 	 * 表格实例
 	 * @description 创建表格实例并管理相关状态
 	 */
-	const { TableComponent, PageComponent, loading, param, data, total, fetch } = useTable<
-		SiteMonitorItem,
-		SiteMonitorListParams
-	>({
+	const { TableComponent, PageComponent, loading, param, fetch } = useTable<SiteMonitorItem, SiteMonitorListParams>({
 		config: createColumns(),
 		request: fetchMonitorList,
 		defaultValue: { p: 1, limit: 10, search: '' },
@@ -208,15 +219,13 @@ export const useController = (): MonitorControllerExposes => {
 		storage: 'monitorPageSize',
 	})
 
-	// /**
-	//  * 分页实例
-	//  * @description 创建表格分页组件
-	//  */
-	// const { component: MonitorTablePage } = useTablePage({
-	// 	param,
-	// 	total,
-	// 	,
-	// })
+	// 搜索实例
+	const { SearchComponent } = useSearch({
+		onSearch: (value) => {
+			param.value.search = value
+			fetch()
+		},
+	})
 
 	/**
 	 * 打开添加监控弹窗
@@ -297,9 +306,8 @@ export const useController = (): MonitorControllerExposes => {
 		fetch,
 		TableComponent,
 		PageComponent,
+		SearchComponent,
 		isDetectionAddMonitor,
-		param,
-		data,
 		openAddForm,
 	}
 }

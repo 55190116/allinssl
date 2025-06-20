@@ -100,7 +100,7 @@ export default function useTable<T = Record<string, any>, Z extends Record<strin
 		if ((param.value as Record<string, unknown>)[page]) {
 			;(param.value as Record<string, unknown>)[page] = 1 // 当前页码
 		}
-		console.log(param.value, pageSize)
+
 		if ((param.value as Record<string, unknown>)[pageSize]) {
 			;(param.value as Record<string, unknown>)[pageSize] = getStoredPageSize(storage, 10, pageSizeOptionsRef.value) // 每页条数
 			console.log('初始化每页条数', (param.value as Record<string, unknown>)[pageSize])
@@ -130,7 +130,7 @@ export default function useTable<T = Record<string, any>, Z extends Record<strin
 		/**
 		 * 获取表格数据
 		 */
-		const fetchData = async <T,>() => {
+		const fetchData = async <T,>(resetPage?: boolean) => {
 			try {
 				loading.value = true
 				const rdata: TableResponse<T> = await request(param.value)
@@ -139,6 +139,8 @@ export default function useTable<T = Record<string, any>, Z extends Record<strin
 					list: rdata[tableAlias.value.list as keyof TableResponse<T>] as [],
 					total: rdata[tableAlias.value.total as keyof TableResponse<T>] as number,
 				}
+				// 如果需要重置页码，则重置页码
+				if (resetPage) (param.value as Record<string, unknown>)[page] = 1
 				return data.value
 			} catch (error: any) {
 				errorMsg(error.message)
@@ -197,7 +199,10 @@ export default function useTable<T = Record<string, any>, Z extends Record<strin
 					onUpdatePage={handlePageChange}
 					onUpdatePageSize={handlePageSizeChange}
 					{...paginationProps}
-					v-slots={mergedSlots}
+					v-slots={{
+						...mergedSlots,
+						prefix: () => <span>{hookT('total', `${total.value}`)}</span>,
+					}}
 				/>
 			)
 		}
@@ -206,7 +211,7 @@ export default function useTable<T = Record<string, any>, Z extends Record<strin
 		if (Array.isArray(watchValue)) {
 			// 只监听指定的字段
 			const source = computed(() => watchValue.map((key) => param.value[key]))
-			watch(source, fetchData, { deep: true })
+			watch(source, (value) => fetchData(), { deep: true })
 		}
 
 		onUnmounted(() => {

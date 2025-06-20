@@ -93,7 +93,7 @@ export default defineComponent<DnsProviderSelectProps>({
 		 */
 		const renderSingleSelectTag = ({ option }: { option: DnsProviderOption }): VNode => {
 			return (
-				<div class="flex items-center">
+				<NFlex align="center">
 					{option.label ? (
 						renderLabel(option)
 					) : (
@@ -101,7 +101,7 @@ export default defineComponent<DnsProviderSelectProps>({
 							{props.type === 'dns' ? $t('t_0_1747019621052') : $t('t_0_1746858920894')}
 						</NText>
 					)}
-				</div>
+				</NFlex>
 			)
 		}
 

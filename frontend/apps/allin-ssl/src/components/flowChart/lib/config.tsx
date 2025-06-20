@@ -180,6 +180,7 @@ nodeOptions[NOTIFY] = () =>
 				provider_id: '',
 				subject: '',
 				body: '',
+				skip: false,
 			},
 			childNode: null,
 		},
